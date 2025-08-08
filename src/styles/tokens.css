@@ -1,0 +1,39 @@
+:root {
+  --color-bg: #F8F5F2;
+  --color-bg-elev: #FFFEFD;
+  --color-text: #1E1B16;
+  --color-text-muted: #6C6358;
+  --color-primary: #C89F7A;
+  --color-primary-deep: #A4764F;
+  --color-secondary: #7A9EAF;
+  --color-accent: #B88A3B;
+  --color-border: #E8E2DB;
+  --color-border-strong: #CFC6BC;
+  --color-success: #4E8A5B;
+  --color-warning: #C98C3A;
+  --color-error:   #B75A4A;
+  --radius: 14px;
+  --shadow-soft: 0 8px 28px rgba(0,0,0,.06);
+  --shadow-strong: 0 12px 40px rgba(0,0,0,.14);
+  --gradient-primary: linear-gradient(135deg, #C89F7A 0%, #B88A3B 100%);
+  --gradient-bg: linear-gradient(135deg, #F6EFE8 0%, #EEE6DD 100%);
+  --ring: 0 0 0 3px color-mix(in oklab, var(--color-primary) 28%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #121110;
+    --color-bg-elev: #181614;
+    --color-text: #EFEAE3;
+    --color-text-muted: #B9B1A6;
+    --color-primary: #D1A882;
+    --color-primary-deep: #B6845A;
+    --color-secondary: #88A6B5;
+    --color-accent: #CFA14A;
+    --color-border: #2A2622;
+    --color-border-strong: #3A332D;
+    --shadow-soft: 0 10px 36px rgba(0,0,0,.35);
+    --shadow-strong: 0 16px 52px rgba(0,0,0,.45);
+  }
+}
+

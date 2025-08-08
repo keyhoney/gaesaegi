@@ -1,0 +1,2 @@
+.focus-ring:focus-visible { outline: none; box-shadow: var(--ring); }
+
