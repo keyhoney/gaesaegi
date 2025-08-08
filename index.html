@@ -23,35 +23,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body class="login-page">
-<div class="login-container">
-<div class="logo">📚</div>
-<h1>송현여고 수학 학습 시스템</h1>
-<p class="subtitle">개인화된 학습 경험으로 수학 실력을 향상시켜보세요</p>
-<button class="btn btn-primary login-button" onclick="googleSignUp()" id="loginBtn">
-<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
-<span>Google 계정으로 시작하기</span>
-</button>
-<div class="message" id="message">
-</div>
-<div class="grid grid-3">
-<div class="card">
-<div class="feature-icon">🎯</div>
-<div class="feature-title">개인화 학습</div>
-<div class="feature-desc">맞춤형 수학 문제 제공</div>
-</div>
-<div class="card">
-<div class="feature-icon">📝</div>
-<div class="feature-title">실전 연습</div>
-<div class="feature-desc">실제 시험 유형 문제</div>
-</div>
-<div class="card">
-<div class="feature-icon">📊</div>
-<div class="feature-title">학습 기록</div>
-<div class="feature-desc">개인별 학습 진도</div>
-</div>
-</div>
-</div>
+<body class="login-page" style="background: linear-gradient(to right, #141E30, #243B55); display:flex; align-items:center; justify-content:center; min-height:100vh;">
+  <div class="container" style="background: rgba(255,255,255,.1); padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,.3); text-align:center; width: 320px; backdrop-filter: blur(10px);">
+    <h1 style="color:#fff; font-size:22px; margin-bottom:20px;">송현여고 수학 학습 시스템</h1>
+    <button class="google-btn" onclick="googleSignUp()" id="loginBtn" style="border:1px solid #ddd; background:#fff; color:#555; width:100%; padding:12px 20px; border-radius:8px; font-size:16px; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:15px;">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" style="width:20px; height:20px;"/>
+      구글 간편 로그인
+    </button>
+    <p id="message" style="color:#fff; font-size:14px;"></p>
+  </div>
 <script type="module">
 import { firebaseConfig, ERROR_MESSAGES, getFirebaseApp, getFirebaseAuth } from './script.js';
 import {

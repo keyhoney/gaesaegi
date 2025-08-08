@@ -98,18 +98,16 @@
     </div>
     
     <div class="page-container">
-    <!-- 메인 레이아웃 -->
-    <div class="main-layout">
+    <!-- old 레이아웃 구조(#top: #left + #center) -->
+    <div id="top">
         <!-- 왼쪽 사이드바 -->
-        <div class="sidebar" id="left">
-            <h2>문제 선택</h2>
-            <ul id="questionList">
-                <!-- 문제 목록은 JavaScript로 동적으로 추가됩니다-->
-            </ul>
+        <div id="left" class="sidebar">
+            <h2>문항 선택</h2>
+            <ul id="questionList"></ul>
         </div>
-        
+
         <!-- 중앙 콘텐츠 영역 -->
-        <div class="main-content" id="center">
+        <div id="center" class="main-content">
             <!-- 헤더 -->
             <div class="content-header" id="centerHeader">
                 <div class="header-content">
@@ -138,45 +136,30 @@
                     <div class="frame-skeleton" aria-hidden="true"></div>
                 </div>
                 
-                <!-- 하단 영역 -->
-                <div class="content-bottom">
-                    <!-- 네비게이션 버튼 -->
-                    <div class="navigation-buttons">
-                        <button class="nav-btn" type="button" onclick="navigateToPreviousQuestion()">
-                            <span>←</span>
-                            <span>이전 문제</span>
-                        </button>
-                        <button class="nav-btn" type="button" onclick="navigateToNextQuestion()">
-                            <span>다음 문제</span>
-                            <span>→</span>
-                        </button>
-                    </div>
-                    
-                    <!-- 답안 입력 영역 -->
-                    <div class="answer-area">
-                        <input type="text" id="answer" class="answer-input" placeholder="답안 입력">
-                        <button class="check-btn" type="button" onclick="checkAnswer()">확인</button>
-                    </div>
-                    
-                    <!-- 결과 표시 영역 -->
-                    <div class="result-area" aria-live="polite">
-                        <div id="result"></div>
-                        <div id="solutionLink"></div>
-                    </div>
-
-                    <!-- 키보드 힌트 -->
-                    <div class="kbd-hints" aria-hidden="true">
-                        <div class="kbd">← 이전 문제</div>
-                        <div class="kbd">→ 다음 문제</div>
-                        <div class="kbd">Enter 정답 확인</div>
-                        <div class="kbd">Esc 이미지 닫기</div>
-                    </div>
+                <!-- 네비게이션 버튼 (centerMain 하단) -->
+                <div class="navigation-buttons" style="margin-top:16px;">
+                    <button class="nav-btn" type="button" onclick="navigateToPreviousQuestion()">
+                        <span>←</span>
+                        <span>이전 문제</span>
+                    </button>
+                    <button class="nav-btn" type="button" onclick="navigateToNextQuestion()">
+                        <span>다음 문제</span>
+                        <span>→</span>
+                    </button>
+                </div>
+                <!-- 키보드 힌트 -->
+                <div class="kbd-hints" aria-hidden="true" style="margin-top:8px;">
+                    <div class="kbd">← 이전 문제</div>
+                    <div class="kbd">→ 다음 문제</div>
+                    <div class="kbd">Enter 정답 확인</div>
+                    <div class="kbd">Esc 이미지 닫기</div>
                 </div>
             </div>
         </div>
-        
-        <!-- 오른쪽 패널 (메모) -->
-        <div class="right-panel" id="rightPanel">
+    </div>
+
+    <!-- 오른쪽 패널 (메모) - old 구조에서도 토글 패널 유지 -->
+    <div class="right-panel" id="rightPanel">
             <h3>📝 학습 메모</h3>
             <div class="note-content">
                 <textarea id="noteText" placeholder="이 문제에 대한 메모를 작성해보세요..."></textarea>
@@ -184,6 +167,21 @@
                     <button class="save-note-btn" type="button" onclick="saveNote()">저장</button>
                     <button class="clear-note-btn" type="button" onclick="clearNote()">지우기</button>
                 </div>
+            </div>
+    </div>
+
+    <!-- old 하단 바(#bottom): 답안/결과 분리 -->
+    <div id="bottom">
+        <div id="leftBottom">
+            <div id="answerArea" class="answer-area">
+                <input type="text" id="answer" class="answer-input" placeholder="답을 입력하세요">
+                <button class="check-btn" type="button" onclick="checkAnswer()">제출</button>
+            </div>
+        </div>
+        <div id="rightBottom">
+            <div id="resultArea" class="result-area" aria-live="polite">
+                <div id="result"></div>
+                <div id="solutionLink" style="margin-top:5px;"></div>
             </div>
         </div>
     </div>
