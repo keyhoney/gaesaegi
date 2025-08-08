@@ -86,7 +86,7 @@ async function initializeFirebaseServices() {
     try {
       const redirectResult = await getRedirectResult(auth);
       if (redirectResult && redirectResult.user) {
-        window.location.href = 'dashboard.html';
+        window.location.href = 'gsg.html';
         return;
       }
     } catch (redirectErr) {
@@ -96,7 +96,7 @@ async function initializeFirebaseServices() {
     try { analytics = getAnalytics(app); } catch (e) { /* 무시 */ }
 
     onAuthStateChanged(auth, (user) => {
-      if (user) { window.location.href = 'dashboard.html'; }
+      if (user) { window.location.href = 'gsg.html'; }
     });
 
     if (loginBtn) { loginBtn.disabled = false; loginBtn.removeAttribute('aria-busy'); }

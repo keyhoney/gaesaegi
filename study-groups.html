@@ -171,15 +171,14 @@
 <script type="module">
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { collection, doc, getDoc, updateDoc, addDoc, query, where, orderBy, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+    // Storage 제거: 파일 공유는 외부 링크 공유로 대체
     import { getFirebaseApp, getFirebaseAuth, getFirebaseDb } from './script.js';
 
-    let app, auth, db, storage;
+    let app, auth, db;
     async function initializeFirebaseServices() {
       app = await getFirebaseApp();
       auth = await getFirebaseAuth();
       db = await getFirebaseDb();
-      storage = getStorage(app);
     }
 
     let currentUser = null;
@@ -636,42 +635,27 @@ ${msg.problemNote ? `<div class="problem-note">문제 설명: ${msg.problemNote}
     }
 
     // 파일 공유
+    // 파일 공유 대체: 외부 링크(예: Google Drive, OneDrive) URL 붙여넣기
     window.shareFile = async function() {
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = '.pdf,.doc,.docx,.jpg,.png,.gif';
-      
-      fileInput.onchange = async function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        try {
-          // 파일 업로드
-          const storageRef = ref(storage, `group-files/${currentChatGroup}/${file.name}`);
-          const snapshot = await uploadBytes(storageRef, file);
-          const downloadURL = await getDownloadURL(snapshot.ref);
-          
-          // 채팅 메시지에 파일 추가
-          const message = {
-            content: `파일 공유: ${file.name}`,
-            fileUrl: downloadURL,
-            fileName: file.name,
-            userId: currentUser.uid,
-            userName: currentUser.displayName || '익명',
-            timestamp: serverTimestamp(),
-            type: 'file'
-          };
-          
-          await sendMessageToChat(message);
-          
-          showSuccess("파일이 공유되었습니다!");
-        } catch (error) {
-          console.error("파일 공유 중 오류:", error);
-          showError("파일 공유 중 오류가 발생했습니다.");
-        }
-      };
-      
-      fileInput.click();
+      if (!currentChatGroup) return;
+      const url = prompt('공유할 파일의 링크(URL)를 입력하세요. 예: https://...');
+      if (!url) return;
+      try {
+        const message = {
+          content: `파일 공유: ${url}`,
+          fileUrl: url,
+          fileName: url,
+          userId: currentUser.uid,
+          userName: currentUser.displayName || '익명',
+          timestamp: serverTimestamp(),
+          type: 'file'
+        };
+        await sendMessageToChat(message);
+        showSuccess('파일 링크가 공유되었습니다!');
+      } catch (error) {
+        console.error('파일 링크 공유 중 오류:', error);
+        showError('파일 링크 공유 중 오류가 발생했습니다.');
+      }
     }
 
     // 스터디 세션 시작

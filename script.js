@@ -13,7 +13,7 @@ let menuVisible = false;
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, setDoc, query, where, orderBy, limit, getDocs, deleteDoc, onSnapshot, runTransaction, increment } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getStorage, ref as storageRef, uploadString, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+// firebase-storage 사용 제거
 
 // ===== 통합 설정 상수 =====
 const SYSTEM_CONFIG = {
@@ -117,7 +117,7 @@ const firebaseConfig = {
 let app = null;
 let auth = null;
 let db = null;
-let storage = null;
+// storage 제거
 
 // Firebase 앱 초기화
 async function getFirebaseApp() {
@@ -163,20 +163,7 @@ async function getFirebaseDb() {
   return db;
 }
 
-// Firebase Storage 초기화
-async function getFirebaseStorage() {
-  if (!storage) {
-    try {
-      const appInstance = await getFirebaseApp();
-      storage = getStorage(appInstance);
-      console.log('Firebase Storage 초기화 성공');
-    } catch (error) {
-      console.error('Firebase Storage 초기화 실패:', error);
-      throw error;
-    }
-  }
-  return storage;
-}
+// Firebase Storage 제거 (대체 없음)
 
 // Firebase 설정 유효성 검사
 function validateFirebaseConfig() {
@@ -3327,8 +3314,7 @@ export {
   addCoins,
   onCoinsChange,
   initializeUserCoins,
-  getFirebaseDb,
-  getFirebaseStorage
+  getFirebaseDb
 };
 
 // ===== gsg.html에서 호출하는 함수들을 window 객체에 할당 =====
@@ -3629,11 +3615,10 @@ async function initializeCoinDatabase() {
   }
 }
 
-// 데이터베이스 백업 생성 (Storage 기반)
+// 데이터베이스 백업 생성 (Firestore payload 기반)
 async function createDatabaseBackup() {
   try {
     const db = await getFirebaseDb();
-    const storage = await getFirebaseStorage();
     const collections = [
       'users',
       'coin_transactions',
@@ -3645,92 +3630,54 @@ async function createDatabaseBackup() {
     ];
     
     const backupId = new Date().toISOString().replace(/[:.]/g, '-');
-    const files = {};
     const summary = {};
+    const payload = {};
     
     for (const collectionName of collections) {
       const colRef = collection(db, collectionName);
       const snapshot = await getDocs(colRef);
       const documents = snapshot.docs.map(d => ({ id: d.id, data: d.data() }));
-      const json = JSON.stringify(documents);
-      const path = `backups/${backupId}/${collectionName}.json`;
-      const refObj = storageRef(storage, path);
-      await uploadString(refObj, json, 'raw');
-      files[collectionName] = path;
+      payload[collectionName] = documents;
       summary[collectionName] = documents.length;
     }
 
-    // 메타데이터는 Firestore에 저장
+    // Firestore에 저장 (문서 크기 제한 유의)
     const metaRef = await addDoc(collection(db, 'database_backups'), {
       backupId,
       created_at: serverTimestamp(),
-      files,
-      summary
+      summary,
+      payload
     });
 
-    return { backupId, files, summary, backupDocId: metaRef.id };
+    return { backupId, summary, backupDocId: metaRef.id };
   } catch (error) {
     console.error('백업 생성 실패:', error);
     throw new Error('백업 생성 중 오류가 발생했습니다.');
   }
 }
 
-// 데이터베이스 백업 복원 (Storage 기반)
+// 데이터베이스 백업 복원 (Firestore payload 기반)
 async function restoreDatabaseBackup(backupId) {
   try {
     const db = await getFirebaseDb();
-    const storage = await getFirebaseStorage();
-
-    let files = null;
-    // Firestore 메타데이터 우선 조회
-    try {
-      const backupsCol = collection(db, 'database_backups');
-      const q = query(backupsCol, where('backupId', '==', backupId));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const data = snap.docs[0].data();
-        files = data.files || null;
-      }
-    } catch (_) {}
-
-    // 메타데이터 없으면 Storage 디렉터리 스캔
-    if (!files) {
-      files = {};
-      const folder = storageRef(storage, `backups/${backupId}`);
-      const list = await listAll(folder);
-      for (const item of list.items) {
-        const name = item.name; // e.g., users.json
-        const colName = name.replace(/\.json$/, '');
-        files[colName] = `backups/${backupId}/${name}`;
-      }
-    }
-
+    const backupsCol = collection(db, 'database_backups');
+    const q = query(backupsCol, where('backupId', '==', backupId));
+    const snap = await getDocs(q);
+    if (snap.empty) throw new Error('해당 백업을 찾을 수 없습니다.');
+    const { payload = {} } = snap.docs[0].data();
     const restoredCollections = [];
     let totalDocuments = 0;
-    
-    for (const [collectionName, path] of Object.entries(files)) {
-      try {
-        const fileRef = storageRef(storage, path);
-        const url = await getDownloadURL(fileRef);
-        const resp = await fetch(url);
-        const documents = await resp.json();
-
-        const colRef = collection(db, collectionName);
-        const existingSnapshot = await getDocs(colRef);
-        await Promise.all(existingSnapshot.docs.map(d => deleteDoc(d.ref)));
-
-        await Promise.all(documents.map(dObj => {
-          const targetRef = doc(db, collectionName, dObj.id);
-          return setDoc(targetRef, dObj.data);
-        }));
-        
-        restoredCollections.push(collectionName);
-        totalDocuments += documents.length;
-      } catch (err) {
-        console.error(`${collectionName} 복원 실패:`, err);
-      }
+    for (const [collectionName, documents] of Object.entries(payload)) {
+      const colRef = collection(db, collectionName);
+      const existingSnapshot = await getDocs(colRef);
+      await Promise.all(existingSnapshot.docs.map(d => deleteDoc(d.ref)));
+      await Promise.all(documents.map(dObj => {
+        const targetRef = doc(db, collectionName, dObj.id);
+        return setDoc(targetRef, dObj.data);
+      }));
+      restoredCollections.push(collectionName);
+      totalDocuments += documents.length;
     }
-
     return { restoredCollections, totalDocuments, backupId };
   } catch (error) {
     console.error('백업 복원 실패:', error);
