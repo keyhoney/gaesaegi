@@ -1,0 +1,110 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로그인 가이드 - 송현여고 수학 학습 시스템</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>🔗</text>
+</svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🔗 로그인 가이드</h1>
+<p>카카오톡에서 홈 화면에 추가해주세요</p>
+</div>
+<div class="card">
+<h2>📱 카카오톡 홈 화면 추가</h2>
+<p>카카오톡 브라우저에서 홈 화면에 추가하면 앱처럼 사용할 수 있습니다. 아래 링크를 복사하여 카카오톡 브라우저에서 접속해주세요.</p>
+<div class="url-box">
+<div class="url-text" id="urlText">https://keyhoney.github.io/math/</div>
+<button class="btn btn-primary" id="copyButton">링크 복사</button>
+</div>
+<div class="browser-list">
+<h3>📱 지원 브라우저</h3>
+<ul>
+<li>
+<span class="highlight">Safari</span>
+- iOS 기본 브라우저</li>
+<li>
+<span class="highlight">Chrome</span>
+- 안정적이고 빠른 성능</li>
+<li>
+<span class="highlight">Samsung Internet</span>
+- 삼성 갤럭시 기본</li>
+<li>
+<span class="highlight">Whale</span>
+- 네이버 브라우저</li>
+</ul>
+</div>
+</div>
+<div class="card">
+<h2>📋 추가 방법</h2>
+<ol>
+<li>위의 "링크 복사" 버튼을 눌러주세요</li>
+<li>브라우저를 실행하세요(Safari, Chrome 등)</li>
+<li>주소창에 복사한 링크를 붙여넣고 접속하세요</li>
+<li>계정 정보로 로그인하여 학습을 시작하세요</li>
+</ol>
+</div>
+<div class="card">
+<h2>ℹ️ 참고 사항</h2>
+<ul>
+<li>홈 화면 추가는 브라우저/기기마다 메뉴 위치가 다를 수 있습니다.</li>
+<li>푸시/오프라인 기능은 최초 접속 후 네트워크 연결 상태에 따라 달라질 수 있습니다.</li>
+<li>문제가 지속되면 일반 브라우저(Chrome/Safari)에서 접속을 권장합니다.</li>
+</ul>
+</div>
+<div class="card">
+<h2>🎯 주요 학습 시스템 기능</h2>
+<ul>
+<li>
+<span class="highlight">개념별 학습</span>: 수학의 각 개념별로 체계적으로 정리된 기출문제</li>
+<li>
+<span class="highlight">실시간 피드백</span>: 문제 풀이 후 즉시 정답 여부 확인</li>
+<li>
+<span class="highlight">개인별 분석</span>: 학습 현황과 정답률을 한눈에 확인</li>
+<li>
+<span class="highlight">게이미피케이션</span>: XP, 배지, 스트릭으로 학습 동기부여</li>
+<li>
+<span class="highlight">즐겨찾기</span>: 중요한 문제를 저장하여 나중에 복습</li>
+</ul>
+</div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+      // URL 복사 기능
+      document.getElementById("copyButton").addEventListener("click", function() {
+        const textToCopy = document.getElementById("urlText").textContent;
+        (navigator.clipboard?.writeText ? navigator.clipboard.writeText(textToCopy) : Promise.reject()).then(function() {
+          // 성공 메시지 표시
+          const message = document.createElement('div');
+          message.className = 'message success';
+          message.textContent = '링크가 클립보드에 복사되었습니다!';
+          document.querySelector('.card').appendChild(message);
+          
+          // 3초 후 메시지 제거
+          setTimeout(() => {
+            message.remove();
+          }, 3000);
+        }, function() {
+          // 실패 메시지 표시
+          const message = document.createElement('div');
+          message.className = 'message error';
+          message.textContent = '복사에 실패했습니다. 수동으로 링크를 복사해주세요.';
+          document.querySelector('.card').appendChild(message);
+          
+          // 3초 후 메시지 제거
+          setTimeout(() => {
+            message.remove();
+          }, 3000);
+        });
+      });
+    });
+</script>
+</body>
+</html>
+

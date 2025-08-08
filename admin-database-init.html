@@ -1,0 +1,400 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코인 데이터베이스 초기화 - 관리자</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+        <text y='.9em' font-size='90'>💰</text>
+    </svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="admin-container" id="adminContainer">
+        <div class="admin-header">
+            <h1>코인 데이터베이스 초기화 관리자</h1>
+            <p>관리자 전용 코인 데이터베이스 설정 및 초기화 작업</p>
+            <div class="admin-actions" style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+                <button class="admin-btn primary" id="loginBtn">Google 로그인</button>
+            </div>
+        </div>
+        
+        <div class="admin-content">
+            <div class="admin-section">
+                <h2>코인 데이터베이스 상태 확인</h2>
+                <p>현재 Firebase 코인 데이터베이스의 설정 상태를 확인합니다.</p>
+                <button class="admin-btn primary" onclick="checkDatabaseStatus()" id="statusBtn">
+                    <span class="btn-text">상태 확인</span>
+                    <span class="loading-spinner" style="display: none;"></span>
+                </button>
+                <div id="statusCheck"></div>
+            </div>
+            
+            <div class="admin-section">
+                <h2>필수 코인 컬렉션 생성</h2>
+                <p>필수 코인 컬렉션들을 생성합니다.</p>
+                <button class="admin-btn primary" onclick="createCoinCollections()" id="collectionBtn">
+                    <span class="btn-text">컬렉션 생성</span>
+                    <span class="loading-spinner" style="display: none;"></span>
+                </button>
+                <div id="collectionStatus"></div>
+            </div>
+            
+            <div class="admin-section">
+                <h2>기존 사용자 코인 초기화</h2>
+                <p>기존 사용자들의 코인 잔고를 초기값으로 설정합니다. (설정값: INITIAL_COINS)</p>
+                <button class="admin-btn success" onclick="initializeUserCoins()" id="userInitBtn">
+                    <span class="btn-text">사용자 코인 초기화</span>
+                    <span class="loading-spinner" style="display: none;"></span>
+                </button>
+                <div id="userInitStatus"></div>
+            </div>
+            
+            <div class="admin-section">
+                <h2>전체 데이터베이스 초기화</h2>
+                <p>모든 초기화 작업을 한 번에 실행합니다.</p>
+                <button class="admin-btn success" onclick="initializeFullDatabase()" id="fullInitBtn">
+                    <span class="btn-text">전체 초기화 실행</span>
+                    <span class="loading-spinner" style="display: none;"></span>
+                </button>
+                <div id="fullInitStatus"></div>
+            </div>
+        </div>
+        
+        <div class="backup-section">
+            <h2>데이터베이스 백업 및 복원</h2>
+            <p>현재 데이터베이스 상태를 백업하거나 이전 백업을 복원합니다.</p>
+            <div class="backup-controls">
+                <button class="admin-btn primary" onclick="createBackup()" id="backupBtn">
+                    <span class="btn-text">백업 생성</span>
+                    <span class="loading-spinner" style="display: none;"></span>
+                </button>
+                <button class="admin-btn primary" onclick="restoreBackup()" id="restoreBtn">
+                    <span class="btn-text">백업 복원</span>
+                    <span class="loading-spinner" style="display: none;"></span>
+                </button>
+                <button class="admin-btn danger" onclick="cleanupDatabase()" id="cleanupBtn">
+                    <span class="btn-text">정리 작업</span>
+                    <span class="loading-spinner" style="display: none;"></span>
+                </button>
+            </div>
+            <div id="backupStatus"></div>
+        </div>
+        
+        <div class="log-container">
+            <div class="log-header">
+                <div class="log-title">초기화 로그</div>
+                <button class="log-clear" onclick="clearLog()">로그 지우기</button>
+            </div>
+            <div id="log" class="log-content"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (버전 통일: v9 사용) -->
+    <script type="module">
+        import { 
+            getFirebaseApp,
+            getFirebaseAuth,
+            initializeCoinDatabase, 
+            checkDatabaseStatus, 
+            createCoinCollections, 
+            initializeExistingUsersCoins,
+            createDatabaseBackup,
+            restoreDatabaseBackup,
+            cleanupDatabase
+        } from "./script.js";
+
+        import { onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, getIdTokenResult } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+        // Firebase 초기화(재사용)
+        const app = await getFirebaseApp();
+        const auth = await getFirebaseAuth();
+        let isAuthenticated = false;
+        let isAdmin = false;
+
+        // 페이지 로드 시 애니메이션
+        window.addEventListener('load', () => {
+            document.getElementById('adminContainer').classList.add('visible');
+        });
+
+        // 로그 함수
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        // 로그 지우기
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+            log('로그가 지워졌습니다.', 'info');
+        };
+
+        // 상태 표시 함수
+        function showStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status-container ${type}">${message}</div>`;
+        }
+
+        // 버튼 로딩 상태 관리
+        function setButtonLoading(buttonId, isLoading) {
+            const button = document.getElementById(buttonId);
+            const btnText = button.querySelector('.btn-text');
+            const spinner = button.querySelector('.loading-spinner');
+            
+            if (isLoading) {
+                btnText.style.display = 'none';
+                spinner.style.display = 'inline-block';
+                button.disabled = true;
+            } else {
+                btnText.style.display = 'inline';
+                spinner.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        // 관리자 클레임 확인
+        async function refreshClaims(user) {
+            const token = await getIdTokenResult(user, true);
+            isAdmin = !!token.claims.admin;
+            isAuthenticated = true;
+            if (!isAdmin) {
+                log('관리자 권한이 없습니다. 접근이 제한됩니다.', 'error');
+                ['statusBtn','collectionBtn','userInitBtn','fullInitBtn','backupBtn','restoreBtn','cleanupBtn'].forEach(id=>{
+                    const b=document.getElementById(id); if (b) b.disabled = true;
+                });
+            } else {
+                log('관리자 인증 성공', 'success');
+            }
+        }
+
+        // 인증 상태 확인
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                await refreshClaims(user);
+            } else {
+                isAuthenticated = false;
+                isAdmin = false;
+                log('인증되지 않음', 'warning');
+            }
+        });
+
+        // 로그인 (Google)
+        async function signIn() {
+            try {
+                const provider = new GoogleAuthProvider();
+                await signInWithRedirect(auth, provider);
+            } catch (error) {
+                log(`로그인 실패: ${error.message}`, 'error');
+            }
+        }
+
+        // Redirect 결과 처리 & 로그인 버튼 바인딩
+        try {
+            const res = await getRedirectResult(auth);
+            if (res?.user) await refreshClaims(res.user);
+        } catch (e) {
+            log(`로그인 처리 오류: ${e.message}`, 'error');
+        }
+
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) loginBtn.addEventListener('click', () => signIn());
+
+        // 데이터베이스 상태 확인
+        function guardOrToast(areaId) {
+            if (!isAuthenticated) { showStatus(areaId, '먼저 로그인하세요.', 'error'); return false; }
+            if (!isAdmin) { showStatus(areaId, '관리자 권한이 필요합니다.', 'error'); return false; }
+            return true;
+        }
+
+        window.checkDatabaseStatus = async function() {
+            if (!guardOrToast('statusCheck')) return;
+            if (!isAuthenticated) {
+                showStatus('statusCheck', '먼저 인증을 완료해주세요.', 'error');
+                return;
+            }
+
+            setButtonLoading('statusBtn', true);
+            try {
+                log('데이터베이스 상태 확인 시작...', 'info');
+                const status = await checkDatabaseStatus();
+                
+                let statusHtml = '<div class="stats-grid">';
+                for (const [collection, info] of Object.entries(status)) {
+                    const statusClass = info.exists ? 'success' : 'error';
+                    const statusText = info.exists ? '존재' : '없음';
+                    statusHtml += `
+                        <div class="stat-card">
+                            <div class="stat-number">${info.exists ? info.documentCount : 0}</div>
+                            <div class="stat-label">${collection}</div>
+                            <div style="font-size: 12px; color: ${info.exists ? '#27ae60' : '#e74c3c'};">${statusText}</div>
+                        </div>
+                    `;
+                }
+                statusHtml += '</div>';
+                
+                document.getElementById('statusCheck').innerHTML = statusHtml;
+                log('데이터베이스 상태 확인 완료', 'success');
+            } catch (error) {
+                log(`상태 확인 실패: ${error.message}`, 'error');
+                showStatus('statusCheck', `오류: ${error.message}`, 'error');
+            } finally {
+                setButtonLoading('statusBtn', false);
+            }
+        };
+
+        // 코인 컬렉션 생성
+        window.createCoinCollections = async function() {
+            if (!guardOrToast('collectionStatus')) return;
+            if (!isAuthenticated) {
+                showStatus('collectionStatus', '먼저 인증을 완료해주세요.', 'error');
+                return;
+            }
+
+            setButtonLoading('collectionBtn', true);
+            try {
+                log('코인 컬렉션 생성 시작...', 'info');
+                await createCoinCollections();
+                log('코인 컬렉션 생성 완료', 'success');
+                showStatus('collectionStatus', '코인 컬렉션들이 성공적으로 생성되었습니다.', 'success');
+            } catch (error) {
+                log(`컬렉션 생성 실패: ${error.message}`, 'error');
+                showStatus('collectionStatus', `오류: ${error.message}`, 'error');
+            } finally {
+                setButtonLoading('collectionBtn', false);
+            }
+        };
+
+        // 사용자 코인 초기화
+        window.initializeUserCoins = async function() {
+            if (!guardOrToast('userInitStatus')) return;
+            if (!isAuthenticated) {
+                showStatus('userInitStatus', '먼저 인증을 완료해주세요.', 'error');
+                return;
+            }
+
+            setButtonLoading('userInitBtn', true);
+            try {
+                log('사용자 코인 초기화 시작...', 'info');
+                const updatedCount = await initializeExistingUsersCoins();
+                log(`사용자 코인 초기화 완료: ${updatedCount}명 업데이트`, 'success');
+                showStatus('userInitStatus', `${updatedCount}명의 사용자 코인이 초기화되었습니다.`, 'success');
+            } catch (error) {
+                log(`사용자 초기화 실패: ${error.message}`, 'error');
+                showStatus('userInitStatus', `오류: ${error.message}`, 'error');
+            } finally {
+                setButtonLoading('userInitBtn', false);
+            }
+        };
+
+        // 전체 데이터베이스 초기화
+        window.initializeFullDatabase = async function() {
+            if (!guardOrToast('fullInitStatus')) return;
+            if (!isAuthenticated) {
+                showStatus('fullInitStatus', '먼저 인증을 완료해주세요.', 'error');
+                return;
+            }
+
+            setButtonLoading('fullInitBtn', true);
+            try {
+                log('전체 데이터베이스 초기화 시작...', 'info');
+                const result = await initializeCoinDatabase();
+                log(`전체 초기화 완료: ${result.updatedUsers}명의 사용자 업데이트`, 'success');
+                showStatus('fullInitStatus', '전체 데이터베이스 초기화가 완료되었습니다.', 'success');
+            } catch (error) {
+                log(`전체 초기화 실패: ${error.message}`, 'error');
+                showStatus('fullInitStatus', `오류: ${error.message}`, 'error');
+            } finally {
+                setButtonLoading('fullInitBtn', false);
+            }
+        };
+
+        // 백업 생성
+        window.createBackup = async function() {
+            if (!guardOrToast('backupStatus')) return;
+            if (!isAuthenticated) {
+                showStatus('backupStatus', '먼저 인증을 완료해주세요.', 'error');
+                return;
+            }
+
+            setButtonLoading('backupBtn', true);
+            try {
+                log('데이터베이스 백업 생성 시작...', 'info');
+                const backupData = await createDatabaseBackup();
+                log(`데이터베이스 백업 생성 완료: ${Object.keys(backupData.collections).length}개 컬렉션`, 'success');
+                showStatus('backupStatus', `백업이 성공적으로 생성되었습니다. (${Object.values(backupData.summary).reduce((a, b) => a + b, 0)}개 문서)`, 'success');
+            } catch (error) {
+                log(`백업 생성 실패: ${error.message}`, 'error');
+                showStatus('backupStatus', `오류: ${error.message}`, 'error');
+            } finally {
+                setButtonLoading('backupBtn', false);
+            }
+        };
+
+        // 백업 복원
+        window.restoreBackup = async function() {
+            if (!guardOrToast('backupStatus')) return;
+            if (!isAuthenticated) {
+                showStatus('backupStatus', '먼저 인증을 완료해주세요.', 'error');
+                return;
+            }
+
+            // 백업 ID 입력 프롬프트
+            const backupId = prompt('복원할 백업의 ID를 입력해주세요:');
+            if (!backupId) {
+                log('백업 복원이 취소되었습니다.', 'warning');
+                return;
+            }
+
+            setButtonLoading('restoreBtn', true);
+            try {
+                log('데이터베이스 백업 복원 시작...', 'info');
+                const result = await restoreDatabaseBackup(backupId);
+                log(`데이터베이스 백업 복원 완료: ${result.restoredCollections.length}개 컬렉션 ${result.totalDocuments}개 문서`, 'success');
+                showStatus('backupStatus', `백업이 성공적으로 복원되었습니다. (${result.totalDocuments}개 문서)`, 'success');
+            } catch (error) {
+                log(`백업 복원 실패: ${error.message}`, 'error');
+                showStatus('backupStatus', `오류: ${error.message}`, 'error');
+            } finally {
+                setButtonLoading('restoreBtn', false);
+            }
+        };
+
+        // 데이터베이스 정리
+        window.cleanupDatabase = async function() {
+            if (!guardOrToast('backupStatus')) return;
+            if (!isAuthenticated) {
+                showStatus('backupStatus', '먼저 인증을 완료해주세요.', 'error');
+                return;
+            }
+
+            const confirmed = confirm('정말로 모든 문서를 정리하시겠습니까? 이 작업은 되돌릴 수 없습니다.');
+            if (!confirmed) {
+                log('정리 작업이 취소되었습니다.', 'warning');
+                return;
+            }
+
+            setButtonLoading('cleanupBtn', true);
+            try {
+                log('데이터베이스 정리 작업 시작...', 'info');
+                await cleanupDatabase();
+                log('데이터베이스 정리 작업 완료', 'success');
+                showStatus('backupStatus', '데이터베이스 정리 작업이 완료되었습니다.', 'success');
+            } catch (error) {
+                log(`정리 작업 실패: ${error.message}`, 'error');
+                showStatus('backupStatus', `오류: ${error.message}`, 'error');
+            } finally {
+                setButtonLoading('cleanupBtn', false);
+            }
+        };
+
+        // 로그인은 사용자가 수동으로 진행(익명 로그인 제거)
+        log('관리자 페이지 로드됨 - 로그인 후 사용하세요', 'info');
+    </script>
+</body>
+</html>
+

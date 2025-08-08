@@ -1,0 +1,1136 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스터디 그룹</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>👥</text>
+</svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>👥 스터디 그룹</h1>
+<p>함께 학습하고 경쟁하며 성장해보세요</p>
+</div>
+<div class="group-section">
+<div class="section-header">
+<div class="section-title">내 스터디 그룹</div>
+<button class="btn" onclick="showCreateGroupModal()">새 스터디 그룹 만들기</button>
+</div>
+<div class="groups-grid" id="myGroups">
+<!-- 내 스터디 그룹들이 표시됩니다-->
+</div>
+</div>
+<div class="group-section">
+<div class="section-header">
+<div class="section-title">가입할 수 있는 그룹</div>
+<button class="btn btn-secondary" onclick="refreshGroups()">새로고침</button>
+</div>
+<div class="groups-grid" id="availableGroups">
+<!-- 가입할 수 있는 그룹들이 표시됩니다-->
+</div>
+</div>
+<div class="chat-section">
+<div class="section-header">
+<div class="section-title">그룹 채팅</div>
+<select id="chatGroupSelect" onchange="switchChatGroup()">
+<option value="">그룹 선택</option>
+</select>
+</div>
+<div class="chat-container" id="chatContainer">
+<div class="chat-header">
+<span id="chatGroupName">그룹을 선택해주세요</span>
+</div>
+<div class="chat-messages" id="chatMessages">
+<!-- 채팅 메시지들이 표시됩니다-->
+</div>
+<div class="chat-input">
+<input type="text" id="chatInput" placeholder="메시지를 입력해주세요.." onkeypress="handleChatKeyPress(event)">
+<button onclick="sendMessage()">전송</button>
+</div>
+</div>
+</div>
+<div class="shared-problems">
+<div class="section-header">
+<div class="section-title">공유된 문제</div>
+<button class="btn" onclick="showShareProblemModal()">문제 공유하기</button>
+</div>
+<div class="problems-grid" id="sharedProblems">
+<!-- 공유된 문제들이 표시됩니다-->
+</div>
+</div>
+</div>
+<!-- 그룹 생성 모달 -->
+<div class="modal" id="createGroupModal">
+<div class="modal-content">
+<div class="modal-header">
+<div class="modal-title">새 스터디 그룹 만들기</div>
+<button class="close-btn" onclick="closeModal('createGroupModal')">&times;</button>
+</div>
+<form id="createGroupForm">
+<div class="form-group">
+<label for="groupName">그룹 이름</label>
+<input type="text" id="groupName" required>
+</div>
+<div class="form-group">
+<label for="groupDesc">그룹 설명</label>
+<textarea id="groupDesc" required>
+</textarea>
+</div>
+<div class="form-group">
+<label for="groupType">그룹 종류</label>
+<select id="groupType" required>
+<option value="study">학습 그룹</option>
+<option value="competition">경쟁 그룹</option>
+<option value="help">도움 그룹</option>
+</select>
+</div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" onclick="closeModal('createGroupModal')">취소</button>
+<button type="submit" class="btn">그룹 만들기</button>
+</div>
+</form>
+</div>
+</div>
+<!-- 문제 공유 모달 -->
+<div class="modal" id="shareProblemModal">
+<div class="modal-content">
+<div class="modal-header">
+<div class="modal-title">문제 공유하기</div>
+<button class="close-btn" onclick="closeModal('shareProblemModal')">&times;</button>
+</div>
+<form id="shareProblemForm">
+<div class="form-group">
+<label for="problemId">문제 ID</label>
+<input type="text" id="problemId" required>
+</div>
+<div class="form-group">
+<label for="problemNote">문제 설명</label>
+<textarea id="problemNote" placeholder="문제 설명을 입력해주세요.."></textarea>
+</div>
+<div class="form-group">
+<label for="shareGroup">공유할 그룹</label>
+<select id="shareGroup" required>
+<option value="">그룹을 선택해주세요</option>
+</select>
+</div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" onclick="closeModal('shareProblemModal')">취소</button>
+<button type="submit" class="btn">문제 공유</button>
+</div>
+</form>
+</div>
+</div>
+<!-- 肄붿씤 湲고봽??紐⑤떖 -->
+<div class="modal" id="coinGiftModal">
+<div class="modal-content">
+<div class="modal-header">
+<div class="modal-title">코인 선물하기</div>
+<button class="close-btn" onclick="closeModal('coinGiftModal')">&times;</button>
+</div>
+<div class="modal-body">
+<div class="gift-warning">
+<p>
+<strong>주의: 코인은 한 번만 선물할 수 있습니다.</strong>
+</p>
+<p>코인 선물은 24시간 후 만료됩니다. 만료된 코인은 자동으로 받는 사람에게 전송됩니다.</p>
+<ul>
+<li>코인 선물은 하루에 한 번만 가능합니다.</li>
+<li>코인 선물은 그룹 멤버에게만 가능합니다.</li>
+<li>코인 선물은 24시간 후 만료됩니다.</li>
+<li>만료된 코인은 자동으로 받는 사람에게 전송됩니다.</li>
+</ul>
+</div>
+<div class="form-group">
+<label for="giftRecipient">코인을 받을 멤버</label>
+<select id="giftRecipient" class="form-control">
+<option value="">코인을 받을 멤버를 선택해주세요</option>
+</select>
+</div>
+<div class="form-group">
+<label for="giftMessage">메시지 (선택 사항)</label>
+<textarea id="giftMessage" placeholder="코인 선물 메시지를 입력해주세요.."></textarea>
+</div>
+<div class="gift-preview">
+<p>
+<strong>예상 코인 수량:</strong>
+</p>
+<p>1개 코인 + 1개 코인</p>
+</div>
+</div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" onclick="closeModal('coinGiftModal')">취소</button>
+<button type="button" class="btn btn-gift" onclick="sendCoinGift()">코인 선물</button>
+</div>
+</div>
+</div>
+<script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { collection, doc, getDoc, updateDoc, addDoc, query, where, orderBy, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+    import { getFirebaseApp, getFirebaseAuth, getFirebaseDb } from './script.js';
+
+    let app, auth, db, storage;
+    async function initializeFirebaseServices() {
+      app = await getFirebaseApp();
+      auth = await getFirebaseAuth();
+      db = await getFirebaseDb();
+      storage = getStorage(app);
+    }
+
+    let currentUser = null;
+    let currentChatGroup = null;
+    let userGroups = [];
+    let allGroups = [];
+
+    // 로그인 상태 변경 감지
+(async () => {
+  await initializeFirebaseServices();
+  onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        alert("로그인이 필요합니다.");
+        location.href = "index.html";
+        return;
+      }
+      
+      currentUser = user;
+      await loadUserGroups();
+      await loadAllGroups();
+      await processPendingGifts(); // 보류 중인 코인 선물 처리
+      setupRealTimeUpdates();
+  });
+})();
+
+    // 사용자가 속한 그룹 목록 로드
+    async function loadUserGroups() {
+      try {
+        // 사용자가 속한 그룹 문서 쿼리
+        const memberQuery = query(
+          collection(db, "groupMembers"),
+          where("userId", "==", currentUser.uid)
+        );
+        const memberSnapshot = await getDocs(memberQuery);
+        
+        userGroups = [];
+        for (const memberDoc of memberSnapshot.docs) {
+          const groupId = memberDoc.data().groupId;
+          const groupDoc = await getDoc(doc(db, "studyGroups", groupId));
+          if (groupDoc.exists()) {
+            userGroups.push({
+              id: groupDoc.id,
+              ...groupDoc.data()
+            });
+          }
+        }
+        
+        displayUserGroups();
+      } catch (error) {
+        console.error("사용자 그룹 목록 로드 중 오류:", error);
+        showError("내 그룹 목록을 불러올 수 없습니다.");
+      }
+    }
+
+    // 모든 그룹 목록 로드
+    async function loadAllGroups() {
+      try {
+        const groupsQuery = query(
+          collection(db, "studyGroups"),
+          orderBy("createdAt", "desc")
+        );
+        const snapshot = await getDocs(groupsQuery);
+        
+        allGroups = [];
+        snapshot.forEach(doc =>
+{
+          allGroups.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        
+        displayAllGroups();
+      } catch (error) {
+        console.error("모든 그룹 목록 로드 중 오류:", error);
+      }
+    }
+
+    // 내 그룹 목록 표시
+    function displayUserGroups() {
+      const container = document.getElementById('myGroups');
+      if (!container) return;
+      
+      container.innerHTML = '';
+      
+      if (userGroups.length === 0) {
+        container.innerHTML = `
+<div class="empty-state">
+<div class="empty-icon">👥</div>
+<div class="empty-title">내 스터디 그룹이 없습니다</div>
+<div class="empty-desc">새로운 스터디 그룹을 만들어보세요!</div>
+</div>
+`;
+        return;
+      }
+      
+      userGroups.forEach(group =>
+{
+        const groupElement = document.createElement('div');
+        groupElement.className = 'group-card';
+        groupElement.innerHTML = `
+<div class="group-header">
+<div class="group-name">${group.name}</div>
+<div class="group-role">${group.creatorId === currentUser.uid ? '그룹 생성자 : ' : '멤버'}</div>
+</div>
+<div class="group-desc">${group.description}</div>
+<div class="group-stats">
+<span class="stat">멤버 ${group.memberCount || 1}명</span>
+<span class="stat">주제 ${group.subject}</span>
+<span class="stat">생성일 ${formatDate(group.createdAt)}</span>
+</div>
+<div class="group-actions">
+<button class="btn btn-primary" onclick="joinGroupChat('${group.id}')">채팅 참여</button>
+<button class="btn btn-secondary" onclick="viewGroupDetails('${group.id}')">상세 보기</button>
+<button class="btn btn-gift" onclick="showCoinGiftModal('${group.id}')" title="코인 선물">🎁</button>
+</div>
+`;
+        container.appendChild(groupElement);
+      });
+    }
+
+    // 모든 그룹 목록 표시
+    function displayAllGroups() {
+      const container = document.getElementById('availableGroups');
+      if (!container) return;
+      
+      container.innerHTML = '';
+      
+      allGroups.forEach(group =>
+{
+        const isMember = userGroups.some(ug =>
+ug.id === group.id);
+        const groupElement = document.createElement('div');
+        groupElement.className = `group-card ${isMember ? 'member' : ''}`;
+        groupElement.innerHTML = `
+<div class="group-header">
+<div class="group-name">${group.name}</div>
+<div class="group-status">${isMember ? '내 그룹 : ' : '가입 가능'}</div>
+</div>
+<div class="group-desc">${group.description}</div>
+<div class="group-stats">
+<span class="stat">멤버 ${group.memberCount || 1}명</span>
+<span class="stat">주제 ${group.subject}</span>
+<span class="stat">생성일 ${formatDate(group.createdAt)}</span>
+</div>
+<div class="group-actions">
+${isMember ? 
+            '<button class="btn btn-primary" onclick="joinGroupChat(\'' + group.id + '\')">채팅 참여</button>' :
+            '<button class="btn btn-primary" onclick="joinGroup(\'' + group.id + '\')">그룹 가입</button>'
+          }
+<button class="btn btn-secondary" onclick="viewGroupDetails('${group.id}')">상세 보기</button>
+${isMember ? 
+            '<button class="btn btn-gift" onclick="showCoinGiftModal(\'' + group.id + '\')" title="코인 선물">🎁</button>' :
+            '<button class="btn btn-gift" disabled title="그룹 멤버가 아닙니다">🎁</button>'
+          }
+</div>
+`;
+        container.appendChild(groupElement);
+      });
+    }
+
+    // 문제 공유 폼 제출 처리
+    document.getElementById('shareProblemForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const problemId = document.getElementById('problemId').value.trim();
+      const problemNote = document.getElementById('problemNote').value.trim();
+      const shareGroup = document.getElementById('shareGroup').value;
+      
+      if (!problemId || !shareGroup) {
+        alert("문제 ID 또는 공유할 그룹을 선택해주세요.");
+        return;
+      }
+      
+      try {
+        // 문제 정보 가져오기
+        const response = await fetch('questions.json');
+        const raw = await response.json();
+        const flat = flattenQuestions(raw);
+        const problem = flat.find(q => String(q.id) === String(problemId));
+        
+        if (!problem) {
+          alert("해당 문제를 찾을 수 없습니다.");
+          return;
+        }
+        
+        // 그룹 채팅 문서 찾기 또는 생성
+        const chatQuery = query(collection(db, "groupChats"), where("groupId", "==", shareGroup));
+        const chatSnapshot = await getDocs(chatQuery);
+        
+        let chatRef;
+        if (chatSnapshot.empty) {
+          // 새로운 채팅 문서 생성
+          chatRef = await addDoc(collection(db, "groupChats"), {
+            groupId: shareGroup,
+            messages: []
+          });
+        } else {
+          chatRef = doc(db, "groupChats", chatSnapshot.docs[0].id);
+        }
+        
+        // 문제 공유 메시지 생성
+        const shareMessage = {
+          type: 'problem_share',
+          userId: currentUser.uid,
+          userName: currentUser.displayName || '익명',
+          timestamp: serverTimestamp(),
+          problemId: problemId,
+          problemTitle: problem.title || `문제 ${problemId}`,
+          problemNote: problemNote,
+          content: `문제 공유: ${problem.title || `문제 ${problemId}`}${problemNote ? `\n문제 설명: ${problemNote}` : ''}`
+        };
+        
+        const chatDoc = await getDoc(chatRef);
+        const currentMessages = chatDoc.data().messages || [];
+        currentMessages.push(shareMessage);
+        
+        await updateDoc(chatRef, {
+          messages: currentMessages
+        });
+        
+        alert("문제 공유가 완료되었습니다!");
+        closeModal('shareProblemModal');
+        
+        // 폼 초기화
+        document.getElementById('problemId').value = '';
+        document.getElementById('problemNote').value = '';
+        document.getElementById('shareGroup').value = '';
+        
+      } catch (error) {
+        console.error("문제 공유 중 오류:", error);
+        alert("문제 공유 중 오류가 발생했습니다.");
+      }
+    });
+
+    // 그룹 생성 폼 제출 처리
+    document.getElementById('createGroupForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const name = document.getElementById('groupName').value.trim();
+      const description = document.getElementById('groupDesc').value.trim();
+      const type = document.getElementById('groupType').value;
+      
+      if (!name || !description) {
+        alert("그룹 이름과 설명을 입력해주세요.");
+        return;
+      }
+
+      try {
+        const groupRef = await addDoc(collection(db, "studyGroups"), {
+          name,
+          description,
+          type,
+          creatorId: currentUser.uid,
+          creatorName: currentUser.displayName || '익명',
+          memberCount: 1,
+          createdAt: serverTimestamp()
+        });
+
+        await addDoc(collection(db, "groupMembers"), {
+          groupId: groupRef.id,
+          userId: currentUser.uid,
+          userName: currentUser.displayName || '익명',
+          role: 'creator',
+          joinedAt: serverTimestamp()
+        });
+
+        alert("새 스터디 그룹이 생성되었습니다!");
+        closeModal('createGroupModal');
+        loadUserGroups();
+        loadAllGroups();
+      } catch (error) {
+        console.error("스터디 그룹 생성 중 오류:", error);
+        alert("스터디 그룹 생성 중 오류가 발생했습니다.");
+      }
+    });
+
+    // 그룹 가입
+    window.joinGroup = async function(groupId) {
+      try {
+        const groupRef = doc(db, "studyGroups", groupId);
+        const groupDoc = await getDoc(groupRef);
+        if (!groupDoc.exists()) {
+          alert("해당 그룹을 찾을 수 없습니다.");
+          return;
+        }
+
+        const memberQuery = query(collection(db, "groupMembers"), where("groupId", "==", groupId), where("userId", "==", currentUser.uid));
+        const memberSnapshot = await getDocs(memberQuery);
+        if (!memberSnapshot.empty) {
+          alert("이미 해당 그룹의 멤버입니다.");
+          return;
+        }
+
+        await addDoc(collection(db, "groupMembers"), {
+          groupId: groupId,
+          userId: currentUser.uid,
+          userName: currentUser.displayName || '익명',
+          role: 'member',
+          joinedAt: serverTimestamp()
+        });
+        
+        await updateDoc(groupRef, {
+          memberCount: groupDoc.data().memberCount + 1
+        });
+
+        alert("그룹에 가입되었습니다!");
+        loadUserGroups();
+        loadAllGroups();
+      } catch (error) {
+        console.error("그룹 가입 중 오류:", error);
+        alert("그룹 가입 중 오류가 발생했습니다.");
+      }
+    }
+
+    // 그룹 채팅 참여
+    window.joinGroupChat = async function(groupId) {
+      currentChatGroup = groupId;
+      const group = userGroups.find(g =>
+g.id === groupId);
+      if (!group) return;
+
+      document.getElementById('chatGroupName').textContent = group.name;
+      document.getElementById('chatContainer').style.display = 'flex';
+
+      // 채팅 메시지 실시간 업데이트
+      const chatQuery = query(collection(db, "groupChats"), where("groupId", "==", groupId));
+      onSnapshot(chatQuery, (snapshot) =>
+{
+        if (!snapshot.empty) {
+          const chatData = snapshot.docs[0].data();
+          displayChatMessages(chatData.messages || []);
+        }
+      });
+    }
+
+    // 메시지 전송
+    window.sendMessage = async function() {
+      const input = document.getElementById('chatInput');
+      const content = input.value.trim();
+      if (!content || !currentChatGroup) return;
+
+      const message = {
+        userId: currentUser.uid,
+        userName: currentUser.displayName || '익명',
+        content: content,
+        timestamp: serverTimestamp()
+      };
+
+      const chatQuery = query(collection(db, "groupChats"), where("groupId", "==", currentChatGroup));
+      const snapshot = await getDocs(chatQuery);
+
+      if (snapshot.empty) {
+        // 새로운 채팅 문서 생성
+        await addDoc(collection(db, "groupChats"), {
+          groupId: currentChatGroup,
+          messages: [message]
+        });
+      } else {
+        // 기존 채팅 문서 업데이트
+        const docRef = snapshot.docs[0].ref;
+        const currentMessages = snapshot.docs[0].data().messages || [];
+        await updateDoc(docRef, {
+          messages: [...currentMessages, message],
+          lastMessage: message.content,
+          lastMessageTime: serverTimestamp()
+        });
+      }
+      input.value = '';
+    }
+
+    // 채팅 메시지 표시
+    function displayChatMessages(messages) {
+      const container = document.getElementById('chatMessages');
+      container.innerHTML = '';
+      messages.forEach(msg =>
+{
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${msg.userId === currentUser.uid ? 'own' : ''}`;
+        
+        const avatar = `<div class="message-avatar">${msg.userName.charAt(0)}</div>`;
+        
+        let contentText = msg.content;
+        
+        // 파일 메시지 처리
+        if (msg.type === 'file' && msg.fileUrl) {
+          contentText = `
+<div class="file-message">
+<div>파일: ${msg.fileName}</div>
+<a href="${msg.fileUrl}" target="_blank" class="file-download-link">
+파일 다운로드
+</a>
+</div>
+`;
+        }
+        
+        // 문제 공유 메시지 처리
+        if (msg.type === 'problem_share' && msg.problemId) {
+          contentText = `
+<div class="problem-share-message">
+<div>문제: ${msg.problemTitle}</div>
+${msg.problemNote ? `<div class="problem-note">문제 설명: ${msg.problemNote}</div>` : ''}
+<a href="gsg.html?problem=${msg.problemId}" target="_blank" class="problem-link">
+문제 보기
+</a>
+</div>
+`;
+        }
+        
+        const content = `
+<div class="message-content">
+<div class="message-sender">${msg.userName}</div>
+<div class="message-text">${contentText}</div>
+<div class="message-time">${(msg.timestamp?.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp)).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})}</div>
+    // 보조: questions.json 평탄화
+    function flattenQuestions(data) {
+      const results = [];
+      function walk(node, ctx = {}) {
+        if (!node || typeof node !== 'object') return;
+        const nextCtx = {
+          subject: node['과목'] ?? ctx.subject,
+          big: node['대분류'] ?? ctx.big,
+          mid: node['중분류'] ?? ctx.mid,
+          small: node['소분류'] ?? ctx.small,
+        };
+        if (Array.isArray(node['문항들'])) {
+          for (const q of node['문항들']) {
+            results.push({ id: q['문항번호'], title: q['제목'] || '', subject: nextCtx.subject, middleCategory: nextCtx.mid, smallCategory: nextCtx.small });
+          }
+        }
+        for (const v of Object.values(node)) {
+          if (v && typeof v === 'object') {
+            if (Array.isArray(v)) v.forEach(item => walk(item, nextCtx));
+            else walk(v, nextCtx);
+          }
+        }
+      }
+      if (Array.isArray(data)) data.forEach(item => walk(item)); else walk(data);
+      return results;
+    }
+</div>
+`;
+
+        msgDiv.innerHTML = avatar + content;
+        container.appendChild(msgDiv);
+      });
+      container.scrollTop = container.scrollHeight;
+    }
+    
+    // 채팅 입력 핸들러
+    window.handleChatKeyPress = function(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    // 파일 공유
+    window.shareFile = async function() {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.pdf,.doc,.docx,.jpg,.png,.gif';
+      
+      fileInput.onchange = async function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        try {
+          // 파일 업로드
+          const storageRef = ref(storage, `group-files/${currentChatGroup}/${file.name}`);
+          const snapshot = await uploadBytes(storageRef, file);
+          const downloadURL = await getDownloadURL(snapshot.ref);
+          
+          // 채팅 메시지에 파일 추가
+          const message = {
+            content: `파일 공유: ${file.name}`,
+            fileUrl: downloadURL,
+            fileName: file.name,
+            userId: currentUser.uid,
+            userName: currentUser.displayName || '익명',
+            timestamp: serverTimestamp(),
+            type: 'file'
+          };
+          
+          await sendMessageToChat(message);
+          
+          showSuccess("파일이 공유되었습니다!");
+        } catch (error) {
+          console.error("파일 공유 중 오류:", error);
+          showError("파일 공유 중 오류가 발생했습니다.");
+        }
+      };
+      
+      fileInput.click();
+    }
+
+    // 스터디 세션 시작
+    window.startStudySession = async function() {
+      if (!currentChatGroup) return;
+      
+      try {
+        // 스터디 세션 데이터 생성
+        const sessionData = {
+          groupId: currentChatGroup,
+          creatorId: currentUser.uid,
+          creatorName: currentUser.displayName || '익명',
+          status: 'active',
+          startTime: serverTimestamp(),
+          participants: [currentUser.uid],
+          subject: '학습', // 기본값
+          duration: 60 // 60분
+        };
+        
+        const sessionRef = await addDoc(collection(db, "studySessions"), sessionData);
+        
+        // 채팅 메시지에 세션 시작 알림 추가
+        const message = {
+          content: `스터디 세션 시작: ${sessionRef.id}`,
+          userId: currentUser.uid,
+          userName: currentUser.displayName || '익명',
+          timestamp: serverTimestamp(),
+          type: 'session_start'
+        };
+        
+        await sendMessageToChat(message);
+        
+        showSuccess("스터디 세션이 시작되었습니다!");
+      } catch (error) {
+        console.error("스터디 세션 시작 중 오류:", error);
+        showError("스터디 세션 시작 중 오류가 발생했습니다.");
+      }
+    }
+
+    // 메시지 전송 헬퍼
+    async function sendMessageToChat(message) {
+      const chatQuery = query(
+        collection(db, "groupChats"),
+        where("groupId", "==", currentChatGroup)
+      );
+      const chatSnapshot = await getDocs(chatQuery);
+      
+      if (!chatSnapshot.empty) {
+        const chatDoc = chatSnapshot.docs[0];
+        const currentMessages = chatDoc.data().messages || [];
+        currentMessages.push(message);
+        
+        await updateDoc(chatDoc.ref, {
+          messages: currentMessages,
+          lastMessage: message.content,
+          lastMessageTime: serverTimestamp()
+        });
+      }
+    }
+
+    // 그룹 상세 정보 로드
+    window.viewGroupDetails = async function(groupId) {
+      try {
+        const groupDoc = await getDoc(doc(db, "studyGroups", groupId));
+        if (!groupDoc.exists()) {
+          showError("그룹 상세 정보를 불러올 수 없습니다.");
+          return;
+        }
+        
+        const groupData = groupDoc.data();
+        
+        // 멤버 목록 가져오기
+        const memberQuery = query(
+          collection(db, "groupMembers"),
+          where("groupId", "==", groupId)
+        );
+        const memberSnapshot = await getDocs(memberQuery);
+        
+        const members = [];
+        memberSnapshot.forEach(doc =>
+{
+          members.push(doc.data());
+        });
+        
+        // 그룹 상세 정보 표시
+        showGroupDetails(groupData, members);
+        
+      } catch (error) {
+        console.error("그룹 상세 정보 로딩 중 오류:", error);
+        showError("그룹 상세 정보 로딩 중 오류가 발생했습니다.");
+      }
+    }
+
+    // 그룹 상세 정보 표시
+    function showGroupDetails(groupData, members) {
+      const detailsContainer = document.getElementById('groupDetails');
+      if (!detailsContainer) {
+        console.error('groupDetails 요소를 찾을 수 없습니다.');
+        return;
+      }
+      detailsContainer.innerHTML = `
+<div class="details-header">
+<h2>${groupData.name}</h2>
+<button class="btn btn-secondary" onclick="closeGroupDetails()">닫기</button>
+</div>
+<div class="details-content">
+<div class="detail-section">
+<h3>그룹 정보</h3>
+<p>
+<strong>설명:</strong>
+${groupData.description}</p>
+<p>
+<strong>주제:</strong>
+${groupData.subject}</p>
+<p>
+<strong>생성일:</strong>
+${formatDate(groupData.createdAt)}</p>
+<p>
+<strong>멤버:</strong>
+${members.length}/${groupData.maxMembers || '무제한'}</p>
+</div>
+<div class="detail-section">
+<h3>멤버 목록</h3>
+<div class="members-list">
+${members.map(member =>
+`
+<div class="member-item">
+<span class="member-name">${member.userName}</span>
+<span class="member-role">${member.role === 'creator' ? '그룹 생성자 : ' : '멤버'}</span>
+<span class="member-joined">가입일 ${formatDate(member.joinedAt)}</span>
+</div>
+`).join('')}
+</div>
+</div>
+</div>
+`;
+      
+      detailsContainer.style.display = 'block';
+    }
+
+    // 그룹 상세 정보 닫기
+    window.closeGroupDetails = function() {
+      document.getElementById('groupDetails').style.display = 'none';
+    }
+
+    // 모달 열기/닫기
+    window.openModal = function(modalId) {
+      document.getElementById(modalId).style.display = 'flex';
+    }
+
+    window.closeModal = function(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    // 코인 선물 모달 데이터 로드
+    window.showCoinGiftModal = async function(groupId) {
+      try {
+        // 그룹 멤버 목록 가져오기
+        const memberQuery = query(
+          collection(db, "groupMembers"),
+          where("groupId", "==", groupId)
+        );
+        const memberSnapshot = await getDocs(memberQuery);
+        
+        const members = [];
+        memberSnapshot.forEach(doc =>
+{
+          const memberData = doc.data();
+          if (memberData.userId !== currentUser.uid) { // 자신은 제외
+            members.push(memberData);
+          }
+        });
+        
+        // 코인 선물 받을 멤버 선택 옵션 설정
+        const recipientSelect = document.getElementById('giftRecipient');
+        recipientSelect.innerHTML = '<option value="">코인을 받을 멤버를 선택해주세요</option>';
+        
+        members.forEach(member =>
+{
+          const option = document.createElement('option');
+          option.value = member.userId;
+          option.textContent = member.userName;
+          recipientSelect.appendChild(option);
+        });
+        
+        // 폼 초기화
+        document.getElementById('giftMessage').value = '';
+        
+        // 모달 열기
+        openModal('coinGiftModal');
+        
+        // 현재 그룹 ID 저장
+        window.currentGiftGroupId = groupId;
+        
+      } catch (error) {
+        console.error("코인 선물 모달 데이터 로딩 중 오류:", error);
+        showError("코인 선물 모달 데이터 로딩 중 오류가 발생했습니다.");
+      }
+    }
+
+    // 코인 선물 전송
+    window.sendCoinGift = async function() {
+      try {
+        const recipientId = document.getElementById('giftRecipient').value;
+        const message = document.getElementById('giftMessage').value.trim();
+        const groupId = window.currentGiftGroupId;
+        
+        if (!recipientId) {
+          showError("코인을 받을 멤버를 선택해주세요.");
+          return;
+        }
+        
+        if (!groupId) {
+          showError("그룹을 먼저 선택해주세요.");
+          return;
+        }
+        
+        // 현재 사용자 프로필 가져오기
+        const userDocRef = doc(db, "userProfiles", currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (!userDoc.exists()) {
+          showError("현재 사용자 프로필을 찾을 수 없습니다.");
+          return;
+        }
+        
+        const userData = userDoc.data();
+        const currentCoins = userData.coins || 0;
+        
+        if (currentCoins
+< 1) {
+          showError("코인이 부족합니다. 더 많은 코인을 획득해주세요.");
+          return;
+        }
+        
+        // 오늘 날짜로 설정하여 중복 방지
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const giftQuery = query(
+          collection(db, "coin_gifts"),
+          where("senderId", "==", currentUser.uid),
+          where("sentAt", ">=", today)
+        );
+        const giftSnapshot = await getDocs(giftQuery);
+        
+        if (!giftSnapshot.empty) {
+          showError("오늘 이미 코인을 선물했습니다. 내일 다시 시도해주세요.");
+          return;
+        }
+        
+        // 코인 선물 데이터 생성
+        const giftData = {
+          senderId: currentUser.uid,
+          senderName: currentUser.displayName || '익명',
+          recipientId: recipientId,
+          groupId: groupId,
+          amount: 1,
+          message: message,
+          sentAt: serverTimestamp(),
+          status: 'pending', // 24시간 후 만료
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24시간 후 만료
+        };
+        
+        // 코인 선물 목록에 추가
+        await addDoc(collection(db, "coin_gifts"), giftData);
+        
+        // 현재 사용자 코인 감소
+        await updateDoc(userDocRef, {
+          coins: currentCoins - 1
+        });
+        
+        // 받는 사람 코인 증가
+        const recipientDocRef = doc(db, "userProfiles", recipientId);
+        const recipientDoc = await getDoc(recipientDocRef);
+        
+        if (recipientDoc.exists()) {
+          const recipientData = recipientDoc.data();
+          const recipientCoins = recipientData.receivedCoins || 0;
+          
+          await updateDoc(recipientDocRef, {
+            receivedCoins: recipientCoins + 1
+          });
+        }
+        
+        // 채팅에 코인 선물 알림 추가
+        const chatMessage = {
+          content: `코인 선물: ${currentUser.displayName || '익명'}님이 ${recipientId === currentUser.uid ? '자신에게' : recipientData.userName}에게 코인을 선물했습니다!`,
+          userId: currentUser.uid,
+          userName: currentUser.displayName || '익명',
+          timestamp: serverTimestamp(),
+          type: 'gift'
+        };
+        
+        await sendMessageToChat(chatMessage);
+        
+        showSuccess("코인이 선물되었습니다!");
+        closeModal('coinGiftModal');
+        
+        // 24시간 후 만료된 코인 처리
+        setTimeout(async () =>
+{
+          try {
+            await processPendingGifts();
+          } catch (error) {
+            console.error("만료된 코인 선물 처리 중 오류:", error);
+          }
+        }, 24 * 60 * 60 * 1000); // 24시간 후 만료
+        
+      } catch (error) {
+        console.error("코인 선물 중 오류:", error);
+        showError("코인 선물 중 오류가 발생했습니다.");
+      }
+    }
+    
+    // 보류 중인 코인 선물 처리 (24시간 후 만료된 것)
+    async function processPendingGifts() {
+      try {
+        const now = new Date();
+        const giftQuery = query(
+          collection(db, "coin_gifts"),
+          where("status", "==", "pending"),
+          where("expiresAt", "<=", now)
+        );
+        
+        const giftSnapshot = await getDocs(giftQuery);
+        
+        for (const giftDoc of giftSnapshot.docs) {
+          const giftData = giftDoc.data();
+          
+          // 받는 사람 코인 증가
+          const recipientDocRef = doc(db, "userProfiles", giftData.recipientId);
+          const recipientDoc = await getDoc(recipientDocRef);
+          
+          if (recipientDoc.exists()) {
+            const recipientData = recipientDoc.data();
+            const currentCoins = recipientData.coins || 0;
+            
+            await updateDoc(recipientDocRef, {
+              coins: currentCoins + giftData.amount
+            });
+          }
+          
+          // 코인 선물 상태 변경 및 완료 시간 기록
+          await updateDoc(giftDoc.ref, {
+            status: 'completed',
+            completedAt: serverTimestamp()
+          });
+          
+          console.log(`코인 선물 완료: ${giftData.recipientId}에게 ${giftData.amount}코인 전송`);
+        }
+      } catch (error) {
+        console.error("만료된 코인 선물 처리 중 오류:", error);
+      }
+    }
+
+    // 성공 메시지 표시
+    function showSuccess(message) {
+      const successDiv = document.createElement('div');
+      successDiv.className = 'message success show';
+      successDiv.setAttribute('role', 'alert');
+      successDiv.setAttribute('aria-live', 'polite');
+      successDiv.textContent = message;
+      document.body.appendChild(successDiv);
+      
+      setTimeout(() =>
+{
+        successDiv.remove();
+      }, 3000);
+    }
+
+    // 오류 메시지 표시
+    function showError(message) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'message error show';
+      errorDiv.setAttribute('role', 'alert');
+      errorDiv.setAttribute('aria-live', 'polite');
+      errorDiv.textContent = message;
+      document.body.appendChild(errorDiv);
+      
+      setTimeout(() =>
+{
+        errorDiv.remove();
+      }, 3000);
+    }
+
+    // 날짜 형식 변환
+    function formatDate(timestamp) {
+      if (!timestamp) return '날짜 미정';
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleDateString('ko-KR');
+    }
+
+    function formatTime(timestamp) {
+      if (!timestamp) return '';
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+
+
+    // 실시간 업데이트 설정
+    function setupRealTimeUpdates() {
+      // 사용자가 속한 그룹 목록 실시간 업데이트
+      const userGroupsQuery = query(
+        collection(db, "groupMembers"),
+        where("userId", "==", currentUser.uid)
+      );
+      
+      onSnapshot(userGroupsQuery, async () =>
+{
+        await loadUserGroups();
+      });
+    }
+    
+    // 그룹 생성 모달 열기
+    window.showCreateGroupModal = function() {
+      document.getElementById('createGroupModal').style.display = 'block';
+    };
+    
+    // 그룹 새로고침
+    window.refreshGroups = function() {
+      loadUserGroups();
+      loadAllGroups();
+    };
+    
+    // 채팅 입력 핸들러 (모든 창에서 공통으로 사용)
+    window.handleChatKeyPress = function(event) {
+      if (event.key === 'Enter') {
+        sendMessage();
+      }
+    };
+    
+    // 메시지 전송 함수 (모든 창에서 공통으로 사용)
+    window.sendMessage = function() {
+      const messageInput = document.getElementById('chatInput');
+      if (!messageInput) {
+        console.error('chatInput 요소를 찾을 수 없습니다.');
+        return;
+      }
+      const message = messageInput.value.trim();
+      
+      if (message && currentChatGroup) {
+        sendMessageToChat({
+          content: message,
+          userId: currentUser.uid,
+          userName: currentUser.displayName || '익명',
+          timestamp: serverTimestamp(),
+          type: 'message'
+        });
+        messageInput.value = '';
+      }
+    };
+    
+    // 문제 공유 모달 열기
+    window.showShareProblemModal = function() {
+      document.getElementById('shareProblemModal').style.display = 'block';
+    };
+</script>
+</body>
+</html>
+

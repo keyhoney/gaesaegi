@@ -1,0 +1,443 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>즐겨찾기 관리 - 송현여고 수학 학습 시스템</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>⭐</text>
+</svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="favorites-container">
+<div class="favorites-header">
+<h1>⭐ 즐겨찾기 관리</h1>
+<p>저장한 문제들을 한눈에 확인해보세요</p>
+</div>
+<div class="error-message" id="errorMessage">
+</div>
+<div class="success-message" id="successMessage">
+</div>
+<div class="favorites-controls">
+<div class="search-box">
+<input type="text" id="searchInput" placeholder="문제 번호, 과목, 난이도로 검색..." onkeyup="filterFavorites()">
+<button class="search-btn" onclick="filterFavorites()">
+<span>🔍</span>
+검색
+</button>
+</div>
+<div class="filter-buttons">
+<button class="filter-btn active" data-filter="all" onclick="filterByCategory('all')">전체</button>
+<button class="filter-btn" data-filter="math1" onclick="filterByCategory('math1')">수학Ⅰ</button>
+<button class="filter-btn" data-filter="math2" onclick="filterByCategory('math2')">수학Ⅱ</button>
+<button class="filter-btn" data-filter="recent" onclick="filterByDate('recent')">최근 추가</button>
+<button class="filter-btn" data-filter="difficulty" onclick="filterByDifficulty('all')">난이도별</button>
+</div>
+<div class="sort-controls">
+<select id="sortSelect">
+<option value="date-desc">최신순</option>
+<option value="date-asc">오래된순</option>
+<option value="number-asc">번호순</option>
+<option value="number-desc">번호역순</option>
+<option value="difficulty">난이도순</option>
+</select>
+<button class="btn btn-secondary" onclick="toggleViewMode()" title="보기 모드 변경">
+<span id="viewModeIcon">📋</span>
+</button>
+</div>
+</div>
+<div class="favorites-stats" id="favoritesStats">
+<div class="stat-item">
+<span class="stat-number" id="totalCount">0</span>
+<span class="stat-label">전체</span>
+</div>
+<div class="stat-item">
+<span class="stat-number" id="math1Count">0</span>
+<span class="stat-label">수학Ⅰ</span>
+</div>
+<div class="stat-item">
+<span class="stat-number" id="math2Count">0</span>
+<span class="stat-label">수학Ⅱ</span>
+</div>
+<div class="stat-item">
+<span class="stat-number" id="recentCount">0</span>
+<span class="stat-label">최근 7일</span>
+</div>
+</div>
+<div class="favorites-grid" id="favoritesGrid">
+<!-- 즐겨찾기된 문제들이 동적으로 표시됩니다-->
+</div>
+<div class="no-results" id="noResults" style="display: none; text-align:center; padding: 24px; border: 1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-secondary); margin-top: 16px;">
+<div class="no-results-icon" style="font-size: 32px;">🔎</div>
+<h3 style="margin: 8px 0;">검색 결과가 없습니다</h3>
+<p style="color: var(--text-secondary); margin-bottom: 12px;">조건을 변경하거나 검색어를 지워보세요.</p>
+<button class="btn btn-outline" id="clearSearchBtn">검색 초기화</button>
+</div>
+<div class="empty-state" id="emptyState" style="display: none;">
+<div class="empty-icon">⭐</div>
+<h2>즐겨찾기된 문제가 없습니다</h2>
+<p>문제를 풀면서 즐겨찾기 버튼을 눌러보세요</p>
+<button class="btn btn-primary" onclick="goToMain()">문제 풀러가기</button>
+</div>
+<div class="loading" id="loading" style="display: none;">
+<div class="loading-spinner">
+</div>
+<p>즐겨찾기를 불러오는 중...</p>
+<div id="skeletonGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top:12px;">
+  <div class="skeleton-card" style="height:180px; border:1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-secondary);"></div>
+  <div class="skeleton-card" style="height:180px; border:1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-secondary);"></div>
+  <div class="skeleton-card" style="height:180px; border:1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-secondary);"></div>
+  <div class="skeleton-card" style="height:180px; border:1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-secondary);"></div>
+  <div class="skeleton-card" style="height:180px; border:1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-secondary);"></div>
+  <div class="skeleton-card" style="height:180px; border:1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-secondary);"></div>
+</div>
+</div>
+</div>
+<!-- 이미지 확대 모달 -->
+<div class="image-modal" id="imageModal">
+<div class="modal-content" id="imageModalContent">
+<button class="modal-close" onclick="closeImageModal()">&times;</button>
+<img id="modalImage" src="" alt="확대된 이미지">
+</div>
+</div>
+<!-- 키보드 단축키 도움말 -->
+<div class="keyboard-help" id="keyboardHelp">
+<div class="help-content">
+<h3>키보드 단축키</h3>
+<ul>
+<li>
+<kbd>Ctrl</kbd>
++
+<kbd>F</kbd>
+: 검색
+</li>
+<li>
+<kbd>Ctrl</kbd>
++
+<kbd>1</kbd>
+: 전체 보기
+</li>
+<li>
+<kbd>Ctrl</kbd>
++
+<kbd>2</kbd>
+: 수학Ⅰ 보기
+</li>
+<li>
+<kbd>Ctrl</kbd>
++
+<kbd>3</kbd>
+: 수학Ⅱ 보기
+</li>
+<li>
+<kbd>Esc</kbd>
+: 모달 닫기
+</li>
+<li>
+<kbd>?</kbd>
+: 도움말 토글
+</li>
+</ul>
+</div>
+</div>
+<button class="floating-button" onclick="goBack()" title="뒤로 가기">🔙</button>
+<button class="help-button" onclick="toggleHelp()" title="도움말 토글">?</button>
+<script type="module">
+import { firebaseConfig } from './script.js';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, collection, query, where, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    let app, auth, db;
+    let favorites = [];
+let questionsIndex = new Map();
+    let currentCategory = 'all';
+    let currentSort = 'date-desc';
+let viewMode = 'grid';
+    let isHelpVisible = false;
+
+try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+    } catch (error) {
+  console.error('Firebase 초기화 실패:', error);
+  showError('Firebase 초기화 중 오류가 발생했습니다.');
+    }
+
+onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await loadFavorites(user.uid);
+      } else {
+        showEmptyState();
+    showError('로그인이 필요합니다. 곧 메인으로 이동합니다.');
+    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+  }
+});
+
+    async function loadFavorites(userId) {
+      try {
+        showLoading();
+    await loadQuestionsIndex();
+
+    const favoritesQuery = query(collection(db, 'favorites'), where('userId', '==', userId));
+        const snapshot = await getDocs(favoritesQuery);
+    favorites = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // enrich with question info
+    favorites = favorites.map(f => {
+      const q = questionsIndex.get(String(f.questionNumber));
+      const createdAt = f.createdAt?.toDate ? f.createdAt.toDate() : new Date(f.createdAt || Date.now());
+      return {
+        docId: f.id,
+        questionNumber: String(f.questionNumber),
+        createdAt,
+        subject: q?.subject || '알수없음',
+        bigCategory: q?.bigCategory || '',
+        middleCategory: q?.middleCategory || '',
+        smallCategory: q?.smallCategory || '',
+        image: q?.image || '',
+        difficulty: q?.difficulty || '',
+        solutionUrl: q?.solutionUrl || ''
+      };
+    });
+
+    // default sort by latest
+    favorites.sort((a, b) => b.createdAt - a.createdAt);
+        updateStats();
+    renderFavorites(favorites);
+  } catch (e) {
+    console.error('즐겨찾기 로드 실패:', e);
+    showError('즐겨찾기를 불러오는 중 오류가 발생했습니다.');
+          showEmptyState();
+  } finally {
+        hideLoading();
+  }
+}
+
+async function loadQuestionsIndex() {
+  if (questionsIndex.size > 0) return;
+  const res = await fetch('questions.json');
+  if (!res.ok) throw new Error('questions.json 로드 실패');
+  const data = await res.json();
+  data.forEach(section => {
+    const list = section['문항들'] || [];
+    list.forEach(q => {
+      const norm = {
+        number: q['문항번호'],
+        image: q['문항주소'],
+        correctAnswer: q['정답'],
+        difficulty: q['난이도'],
+        solutionUrl: q['해설주소'],
+        subject: section['과목'],
+        bigCategory: section['대분류'],
+        middleCategory: section['중분류'],
+        smallCategory: section['소분류']
+      };
+      questionsIndex.set(String(norm.number), norm);
+    });
+  });
+}
+
+    function updateStats() {
+      const totalCount = favorites.length;
+  const math1Count = favorites.filter(f => f.subject === '수학Ⅰ').length;
+  const math2Count = favorites.filter(f => f.subject === '수학Ⅱ').length;
+  const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const recentCount = favorites.filter(f => f.createdAt >= oneWeekAgo).length;
+      document.getElementById('totalCount').textContent = totalCount;
+      document.getElementById('math1Count').textContent = math1Count;
+      document.getElementById('math2Count').textContent = math2Count;
+      document.getElementById('recentCount').textContent = recentCount;
+    }
+
+    function sortFavorites() {
+      const sortType = document.getElementById('sortSelect').value;
+      currentSort = sortType;
+  const getHearts = d => (typeof d === 'string' ? (d.match(/♥/g) || []).length : 0);
+  const normalizeDifficulty = (raw)=>{
+    const s = String(raw || '').trim();
+    const hearts = (s.match(/♥/g) || []).length; if (hearts) return hearts;
+    if (/^쉬움/.test(s)) return 1; if (/^보통/.test(s)) return 3;
+    if (/^어려움/.test(s) && !/^매우/.test(s)) return 4; if (/^매우\s*어려움?/.test(s)) return 5; return 3;
+  };
+  const sorted = [...favorites];
+      switch (sortType) {
+    case 'date-asc':
+      sorted.sort((a,b)=> a.createdAt - b.createdAt); break;
+        case 'date-desc':
+      sorted.sort((a,b)=> b.createdAt - a.createdAt); break;
+    case 'number-asc':
+      sorted.sort((a,b)=> Number(a.questionNumber) - Number(b.questionNumber)); break;
+    case 'number-desc':
+      sorted.sort((a,b)=> Number(b.questionNumber) - Number(a.questionNumber)); break;
+    case 'difficulty':
+      sorted.sort((a,b)=> normalizeDifficulty(a.difficulty) - normalizeDifficulty(b.difficulty)); break;
+  }
+  renderFavorites(sorted);
+}
+
+    window.toggleViewMode = function() {
+      viewMode = viewMode === 'grid' ? 'list' : 'grid';
+      const grid = document.getElementById('favoritesGrid');
+      const icon = document.getElementById('viewModeIcon');
+  if (viewMode === 'list') { grid.classList.add('list-view'); icon.textContent = '🧾'; icon.setAttribute('aria-label','리스트 보기'); }
+  else { grid.classList.remove('list-view'); icon.textContent = '🗂️'; icon.setAttribute('aria-label','그리드 보기'); }
+      renderFavorites();
+    }
+
+function renderFavorites(list = null) {
+      const grid = document.getElementById('favoritesGrid');
+  const items = list || favorites;
+  if (!items || items.length === 0) { showEmptyState(); document.getElementById('noResults').style.display='none'; return; }
+      hideEmptyState();
+  document.getElementById('noResults').style.display='none';
+  const esc = (s='')=>{ const d=document.createElement('div'); d.textContent=String(s); return d.innerHTML; };
+  grid.innerHTML = items.map(f => `
+    <div class="favorite-item" data-category="${f.subject}" data-number="${f.questionNumber}" data-difficulty="${f.difficulty}">
+<div class="favorite-header">
+        <h3>${esc(f.subject)} - ${esc(f.questionNumber)}</h3>
+        <button class="remove-favorite" onclick="removeFavorite('${f.docId}', '${f.questionNumber}')" title="즐겨찾기 제거">🗑️</button>
+</div>
+<div class="favorite-content">
+        <img src="${f.image}" alt="문제 이미지" class="favorite-image" onclick="openImageModal('${f.image}')" loading="lazy">
+<div class="favorite-info">
+          <p><strong>과목:</strong> ${esc(f.subject)}</p>
+          <p><strong>난이도:</strong> ${getDifficultyBadge(f.difficulty)}</p>
+          <p><strong>문제 번호:</strong> ${esc(f.questionNumber)}</p>
+          <p><strong>추가 날짜:</strong> ${formatDate(f.createdAt)}</p>
+</div>
+</div>
+<div class="favorite-actions">
+        <button class="btn btn-primary" onclick="openQuestion('${f.questionNumber}')">문제 보기</button>
+        ${f.solutionUrl ? `<button class="btn btn-secondary" onclick="openSolution('${f.solutionUrl}')">해설 보기</button>` : ''}
+        <button class="btn btn-outline" onclick="openImageModal('${f.image}')" title="이미지 확대">🔍</button>
+</div>
+</div>
+`).join('');
+    }
+
+window.openImageModal = function(imageSrc){
+      const modal = document.getElementById('imageModal');
+      const modalImage = document.getElementById('modalImage');
+  modalImage.src = imageSrc; modal.style.display = 'flex'; document.body.style.overflow = 'hidden';
+}
+window.closeImageModal = function(){
+  document.getElementById('imageModal').style.display = 'none'; document.body.style.overflow = 'auto';
+}
+document.getElementById('imageModal').addEventListener('click', closeImageModal);
+document.getElementById('imageModalContent').addEventListener('click', e => e.stopPropagation());
+
+window.toggleHelp = function(){
+      const help = document.getElementById('keyboardHelp');
+  isHelpVisible = !isHelpVisible; help.style.display = isHelpVisible ? 'block' : 'none';
+}
+
+function getDifficultyBadge(diff){
+  const hearts = (diff || '').replace(/[^♥]/g,'');
+  const count = hearts.length;
+  if (count <= 2) return '<span style="color:#48BB78;font-weight:600;">쉬움</span>';
+  if (count === 3) return '<span style="color:#ED8936;font-weight:600;">보통</span>';
+  if (count >= 4) return '<span style="color:#F56565;font-weight:600;">어려움</span>';
+  return diff || '';
+}
+
+function formatDate(ts){ const d = ts instanceof Date ? ts : (ts?.toDate ? ts.toDate() : new Date(ts)); return d.toLocaleDateString('ko-KR'); }
+
+window.removeFavorite = async function(docId){
+  if (!confirm('즐겨찾기를 제거하시겠습니까?')) return;
+  try {
+    await deleteDoc(doc(db,'favorites', docId));
+    favorites = favorites.filter(f => f.docId !== docId);
+          updateStats();
+          renderFavorites();
+          showSuccess('즐겨찾기가 제거되었습니다.');
+    if (favorites.length === 0) showEmptyState();
+  } catch (e) {
+    console.error('즐겨찾기 제거 실패:', e);
+          showError('즐겨찾기 제거에 실패했습니다.');
+  }
+}
+
+window.openQuestion = function(questionNumber){
+  window.location.href = `gsg.html?question=${encodeURIComponent(questionNumber)}`;
+}
+window.openSolution = function(url){ window.open(url,'_blank'); }
+
+window.filterFavorites = function(){
+  const t = document.getElementById('searchInput').value.trim().toLowerCase();
+  const filtered = favorites.filter(f =>
+    String(f.questionNumber).toLowerCase().includes(t) ||
+    (f.subject || '').toLowerCase().includes(t) ||
+    (f.difficulty || '').toLowerCase().includes(t)
+      );
+  if (filtered.length === 0 && t) {
+    document.getElementById('favoritesGrid').innerHTML = '';
+    document.getElementById('noResults').style.display='block';
+  } else {
+    renderFavorites(filtered);
+  }
+    }
+
+window.filterByCategory = function(category){
+  currentCategory = category; updateCategoryButtons(category);
+  if (category === 'all') { renderFavorites(favorites); return; }
+  const target = category === 'math1' ? '수학Ⅰ' : '수학Ⅱ';
+  renderFavorites(favorites.filter(f => f.subject === target));
+}
+
+window.filterByDate = function(dateType){
+  updateFilterButtons('date', dateType);
+  if (dateType !== 'recent') { renderFavorites(favorites); return; }
+  const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate()-7);
+  renderFavorites(favorites.filter(f => f.createdAt >= oneWeekAgo));
+}
+
+window.filterByDifficulty = function(difficulty){
+  // 현재 UI는 'all'만 제공. 확장 시 'easy'|'medium'|'hard' 지원 가능
+  renderFavorites(favorites);
+}
+
+function updateCategoryButtons(category){
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    const key = btn.getAttribute('data-filter');
+    if (key === category) btn.classList.add('active'); else if (key==='all' && category==='all') btn.classList.add('active'); else btn.classList.remove('active');
+  });
+}
+function updateFilterButtons(group, value){ /* no-op placeholder for future groups */ }
+
+function showEmptyState(){ document.getElementById('emptyState').style.display='block'; document.getElementById('favoritesGrid').style.display='none'; }
+function hideEmptyState(){ document.getElementById('emptyState').style.display='none'; document.getElementById('favoritesGrid').style.display='grid'; }
+function showLoading(){ document.getElementById('loading').style.display='block'; document.getElementById('favoritesGrid').style.display='none'; document.getElementById('emptyState').style.display='none'; }
+function hideLoading(){ document.getElementById('loading').style.display='none'; }
+
+function showError(message){ const e=document.getElementById('errorMessage'); e.textContent=message; e.style.display='block'; setTimeout(()=>{ e.style.display='none'; }, 5000); }
+function showSuccess(message){ const e=document.getElementById('successMessage'); e.textContent=message; e.style.display='block'; setTimeout(()=>{ e.style.display='none'; }, 3000); }
+
+window.goToMain = function(){ window.location.href='gsg.html'; }
+window.goBack = function(){ if (window.history.length>1) window.history.back(); else window.location.href='index.html'; }
+
+document.addEventListener('keydown', function(e){
+  if (e.ctrlKey && e.key === 'f') { e.preventDefault(); document.getElementById('searchInput').focus(); }
+  if (e.ctrlKey && e.key === '1') { e.preventDefault(); filterByCategory('all'); }
+  if (e.ctrlKey && e.key === '2') { e.preventDefault(); filterByCategory('math1'); }
+  if (e.ctrlKey && e.key === '3') { e.preventDefault(); filterByCategory('math2'); }
+  if (e.key === 'Escape') { closeImageModal(); if (isHelpVisible) toggleHelp(); }
+  if (e.key === '?') { e.preventDefault(); toggleHelp(); }
+});
+
+document.addEventListener('DOMContentLoaded', function(){
+      const container = document.querySelector('.favorites-container');
+  container.style.opacity='0'; container.style.transform='translateY(20px)';
+  setTimeout(()=>{ container.style.transition='all 0.5s ease'; container.style.opacity='1'; container.style.transform='translateY(0)'; }, 100);
+  const clearBtn = document.getElementById('clearSearchBtn');
+  if (clearBtn) clearBtn.addEventListener('click', ()=>{ document.getElementById('searchInput').value=''; document.getElementById('noResults').style.display='none'; renderFavorites(favorites); });
+});
+
+document.getElementById('sortSelect').addEventListener('change', sortFavorites);
+</script>
+</body>
+</html>
+

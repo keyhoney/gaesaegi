@@ -1,0 +1,481 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>간격 반복 학습</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>🔄</text>
+</svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🔄 간격 반복 학습</h1>
+<p>Ebbinghaus 망각곡선을 기반으로 한 과학적 학습 시스템</p>
+</div>
+<div class="algorithm-info">
+<div class="algorithm-title">📚 간격 반복 알고리즘</div>
+<div class="algorithm-description">
+간격 반복은 Hermann Ebbinghaus의 망각곡선 이론을 바탕으로 한 과학적 학습 방법입니다.
+        학습한 내용을 일정한 간격으로 반복하면 망각을 최소화하고 장기 기억으로 전환할 수 있습니다.
+<br>
+<br>
+<strong>반복 일정:</strong>
+1일 → 3일 → 7일 → 14일 → 30일
+</div>
+</div>
+<div class="repetition-section">
+<div class="section-header">
+오늘의 반복 일정
+</div>
+<div class="section-content">
+<div class="schedule-grid" id="todaySchedule">
+<!-- 오늘의 반복 일정이 표시됩니다-->
+</div>
+</div>
+</div>
+<div class="repetition-section">
+<div class="section-header">
+반복 학습 통계 및 진행
+</div>
+<div class="section-content">
+<table class="repetition-table" id="repetitionTable">
+<thead>
+<tr>
+<th>문제 번호</th>
+<th>과목</th>
+<th>마지막 학습일</th>
+<th>다음 반복일</th>
+<th>반복 횟수</th>
+<th>상태</th>
+<th>작업</th>
+</tr>
+</thead>
+<tbody id="repetitionBody">
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { collection, doc, getDoc, updateDoc, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirebaseApp, getFirebaseAuth, getFirebaseDb } from './script.js';
+
+    let app, auth, db;
+    async function initializeFirebaseServices() {
+      app = await getFirebaseApp();
+      auth = await getFirebaseAuth();
+      db = await getFirebaseDb();
+    }
+
+    let currentUser = null;
+    let userProfile = null;
+    let reviewQueue = [];
+    let todayReviews = [];
+    let allUserReviews = [];
+    let questionsData = [];
+
+    // 간격 반복 설정
+    const SPACED_REPETITION_CONFIG = {
+      // Ebbinghaus 망각곡선 기반 간격 (일 단위)
+      INTERVALS: [1, 3, 7, 14, 30, 90, 180, 365],
+      // 난이도별 간격 조정
+      DIFFICULTY_MULTIPLIERS: {
+        '쉬움': 0.5,    // 쉬운 문제는 더 빠르게
+        '보통': 1.0,   // 보통 문제
+        '어려움': 1.5,  // 어려운 문제는 더 천천히
+        '매우어려움': 2.0  // 매우 어려운 문제는 더 천천히
+      },
+      // 최대 반복 횟수
+      MAX_REVIEWS_PER_DAY: 50,
+      // 반복 성공률 기준
+      SUCCESS_RATE_THRESHOLD: 0.8
+    };
+
+// 로그인 상태 확인 (초기화 후)
+(async () => {
+  await initializeFirebaseServices();
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      location.href = "index.html";
+      return;
+    }
+    currentUser = user;
+    await initializeSpacedRepetition();
+  });
+})();
+
+    // 간격 반복 시스템 초기화
+    async function initializeSpacedRepetition() {
+      try {
+        // 사용자 프로필 로드
+        const userDoc = await getDoc(doc(db, "userProfiles", currentUser.uid));
+        if (userDoc.exists()) {
+          userProfile = userDoc.data();
+        }
+
+        // 문제 데이터 로드
+        await loadQuestionsData();
+
+        // 사용자의 반복 학습 데이터 로드
+        await loadUserReviews();
+
+        // 오늘의 반복 일정 생성
+        await generateTodaySchedule();
+
+        // UI 업데이트
+        updateUI();
+      } catch (error) {
+        console.error("간격 반복 시스템 초기화 오류:", error);
+      }
+    }
+
+    // 문제 데이터 로드
+    async function loadQuestionsData() {
+      try {
+        const response = await fetch('questions.json');
+        questionsData = await response.json();
+      } catch (error) {
+        console.error("문제 데이터 로드 오류:", error);
+      }
+    }
+
+    // 사용자 반복 학습 데이터 로드
+    async function loadUserReviews() {
+      try {
+        const reviewsQuery = query(
+          collection(db, "userReviews"),
+          where("userId", "==", currentUser.uid)
+        );
+        const snapshot = await getDocs(reviewsQuery);
+        
+        allUserReviews = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      } catch (error) {
+        console.error("사용자 반복 데이터 로드 오류:", error);
+      }
+    }
+
+    // 오늘의 반복 일정 생성
+    async function generateTodaySchedule() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      todayReviews = allUserReviews.filter(review => {
+        const nextReviewDate = review.nextReviewDate?.toDate();
+        return nextReviewDate && nextReviewDate <= today;
+      });
+
+      // 난이도별로 정렬 (어려운 문제부터)
+      todayReviews.sort((a, b) => {
+        const difficultyOrder = { '매우어려움': 4, '어려움': 3, '보통': 2, '쉬움': 1 };
+        return (difficultyOrder[b.difficulty] || 0) - (difficultyOrder[a.difficulty] || 0);
+      });
+    }
+
+    // UI 업데이트
+    function updateUI() {
+      displayTodaySchedule();
+      displayRepetitionTable();
+    }
+
+    // 오늘의 일정 표시
+    function displayTodaySchedule() {
+      const container = document.getElementById('todaySchedule');
+      
+      if (todayReviews.length === 0) {
+        container.innerHTML = `
+          <div class="empty-schedule">
+            <div class="empty-icon">✅</div>
+            <h3>오늘의 반복 학습이 없습니다</h3>
+            <p>모든 학습을 완료했습니다!</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = todayReviews.map(review => {
+        const question = findQuestion(review.questionId);
+        return `
+          <div class="schedule-item ${review.difficulty}">
+            <div class="question-info">
+              <h4>${question ? question.title : `문제 ${review.questionId}`}</h4>
+              <p>${question ? question.subject : '과목 미정'}</p>
+            </div>
+            <div class="review-info">
+              <span class="difficulty-badge ${review.difficulty}">${review.difficulty}</span>
+              <span class="review-count">${review.reviewCount || 0}회 반복</span>
+            </div>
+            <button class="btn btn-primary" onclick="startReview('${review.id}')">
+              학습 시작
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 반복 학습 테이블 표시
+    function displayRepetitionTable() {
+      const tbody = document.getElementById('repetitionBody');
+      
+      if (allUserReviews.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="empty-state">
+              <div class="empty-icon">📚</div>
+              <h3>반복 학습 데이터가 없습니다</h3>
+              <p>문제를 풀어보고 반복 학습을 시작해보세요!</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = allUserReviews.map(review => {
+        const question = findQuestion(review.questionId);
+        const nextReviewDate = review.nextReviewDate?.toDate();
+        const isOverdue = nextReviewDate && nextReviewDate < new Date();
+        
+        return `
+          <tr class="${isOverdue ? 'overdue' : ''}">
+            <td>${review.questionId}</td>
+            <td>${question ? question.subject : '과목 미정'}</td>
+            <td>${formatDate(review.lastReviewDate)}</td>
+            <td>${formatDate(review.nextReviewDate)}</td>
+            <td>${review.reviewCount || 0}</td>
+            <td>
+              <span class="status-badge ${review.difficulty}">${review.difficulty}</span>
+              ${isOverdue ? '<span class="overdue-badge">지연</span>' : ''}
+            </td>
+            <td>
+              <button class="btn btn-sm" onclick="startReview('${review.id}')">학습</button>
+              <button class="btn btn-sm btn-secondary" onclick="resetReview('${review.id}')">초기화</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 날짜 포맷
+    function formatDate(timestamp) {
+      if (!timestamp) return '날짜 없음';
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleDateString('ko-KR');
+    }
+
+    // 학습 시작
+    window.startReview = async function(reviewId) {
+      const review = allUserReviews.find(r => r.id === reviewId);
+      if (!review) {
+        alert('반복 학습 데이터를 찾을 수 없습니다.');
+        return;
+      }
+
+      // 학습 페이지로 이동
+      const question = findQuestion(review.questionId);
+      if (question) {
+        // 문제 풀이 페이지로 이동
+        window.location.href = `gsg.html?problem=${review.questionId}&review=true`;
+      } else {
+        alert('문제를 찾을 수 없습니다.');
+      }
+    };
+
+    // 반복 학습 결과 처리
+    window.processReviewResult = async function(reviewId, difficulty, success) {
+      try {
+        const review = allUserReviews.find(r => r.id === reviewId);
+        if (!review) {
+          console.error('반복 학습 데이터를 찾을 수 없습니다.');
+          return;
+        }
+
+        // 새로운 간격 계산
+        const currentInterval = review.currentInterval || 1;
+        const difficultyMultiplier = SPACED_REPETITION_CONFIG.DIFFICULTY_MULTIPLIERS[difficulty] || 1.0;
+        
+        let newInterval;
+        if (success) {
+          // 성공한 경우 간격 증가
+          const intervalIndex = SPACED_REPETITION_CONFIG.INTERVALS.indexOf(currentInterval);
+          const nextIntervalIndex = Math.min(intervalIndex + 1, SPACED_REPETITION_CONFIG.INTERVALS.length - 1);
+          newInterval = SPACED_REPETITION_CONFIG.INTERVALS[nextIntervalIndex] * difficultyMultiplier;
+        } else {
+          // 실패한 경우 간격 감소
+          newInterval = Math.max(1, currentInterval * 0.5);
+        }
+
+        // 다음 반복일 계산
+        const nextReviewDate = new Date();
+        nextReviewDate.setDate(nextReviewDate.getDate() + Math.round(newInterval));
+
+        // 데이터 업데이트
+        const reviewRef = doc(db, "userReviews", reviewId);
+        await updateDoc(reviewRef, {
+          lastReviewDate: serverTimestamp(),
+          nextReviewDate: nextReviewDate,
+          currentInterval: newInterval,
+          reviewCount: (review.reviewCount || 0) + 1,
+          difficulty: difficulty,
+          lastResult: success
+        });
+
+        // UI 업데이트
+        await loadUserReviews();
+        await generateTodaySchedule();
+        updateUI();
+
+        alert(success ? '학습 성공! 다음 반복일이 연기되었습니다.' : '학습 실패! 더 자주 반복하세요.');
+      } catch (error) {
+        console.error("반복 학습 결과 처리 오류:", error);
+        alert('학습 결과 처리 중 오류가 발생했습니다.');
+      }
+    };
+
+    // 반복 학습 초기화
+    window.resetReview = async function(reviewId) {
+      if (!confirm('반복 학습을 초기화하시겠습니까?')) {
+        return;
+      }
+
+      try {
+        const reviewRef = doc(db, "userReviews", reviewId);
+        await updateDoc(reviewRef, {
+          currentInterval: 1,
+          reviewCount: 0,
+          nextReviewDate: new Date()
+        });
+
+        await loadUserReviews();
+        await generateTodaySchedule();
+        updateUI();
+
+        alert('반복 학습이 초기화되었습니다.');
+      } catch (error) {
+        console.error("반복 학습 초기화 오류:", error);
+        alert('초기화 중 오류가 발생했습니다.');
+      }
+    };
+
+    // 새로운 문제 추가
+    window.addToRepetition = async function(questionId, difficulty = '보통') {
+      try {
+        // 이미 추가된 문제인지 확인
+        const existingReview = allUserReviews.find(r => r.questionId === questionId);
+        if (existingReview) {
+          alert('이미 반복 학습에 추가된 문제입니다.');
+          return;
+        }
+
+        // 새로운 반복 학습 데이터 생성
+        const nextReviewDate = new Date();
+        nextReviewDate.setDate(nextReviewDate.getDate() + 1);
+
+        const reviewData = {
+          userId: currentUser.uid,
+          questionId: questionId,
+          difficulty: difficulty,
+          currentInterval: 1,
+          reviewCount: 0,
+          lastReviewDate: serverTimestamp(),
+          nextReviewDate: nextReviewDate,
+          createdAt: serverTimestamp()
+        };
+
+        await addDoc(collection(db, "userReviews"), reviewData);
+
+        await loadUserReviews();
+        await generateTodaySchedule();
+        updateUI();
+
+        alert('반복 학습에 추가되었습니다.');
+      } catch (error) {
+        console.error("반복 학습 추가 오류:", error);
+        alert('반복 학습 추가 중 오류가 발생했습니다.');
+      }
+    };
+
+    // 보조: questions.json 다양한 구조 대응 검색
+    function flattenQuestions(data) {
+      const results = [];
+      function walk(node, ctx = {}) {
+        if (!node || typeof node !== 'object') return;
+        const nextCtx = {
+          subject: node['과목'] ?? ctx.subject,
+          big: node['대분류'] ?? ctx.big,
+          mid: node['중분류'] ?? ctx.mid,
+          small: node['소분류'] ?? ctx.small,
+        };
+        if (Array.isArray(node['문항들'])) {
+          for (const q of node['문항들']) {
+            results.push({
+              id: q['문항번호'],
+              imageUrl: q['문항주소'],
+              subject: nextCtx.subject,
+              middleCategory: nextCtx.mid,
+              smallCategory: nextCtx.small,
+              difficulty: q['난이도']
+            });
+          }
+        }
+        for (const v of Object.values(node)) {
+          if (v && typeof v === 'object') {
+            if (Array.isArray(v)) v.forEach(item => walk(item, nextCtx));
+            else walk(v, nextCtx);
+          }
+        }
+      }
+      if (Array.isArray(data)) data.forEach(item => walk(item)); else walk(data);
+      return results;
+    }
+
+    function findQuestion(id) {
+      // 최초 호출 시 평탄화 캐시
+      if (!Array.isArray(questionsData) || !questionsData.__flat) {
+        const flat = flattenQuestions(questionsData);
+        questionsData = Object.assign([], questionsData);
+        questionsData.__flat = flat;
+      }
+      return questionsData.__flat.find(q => String(q.id) === String(id));
+    }
+
+    // 통계 표시
+    window.showStatistics = function() {
+      const totalReviews = allUserReviews.length;
+      const completedToday = todayReviews.length;
+      const overdueReviews = allUserReviews.filter(r => {
+        const nextReviewDate = r.nextReviewDate?.toDate();
+        return nextReviewDate && nextReviewDate < new Date();
+      }).length;
+
+      const stats = `
+        <div class="stats-container">
+          <div class="stat-item">
+            <div class="stat-value">${totalReviews}</div>
+            <div class="stat-label">전체 반복 문제</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${completedToday}</div>
+            <div class="stat-label">오늘의 반복</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${overdueReviews}</div>
+            <div class="stat-label">지연된 반복</div>
+          </div>
+        </div>
+      `;
+
+      alert(stats);
+    };
+
+  </script>
+</body>
+</html>
+

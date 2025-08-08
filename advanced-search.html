@@ -1,0 +1,1580 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>고급 검색 - 송현여고 수학 학습 시스템</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>🔍</text>
+</svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- 로딩 오버레이 -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+<div class="loading-spinner">
+</div>
+</div>
+<div class="advanced-search-container">
+<!-- 헤더 -->
+<div class="search-header">
+<h1>고급 검색</h1>
+<p>다양한 조건으로 원하는 문제를 찾아보세요</p>
+</div>
+<!-- 검색 패널 -->
+<div class="search-panel">
+<!-- 검색 탭 -->
+<div class="search-tabs">
+<button class="search-tab active" data-tab="basic">기본 검색</button>
+<button class="search-tab" data-tab="advanced">고급 필터</button>
+<button class="search-tab" data-tab="analytics">분석 도구</button>
+</div>
+<!-- 기본 검색 탭 -->
+<div id="basicTab" class="tab-content active">
+<!-- 빠른 필터 -->
+<div class="quick-filters">
+<button class="quick-filter active" data-filter="all">전체</button>
+<button class="quick-filter" data-filter="recent">최근 기출</button>
+<button class="quick-filter" data-filter="difficult">어려운 문제</button>
+<button class="quick-filter" data-filter="important">중요 문제</button>
+<button class="quick-filter" data-filter="unsolved">미해결</button>
+<button class="quick-filter" data-filter="wrong">틀린 문제</button>
+</div>
+<!-- 필터 그리드 -->
+<div class="filter-grid">
+<div class="filter-group">
+<label class="filter-label" for="subject">과목</label>
+<select id="subject" class="filter-input">
+<option value="">전체 과목</option>
+<option value="수학">수학</option>
+</select>
+</div>
+<div class="filter-group">
+<label class="filter-label" for="category">대분류</label>
+<select id="category" class="filter-input">
+<option value="">전체 분류</option>
+</select>
+</div>
+<div class="filter-group">
+<label class="filter-label" for="middleCategory">중분류</label>
+<select id="middleCategory" class="filter-input">
+<option value="">전체 분류</option>
+</select>
+</div>
+<div class="filter-group">
+<label class="filter-label" for="smallCategory">소분류</label>
+<select id="smallCategory" class="filter-input">
+<option value="">전체 분류</option>
+</select>
+</div>
+</div>
+<div class="filter-grid">
+<div class="filter-group">
+<label class="filter-label" for="difficulty">난이도</label>
+<select id="difficulty" class="filter-input">
+<option value="">전체 난이도</option>
+<option value="쉬움">쉬움 (기초)</option>
+<option value="보통">보통 (보통)</option>
+<option value="어려움">어려움 (어려움)</option>
+<option value="매우어려움">매우어려움 (매우 어려움)</option>
+<option value="최고난이도">최고난이도 (최고 난이도)</option>
+</select>
+</div>
+<div class="filter-group">
+<label class="filter-label" for="importance">중요도</label>
+<select id="importance" class="filter-input">
+<option value="">전체 중요도</option>
+<option value="보통">보통 (보통)</option>
+<option value="중요">중요 (중요)</option>
+<option value="매우중요">매우중요 (매우 중요)</option>
+</select>
+</div>
+<div class="filter-group">
+<label class="filter-label" for="year">연도</label>
+<select id="year" class="filter-input">
+<option value="">전체 연도</option>
+<option value="2025">2025년</option>
+<option value="2024">2024년</option>
+<option value="2023">2023년</option>
+<option value="2022">2022년</option>
+</select>
+</div>
+<div class="filter-group">
+<label class="filter-label" for="month">월</label>
+<select id="month" class="filter-input">
+<option value="">전체 월</option>
+<option value="03">3월</option>
+<option value="04">4월</option>
+<option value="06">6월</option>
+<option value="07">7월</option>
+<option value="09">9월</option>
+<option value="10">10월</option>
+<option value="11">11월</option>
+</select>
+</div>
+</div>
+</div>
+<!-- 검색 액션 -->
+<div class="search-actions">
+<button class="btn btn-primary search-btn" onclick="performAdvancedSearch()">
+<span id="searchBtnText">검색</span>
+</button>
+<button class="btn btn-secondary" onclick="resetFilters()">초기화</button>
+<button class="btn btn-outline" onclick="saveSearchPreset()">저장</button>
+<button class="btn btn-outline" onclick="loadSearchPreset()">불러오기</button>
+<button class="btn btn-outline" onclick="goBack()">뒤로가기</button>
+</div>
+</div>
+<!-- 고급 필터 탭 -->
+<div id="advancedTab" class="tab-content" style="display: none;">
+<div class="advanced-filter-section">
+<h3>조건 설정</h3>
+<!-- 조건 빌더 -->
+<div class="condition-builder">
+<div class="condition-group">
+<label class="filter-label">해결된 문제</label>
+<div class="checkbox-group">
+<label>
+<input type="checkbox" id="solvedCorrect">
+정답 문제</label>
+<label>
+<input type="checkbox" id="solvedWrong">
+오답 문제</label>
+<label>
+<input type="checkbox" id="neverAttempted">
+미해결 문제</label>
+<label>
+<input type="checkbox" id="multipleAttempts">
+여러 번 시도한 문제</label>
+</div>
+</div>
+<div class="condition-group">
+<label class="filter-label">난이도</label>
+<div class="range-slider-container">
+<input type="range" id="difficultyMin" min="1" max="5" value="1" class="range-slider">
+<input type="range" id="difficultyMax" min="1" max="5" value="5" class="range-slider">
+<div class="range-labels">
+<span>난이도:
+<span id="difficultyMinValue">1</span>
+</span>
+<span>난이도:
+<span id="difficultyMaxValue">5</span>
+</span>
+</div>
+</div>
+</div>
+<div class="condition-group">
+<label class="filter-label">정확도 (%)</label>
+<div class="range-slider-container">
+<input type="range" id="accuracyMin" min="0" max="100" value="0" class="range-slider">
+<input type="range" id="accuracyMax" min="0" max="100" value="100" class="range-slider">
+<div class="range-labels">
+<span>정확도:
+<span id="accuracyMinValue">0</span>%</span>
+<span>정확도:
+<span id="accuracyMaxValue">100</span>%</span>
+</div>
+</div>
+</div>
+<div class="condition-group">
+<label class="filter-label">시도 횟수</label>
+<div class="number-range">
+<input type="number" id="attemptsMin" placeholder="최소" min="0" class="number-input">
+<span>~</span>
+<input type="number" id="attemptsMax" placeholder="최대" min="0" class="number-input">
+</div>
+</div>
+<div class="condition-group">
+<label class="filter-label">키워드 검색</label>
+<div class="keyword-search">
+<input type="text" id="keywordSearch" placeholder="검색어 입력" class="text-input">
+<div class="search-options">
+<label>
+<input type="checkbox" id="exactMatch">
+정확한 일치</label>
+<label>
+<input type="checkbox" id="caseMatch">
+대소문자 구분</label>
+</div>
+</div>
+</div>
+</div>
+<!-- 고급 필터 액션 -->
+<div class="search-actions">
+<button class="btn btn-primary" onclick="performAdvancedFilterSearch()">
+<span>조건 적용</span>
+</button>
+<button class="btn btn-secondary" onclick="resetAdvancedFilters()">초기화</button>
+<button class="btn btn-outline" onclick="saveAdvancedPreset()">저장</button>
+</div>
+</div>
+</div>
+<!-- 분석 탭 -->
+<div id="analyticsTab" class="tab-content" style="display: none;">
+<div class="analytics-section">
+<h3>분석 결과</h3>
+<div class="analytics-grid">
+<!-- 최근 문제 분석 -->
+<div class="analysis-card">
+<h4>최근 문제 분석</h4>
+<p>최근 문제를 분석하여 약점을 찾아봅니다.</p>
+          <button class="btn btn-primary" onclick="analyzeWeaknesses()">최근 문제 분석</button>
+<div id="weaknessResults" class="analysis-results">
+</div>
+</div>
+<!-- 학습 패턴 분석 -->
+<div class="analysis-card">
+<h4>학습 패턴 분석</h4>
+<p>학습 패턴을 분석하여 효율적인 학습 방법을 찾아봅니다.</p>
+<button class="btn btn-primary" onclick="analyzeStudyPattern()">학습 패턴 분석</button>
+<div id="patternResults" class="analysis-results">
+</div>
+</div>
+<!-- 추천 문제 분석 -->
+<div class="analysis-card">
+<h4>추천 문제 분석</h4>
+<p>약점을 보완하고 실력을 향상시키기 위한 추천 문제를 찾아봅니다.</p>
+          <button class="btn btn-primary" onclick="getRecommendations()">추천 문제 분석</button>
+<div id="recommendationResults" class="analysis-results">
+</div>
+</div>
+<!-- 성취도 예측 -->
+<div class="analysis-card">
+<h4>성취도 예측</h4>
+<p>현재까지의 학습 결과를 바탕으로 예상 성취도를 예측해봅니다.</p>
+<button class="btn btn-primary" onclick="predictAchievement()">성취도 예측</button>
+<div id="predictionResults" class="analysis-results">
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 통계 그리드 -->
+<div class="stats-grid" id="statsSection" style="display: none;">
+<div class="stat-card">
+<div class="stat-number" id="totalQuestions">0</div>
+<div class="stat-label">총 문제 수</div>
+</div>
+<div class="stat-card">
+<div class="stat-number" id="avgDifficulty">0</div>
+<div class="stat-label">평균 난이도</div>
+</div>
+<div class="stat-card">
+<div class="stat-number" id="myAttempts">0</div>
+<div class="stat-label">총 시도 횟수</div>
+</div>
+<div class="stat-card">
+<div class="stat-number" id="myAccuracy">0%</div>
+<div class="stat-label">총 정답률</div>
+</div>
+</div>
+<!-- 결과 패널 -->
+<div class="results-panel" id="resultsContainer" style="display: none;">
+<div class="results-header">
+<div class="results-title">
+검색 결과
+<span id="resultCount">(0개)</span>
+</div>
+<div class="results-controls">
+<select class="sort-select" id="sortSelect">
+<option value="number">번호순</option>
+<option value="difficulty">난이도순</option>
+<option value="accuracy">정확도순</option>
+<option value="attempts">시도 횟수순</option>
+<option value="recent">최근 제출순</option>
+</select>
+<div class="view-toggle">
+<button class="view-btn active" data-view="table">테이블 보기</button>
+<button class="view-btn" data-view="grid">그리드 보기</button>
+</div>
+</div>
+</div>
+<div id="resultsContent">
+<table class="results-table" id="resultsTable">
+<thead>
+<tr>
+<th>문제 번호</th>
+<th>과목</th>
+<th>분류</th>
+<th>난이도</th>
+<th>중요도</th>
+<th>총 시도 횟수</th>
+<th>총 정답률</th>
+<th>평균 소요 시간</th>
+<th>즐겨찾기</th>
+</tr>
+</thead>
+<tbody id="resultsBody">
+</tbody>
+</table>
+</div>
+</div>
+<!-- 결과 없음 -->
+<div id="noResults" class="no-results" style="display: none;">
+<div class="no-results-icon">🔍</div>
+<h3>검색 결과가 없습니다.</h3>
+<p>조건에 맞는 문제를 찾을 수 없습니다. 조건을 다시 확인해주세요.</p>
+</div>
+</div>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirebaseApp, getFirebaseAuth } from './script.js';
+
+    const app = await getFirebaseApp();
+    const auth = await getFirebaseAuth();
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let questionsData = [];
+    let questionToCategoryPath = {};
+    let searchResults = [];
+    let currentFilters = {};
+    let userAnswers = {};
+
+    // 인증 상태 변경 감지
+    onAuthStateChanged(auth, async (user) =>
+{
+      if (!user) {
+        alert("로그인이 필요합니다.");
+        location.href = "index.html";
+        return;
+      }
+      
+      currentUser = user;
+      await initializeSearch();
+    });
+
+    // 검색 초기화
+    async function initializeSearch() {
+      showLoading();
+      try {
+        await Promise.all([
+          loadQuestionsData(),
+          loadUserAnswers()
+        ]);
+        setupEventListeners();
+        hideLoading();
+      } catch (error) {
+        console.error("검색 초기화 중 오류:", error);
+        showError("검색 초기화 중 오류가 발생했습니다.");
+        hideLoading();
+      }
+    }
+
+    // 로딩 표시
+    function showLoading() {
+      document.getElementById('loadingOverlay').style.display = 'flex';
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    // 오류 표시
+    function showError(message) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'message error';
+      errorDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(231, 76, 60, 0.95);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        max-width: 400px;
+        animation: slideIn 0.3s ease;
+      `;
+      errorDiv.innerHTML = `
+<div style="display: flex; align-items: center; gap: 10px;">
+<span style="font-size: 18px;">오류</span>
+<span style="flex: 1;">${message}</span>
+<button onclick="this.parentElement.parentElement.remove()" 
+                  style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; padding: 0;">회</button>
+</div>
+`;
+      document.body.appendChild(errorDiv);
+      
+      setTimeout(() =>
+{
+        if (errorDiv.parentElement) {
+          errorDiv.remove();
+        }
+      }, 5000);
+    }
+
+    // 성공 표시
+    function showSuccess(message) {
+      const successDiv = document.createElement('div');
+      successDiv.className = 'message success';
+      successDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(72, 187, 120, 0.95);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        max-width: 400px;
+        animation: slideIn 0.3s ease;
+      `;
+      successDiv.innerHTML = `
+<div style="display: flex; align-items: center; gap: 10px;">
+<span style="font-size: 18px;">성공</span>
+<span style="flex: 1;">${message}</span>
+<button onclick="this.parentElement.parentElement.remove()" 
+                  style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; padding: 0;">회</button>
+</div>
+`;
+      document.body.appendChild(successDiv);
+      
+      setTimeout(() =>
+{
+        if (successDiv.parentElement) {
+          successDiv.remove();
+        }
+      }, 3000);
+    }
+
+    function flattenQuestions(raw) {
+      if (Array.isArray(raw) && raw.length && raw[0].id) return raw;
+      const out = [];
+      questionToCategoryPath = {};
+      (raw || []).forEach(cat => {
+        const path = [cat.과목, cat.대분류, cat.중분류, cat.소분류].filter(Boolean).join(' / ');
+        (cat.문항들 || []).forEach(item => {
+          const id = item.문항번호 || item.id;
+          if (!id) return;
+          out.push({
+            id,
+            subject: cat.과목 || '수학',
+            category: cat.대분류 || '',
+            middleCategory: cat.중분류 || '',
+            smallCategory: cat.소분류 || '',
+            difficulty: item.난이도 || item.difficulty || '보통',
+            importance: item.중요도 || item.importance || '보통',
+            title: item.제목 || item.title || '',
+            content: item.본문 || item.content || ''
+          });
+          questionToCategoryPath[id] = path;
+        });
+      });
+      return out;
+    }
+
+    async function loadQuestionsData() {
+      try {
+        const res = await fetch('questions.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const raw = await res.json();
+        const arr = Array.isArray(raw) ? raw : Object.values(raw || {});
+        questionsData = flattenQuestions(arr);
+        if (!questionsData.length) throw new Error('문제 데이터가 없습니다.');
+        console.log('문제 데이터 로드:', questionsData.length);
+      } catch (error) {
+        console.error('문제 데이터 로드 중 오류:', error);
+        showError(`문제 데이터 로드 중 오류가 발생했습니다: ${error.message}`);
+        throw error;
+      }
+    }
+
+    // 사용자 답변 로드
+    function normalizeAnswer(a){
+      const qid = a.questionNumber || a.문제번호 || a.id;
+      const ts = a.submittedAt?.toDate?.() || a.submittedAt || a.timestamp?.toDate?.() || a.timestamp || null;
+      return {
+        ...a,
+        questionId: qid,
+        isCorrect: !!a.isCorrect,
+        solvingTime: Number(a.solvingTime || 0),
+        submittedAt: ts ? new Date(ts) : null
+      };
+    }
+
+    async function loadUserAnswers() {
+      try {
+        const q = query(collection(db, 'answers'), where('userId', '==', currentUser.uid));
+        const snap = await getDocs(q);
+        userAnswers = {};
+        snap.forEach(docSnap => {
+          const n = normalizeAnswer(docSnap.data());
+          if (!n.questionId) return;
+          if (!userAnswers[n.questionId]) userAnswers[n.questionId] = [];
+          userAnswers[n.questionId].push(n);
+        });
+        Object.values(userAnswers).forEach(arr => arr.sort((a,b)=>(b.submittedAt?.getTime?.()||0)-(a.submittedAt?.getTime?.()||0)));
+        console.log('사용자 답변 로드:', userAnswers);
+      } catch (error) {
+        console.error('사용자 답변 로드 중 오류:', error);
+        throw error;
+      }
+    }
+
+
+
+    // 필터 설정 이벤트 리스너
+    function setupEventListeners() {
+      // 탭 전환
+      document.querySelectorAll('.search-tab').forEach(tab =>
+{
+        tab.addEventListener('click', switchTab);
+      });
+
+      // 빠른 필터
+      document.querySelectorAll('.quick-filter').forEach(filter =>
+{
+        filter.addEventListener('click', applyQuickFilter);
+      });
+
+      // 과목 필터 업데이트
+      document.getElementById('subject').addEventListener('change', updateCategoryFilters);
+      document.getElementById('category').addEventListener('change', updateCategoryFilters);
+      document.getElementById('middleCategory').addEventListener('change', updateCategoryFilters);
+
+      // 정렬 선택
+      document.getElementById('sortSelect').addEventListener('change', sortResults);
+
+      // 뷰 전환
+      document.querySelectorAll('.view-btn').forEach(btn =>
+{
+        btn.addEventListener('click', switchView);
+      });
+    }
+
+    // 탭 전환
+    function switchTab(e) {
+      const tabId = e.target.dataset.tab;
+      
+      // 활성화된 탭 제거
+      document.querySelectorAll('.search-tab').forEach(tab =>
+tab.classList.remove('active'));
+      e.target.classList.add('active');
+      
+      // 탭 내용 숨기
+      document.querySelectorAll('.tab-content').forEach(content =>
+content.style.display = 'none');
+      document.getElementById(tabId + 'Tab').style.display = 'block';
+    }
+
+    // 빠른 필터 적용
+    function applyQuickFilter(e) {
+      document.querySelectorAll('.quick-filter').forEach(filter =>
+filter.classList.remove('active'));
+      e.target.classList.add('active');
+      
+      const filterType = e.target.dataset.filter;
+      applyQuickFilterLogic(filterType);
+    }
+
+    // 빠른 필터 로직
+    function applyQuickFilterLogic(filterType) {
+      switch(filterType) {
+        case 'recent': {
+          const now = new Date();
+          const y = String(now.getFullYear());
+          document.getElementById('year').value = y;
+          document.getElementById('month').value = '';
+          break;
+        }
+        case 'difficult':
+          document.getElementById('difficulty').value = '어려움';
+          break;
+        case 'important':
+          document.getElementById('importance').value = '중요';
+          break;
+        case 'unsolved':
+          // 미해결 문제 필터링 - 답변이 없는 문제
+          searchResults = questionsData.filter(q =>
+{
+            const answers = userAnswers[q.id] || [];
+            return answers.length === 0;
+          });
+          displayResults(searchResults);
+          displayStats(searchResults);
+          return;
+        case 'wrong':
+          // 틀린 문제 필터링 - 답변이 있는데 정답이 아닌 문제
+          searchResults = questionsData.filter(q =>
+{
+            const answers = userAnswers[q.id] || [];
+            if (answers.length === 0) return false;
+            const correctCount = answers.filter(a =>
+a.isCorrect).length;
+            return correctCount === 0;
+          });
+          displayResults(searchResults);
+          displayStats(searchResults);
+          return;
+        default:
+          // 기본 설정 - 필터 초기화
+          resetFilters();
+          return;
+      }
+      performAdvancedSearch();
+    }
+
+
+
+    // 과목 필터 업데이트
+    function updateCategoryFilters(event) {
+      try {
+        const subject = document.getElementById('subject').value;
+        const category = document.getElementById('category').value;
+        const middleCategory = document.getElementById('middleCategory').value;
+
+        const categorySelect = document.getElementById('category');
+        const middleCategorySelect = document.getElementById('middleCategory');
+        const smallCategorySelect = document.getElementById('smallCategory');
+
+        // 대분류 필터 설정
+        if (event && event.target) {
+          const elementId = event.target.id;
+          
+          if (elementId === 'subject') {
+            categorySelect.innerHTML = '<option value="">전체 분류</option>';
+            middleCategorySelect.innerHTML = '<option value="">전체 분류</option>';
+            smallCategorySelect.innerHTML = '<option value="">전체 분류</option>';
+            if (subject && questionsData.length >
+0) {
+              const categories = [...new Set(questionsData.filter(q =>
+q.subject === subject).map(q =>
+q.category).filter(Boolean))];
+              categories.forEach(c =>
+categorySelect.innerHTML += `<option value="${c}">${c}</option>`);
+            }
+          } else if (elementId === 'category') {
+            middleCategorySelect.innerHTML = '<option value="">전체 분류</option>';
+            smallCategorySelect.innerHTML = '<option value="">전체 분류</option>';
+            if (category && questionsData.length >
+0) {
+              const middleCategories = [...new Set(questionsData.filter(q =>
+q.subject === subject && q.category === category).map(q =>
+q.middleCategory).filter(Boolean))];
+              middleCategories.forEach(mc =>
+middleCategorySelect.innerHTML += `<option value="${mc}">${mc}</option>`);
+            }
+          } else if (elementId === 'middleCategory') {
+            smallCategorySelect.innerHTML = '<option value="">전체 분류</option>';
+            if (middleCategory && questionsData.length >
+0) {
+              const smallCategories = [...new Set(questionsData.filter(q =>
+q.subject === subject && q.category === category && q.middleCategory === middleCategory).map(q =>
+q.smallCategory).filter(Boolean))];
+              smallCategories.forEach(sc =>
+smallCategorySelect.innerHTML += `<option value="${sc}">${sc}</option>`);
+            }
+          }
+        } else {
+          // 기본 설정 - 필터 초기화
+          categorySelect.innerHTML = '<option value="">전체 분류</option>';
+          middleCategorySelect.innerHTML = '<option value="">전체 분류</option>';
+          smallCategorySelect.innerHTML = '<option value="">전체 분류</option>';
+        }
+      } catch (error) {
+        console.error('과목 필터 업데이트 중 오류:', error);
+      }
+    }
+
+    // 고급 검색 수행
+    window.performAdvancedSearch = async function() {
+      showLoading();
+      const searchBtn = document.querySelector('.search-btn');
+      const searchBtnText = document.getElementById('searchBtnText');
+      searchBtn.disabled = true;
+      searchBtnText.textContent = '검색 중...';
+
+      try {
+        // 필터 수집
+        const filters = collectFilters();
+        
+        // 정규 검색 수행
+        searchResults = await performRegularSearch(filters);
+
+        // 결과 정렬
+        sortResults();
+        
+        // 결과 표시
+        displayResults(searchResults);
+        displayStats(searchResults);
+        
+      } catch (error) {
+        console.error("검색 중 오류:", error);
+        showError("검색 중 오류가 발생했습니다.");
+      } finally {
+        hideLoading();
+        searchBtn.disabled = false;
+        searchBtnText.textContent = '검색';
+      }
+    }
+
+    // 필터 수집
+    function collectFilters() {
+      return {
+        subject: document.getElementById('subject').value,
+        category: document.getElementById('category').value,
+        middleCategory: document.getElementById('middleCategory').value,
+        smallCategory: document.getElementById('smallCategory').value,
+        difficulty: document.getElementById('difficulty').value,
+        importance: document.getElementById('importance').value,
+        year: document.getElementById('year').value,
+        month: document.getElementById('month').value
+      };
+    }
+
+    // 정규 검색 수행
+    async function performRegularSearch(filters){
+      let results = [...questionsData];
+
+      results = results.filter(q=>{
+        if (!q.id) return false;
+        // 연/월 파싱 (YYYYMMDD... 형태일 때만)
+        let yearMatch = true, monthMatch = true;
+        const m = String(q.id).match(/^(\d{4})(\d{2})?/);
+        if (filters.year) yearMatch = m ? (m[1]===filters.year) : true;
+        if (filters.month) monthMatch = m && m[2] ? (m[2]===filters.month) : true;
+
+        return (!filters.subject || q.subject===filters.subject) &&
+               (!filters.category || q.category===filters.category) &&
+               (!filters.middleCategory || q.middleCategory===filters.middleCategory) &&
+               (!filters.smallCategory || q.smallCategory===filters.smallCategory) &&
+               (!filters.difficulty || q.difficulty===filters.difficulty) &&
+               (!filters.importance || q.importance===filters.importance) &&
+               yearMatch && monthMatch;
+      });
+
+      return results.map(q=>{
+        const answers = userAnswers[q.id] || [];
+        const attempts = answers.length;
+        const correct = answers.filter(a=>a.isCorrect).length;
+        const accuracy = attempts ? Math.round((correct/attempts)*100) : 0;
+        const avgTime = attempts ? Math.round(answers.reduce((s,a)=>s+(a.solvingTime||0),0)/attempts) : 0;
+        const lastAttempt = answers[0]?.submittedAt?.getTime?.() || null;
+        return {...q, attempts, accuracy, avgTime, lastAttempt};
+      });
+    }
+
+
+
+
+
+    // 저장 함수
+    window.saveSearchPreset = function() {
+      const presetName = prompt("저장할 이름을 입력하세요:");
+      if (presetName && presetName.trim()) {
+        const filters = collectFilters();
+        localStorage.setItem(`searchPreset_${presetName.trim()}`, JSON.stringify(filters));
+        showSuccess("검색 설정이 저장되었습니다.");
+      } else if (presetName !== null) {
+        showError("저장할 이름을 입력해주세요.");
+      }
+    }
+
+    // 불러오기
+    window.loadSearchPreset = function() {
+      const presetName = prompt("불러올 설정 이름을 입력하세요:");
+      if (presetName && presetName.trim()) {
+        const saved = localStorage.getItem(`searchPreset_${presetName.trim()}`);
+        if (saved) {
+          try {
+            const filters = JSON.parse(saved);
+            applyFilters(filters);
+            showSuccess("설정이 불러와졌습니다.");
+          } catch (error) {
+            showError("설정을 불러오는 중 오류가 발생했습니다.");
+          }
+        } else {
+          showError("저장된 설정이 없습니다.");
+        }
+      } else if (presetName !== null) {
+        showError("불러올 설정 이름을 입력해주세요.");
+      }
+    }
+
+    // 필터 적용
+    function applyFilters(filters) {
+      Object.entries(filters).forEach(([key, value]) =>
+{
+        const element = document.getElementById(key);
+        if (element) {
+          element.value = value;
+        }
+      });
+    }
+
+    // 결과 정렬
+    const DIFF_MAP = { '쉬움':1, '보통':2, '어려움':3, '매우어려움':4, '최고난이도':5 };
+    function diffScore(d){ return DIFF_MAP[d] || Number(d) || 2; }
+
+    function sortResults() {
+      const sortBy = document.getElementById('sortSelect').value;
+      
+      searchResults.sort((a, b) =>
+{
+        switch(sortBy) {
+          case 'number':
+            return a.id.localeCompare(b.id);
+          case 'difficulty':
+            return diffScore(b.difficulty) - diffScore(a.difficulty);
+          case 'accuracy':
+            return b.accuracy - a.accuracy;
+          case 'attempts':
+            return b.attempts - a.attempts;
+          case 'recent':
+            return (b.lastAttempt || 0) - (a.lastAttempt || 0);
+          default:
+            return 0;
+        }
+      });
+      
+      displayResults(searchResults);
+    }
+
+    // 뷰 전환
+    function switchView(e) {
+      document.querySelectorAll('.view-btn').forEach(btn =>
+btn.classList.remove('active'));
+      e.target.classList.add('active');
+      
+      const viewType = e.target.dataset.view;
+      const resultsContent = document.getElementById('resultsContent');
+      
+      if (viewType === 'table') {
+        resultsContent.innerHTML = `
+<table class="results-table" id="resultsTable">
+<thead>
+<tr>
+<th>문제 번호</th>
+<th>과목</th>
+<th>분류</th>
+<th>난이도</th>
+<th>중요도</th>
+<th>총 시도 횟수</th>
+<th>총 정답률</th>
+<th>평균 소요 시간</th>
+<th>즐겨찾기</th>
+</tr>
+</thead>
+<tbody id="resultsBody">
+</tbody>
+</table>
+`;
+      } else if (viewType === 'grid') {
+        resultsContent.innerHTML = `
+<div class="results-grid" id="resultsGrid">
+</div>
+`;
+      }
+      
+      // 결과 표시
+      displayResults(searchResults);
+    }
+
+
+
+    // 통계 계산
+    function displayStats(results) {
+      document.getElementById('statsSection').style.display = 'grid';
+      document.getElementById('totalQuestions').textContent = results.length;
+
+      // 평균 난이도 계산
+      let avgDifficultyValue = 0;
+      if (results.length) {
+        const totalDifficulty = results.reduce((sum, q) => sum + diffScore(q.difficulty), 0);
+        avgDifficultyValue = totalDifficulty / results.length;
+      }
+      document.getElementById('avgDifficulty').textContent = '⭐'.repeat(Math.round(avgDifficultyValue)) || 'N/A';
+      
+      const totalAttempts = results.reduce((sum, q) =>
+sum + (q.attempts || 0), 0);
+      document.getElementById('myAttempts').textContent = totalAttempts;
+
+      const totalCorrect = results.reduce((sum, q) =>
+{
+        const answers = userAnswers[q.id] || [];
+        return sum + answers.filter(a =>
+a.isCorrect).length;
+      }, 0);
+      const myAccuracy = totalAttempts >
+0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+      document.getElementById('myAccuracy').textContent = `${myAccuracy}%`;
+    }
+
+    // 결과 표시
+    function displayResults(results) {
+      const resultsContainer = document.getElementById('resultsContainer');
+      const noResults = document.getElementById('noResults');
+      const resultCount = document.getElementById('resultCount');
+      
+      resultCount.textContent = `(${results.length}개)`;
+      
+      if (results.length === 0) {
+        resultsContainer.style.display = 'none';
+        noResults.style.display = 'block';
+        return;
+      }
+      
+      resultsContainer.style.display = 'block';
+      noResults.style.display = 'none';
+      
+      // 활성화된 뷰 확인
+      const activeView = document.querySelector('.view-btn.active').dataset.view;
+      
+      if (activeView === 'table') {
+        displayTableView(results);
+      } else if (activeView === 'grid') {
+        displayGridView(results);
+      }
+    }
+    
+    // 테이블 뷰 표시
+    function displayTableView(results) {
+      const tbody = document.getElementById('resultsBody');
+      if (!tbody) return;
+      
+      tbody.innerHTML = '';
+
+      results.forEach(q =>
+{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+<td>${q.id || 'N/A'}</td>
+<td>${q.subject || 'N/A'}</td>
+<td>${q.category || 'N/A'}</td>
+<td>
+<span class="difficulty-badge difficulty-${diffScore(q.difficulty)}">${q.difficulty || 'N/A'}</span>
+</td>
+<td>${q.importance || 'N/A'}</td>
+<td>${q.attempts || 0}</td>
+<td>${q.accuracy || 0}%</td>
+<td>${q.avgTime || 0}초</td>
+<td>
+<div style="display: flex; gap: 5px;">
+<button class="favorite-btn" onclick="toggleFavorite('${q.id}')" id="fav-${q.id}">
+${isFavorite(q.id) ? '❤️' : '🤍'}
+</button>
+<a href="gsg.html?question=${q.id}" target="_blank" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">문제 보기</a>
+</div>
+</td>
+`;
+        tbody.appendChild(tr);
+      });
+    }
+    
+    // 그리드 뷰 표시
+    function displayGridView(results) {
+      const grid = document.getElementById('resultsGrid');
+      if (!grid) return;
+      
+      grid.innerHTML = '';
+
+      results.forEach(q =>
+{
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        card.innerHTML = `
+<div class="card-header">
+<div class="card-title">${q.id || 'N/A'}</div>
+<div class="card-actions">
+<button class="favorite-btn" onclick="toggleFavorite('${q.id}')" id="fav-${q.id}">
+${isFavorite(q.id) ? '❤️' : '🤍'}
+</button>
+<a href="gsg.html?question=${q.id}" target="_blank" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">문제 보기</a>
+</div>
+</div>
+<div class="card-content">
+<div class="card-item">
+<div class="card-label">과목</div>
+<div class="card-value">${q.subject || 'N/A'}</div>
+</div>
+<div class="card-item">
+<div class="card-label">분류</div>
+<div class="card-value">${q.category || 'N/A'}</div>
+</div>
+<div class="card-item">
+<div class="card-label">난이도</div>
+<div class="card-value">
+<span class="difficulty-badge difficulty-${diffScore(q.difficulty)}">${q.difficulty || 'N/A'}</span>
+</div>
+</div>
+<div class="card-item">
+<div class="card-label">중요도</div>
+<div class="card-value">${q.importance || 'N/A'}</div>
+</div>
+<div class="card-item">
+<div class="card-label">총 시도 횟수</div>
+<div class="card-value">${q.attempts || 0}</div>
+</div>
+<div class="card-item">
+<div class="card-label">총 정답률</div>
+<div class="card-value">${q.accuracy || 0}%</div>
+</div>
+</div>
+`;
+        grid.appendChild(card);
+      });
+    }
+
+    // 즐겨찾기 토글
+    window.resetFilters = function() {
+      document.querySelectorAll('.filter-input').forEach(el =>
+el.value = '');
+      document.querySelectorAll('.quick-filter').forEach(filter =>
+filter.classList.remove('active'));
+      document.querySelector('.quick-filter[data-filter="all"]').classList.add('active');
+      
+      document.getElementById('resultsContainer').style.display = 'none';
+      document.getElementById('statsSection').style.display = 'none';
+      document.getElementById('noResults').style.display = 'none';
+      
+      updateCategoryFilters();
+    }
+    
+    // 즐겨찾기 토글
+    window.toggleFavorite = async function(questionId) {
+      try {
+        const favoriteBtn = document.getElementById(`fav-${questionId}`);
+        const isCurrentlyFavorite = isFavorite(questionId);
+        
+        if (isCurrentlyFavorite) {
+          // 즐겨찾기 제거
+          await removeFromFavorites(questionId);
+          favoriteBtn.textContent = '🤍';
+          favoriteBtn.classList.remove('favorited');
+          showSuccess('즐겨찾기에서 제거되었습니다.');
+        } else {
+          // 즐겨찾기 추가
+          await addToFavorites(questionId);
+          favoriteBtn.textContent = '❤️';
+          favoriteBtn.classList.add('favorited');
+          showSuccess('즐겨찾기에 추가되었습니다.');
+        }
+      } catch (error) {
+        console.error('즐겨찾기 토글 중 오류:', error);
+        showError('즐겨찾기 토글 중 오류가 발생했습니다.');
+      }
+    }
+    
+    // 즐겨찾기 확인
+    function isFavorite(questionId) {
+      try {
+        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        return favorites.includes(questionId);
+      } catch (error) {
+        console.error('즐겨찾기 확인 중 오류:', error);
+        return false;
+      }
+    }
+    
+    // 즐겨찾기 추가
+    async function addToFavorites(questionId) {
+      try {
+        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        if (!favorites.includes(questionId)) {
+          favorites.push(questionId);
+          localStorage.setItem('favorites', JSON.stringify(favorites));
+          
+          // Firebase 추가
+          if (currentUser) {
+            try {
+              await addDoc(collection(db, "favorites"), {
+                userId: currentUser.uid,
+                questionId: questionId,
+                timestamp: serverTimestamp()
+              });
+            } catch (error) {
+              console.error('Firebase 추가 중 오류:', error);
+              // Firebase 오류 처리
+            }
+          }
+        }
+      } catch (error) {
+        console.error('즐겨찾기 추가 중 오류:', error);
+        throw error;
+      }
+    }
+    
+    // 즐겨찾기 제거
+    async function removeFromFavorites(questionId) {
+      try {
+        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        const updatedFavorites = favorites.filter(fav =>
+fav !== questionId);
+        localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+        
+        // Firebase 제거
+        if (currentUser) {
+          try {
+            const q = query(
+              collection(db, "favorites"),
+              where("userId", "==", currentUser.uid),
+              where("questionId", "==", questionId)
+            );
+            const snapshot = await getDocs(q);
+            snapshot.forEach(async (doc) =>
+{
+              await deleteDoc(doc.ref);
+            });
+          } catch (error) {
+            console.error('Firebase 제거 중 오류:', error);
+            // Firebase 오류 처리
+          }
+        }
+      } catch (error) {
+        console.error('즐겨찾기 제거 중 오류:', error);
+        throw error;
+      }
+    }
+    
+    // 고급 필터 적용
+    function performAdvancedFilterSearch() {
+      try {
+        showLoading();
+        
+        // 학습 상태 설정
+        const learningStatus = {
+          solvedCorrect: document.getElementById('solvedCorrect').checked,
+          solvedWrong: document.getElementById('solvedWrong').checked,
+          neverAttempted: document.getElementById('neverAttempted').checked,
+          multipleAttempts: document.getElementById('multipleAttempts').checked
+        };
+        
+        // 난이도 범위 설정
+        const difficultyRange = {
+          min: parseInt(document.getElementById('difficultyMin').value),
+          max: parseInt(document.getElementById('difficultyMax').value)
+        };
+        
+        const accuracyRange = {
+          min: parseInt(document.getElementById('accuracyMin').value),
+          max: parseInt(document.getElementById('accuracyMax').value)
+        };
+        
+        const attemptsRange = {
+          min: parseInt(document.getElementById('attemptsMin').value) || 0,
+          max: parseInt(document.getElementById('attemptsMax').value) || 999
+        };
+        
+        // 키워드 검색
+        let keyword = document.getElementById('keywordSearch').value.trim();
+        const exactMatch = document.getElementById('exactMatch').checked;
+        const caseMatch = document.getElementById('caseMatch').checked;
+        
+        // 필터링
+        let filteredQuestions = questionsData.filter(question =>
+{
+          // 난이도 확인
+          const d = diffScore(question.difficulty);
+          if (d < difficultyRange.min || d > difficultyRange.max) {
+            return false;
+          }
+          
+          // 답변 확인
+          const userAnswer = userAnswers[question.id];
+          const hasAttempted = userAnswer && userAnswer.length >
+0;
+          const isCorrect = hasAttempted && userAnswer.some(a =>
+a.isCorrect);
+          const isWrong = hasAttempted && !isCorrect;
+          const attemptCount = hasAttempted ? userAnswer.length : 0;
+          
+          // 정확도 확인
+          let accuracy = 0;
+          if (hasAttempted) {
+            const correctCount = userAnswer.filter(a =>
+a.isCorrect).length;
+            accuracy = (correctCount / userAnswer.length) * 100;
+          }
+          
+          // 학습 상태 확인
+          if (learningStatus.solvedCorrect && !isCorrect) return false;
+          if (learningStatus.solvedWrong && !isWrong) return false;
+          if (learningStatus.neverAttempted && hasAttempted) return false;
+          if (learningStatus.multipleAttempts && attemptCount
+<= 1) return false;
+          
+          // 정확도 범위 확인
+          if (hasAttempted && (accuracy
+< accuracyRange.min || accuracy >
+accuracyRange.max)) {
+            return false;
+          }
+          
+          // 시도 횟수 범위 확인
+          if (attemptCount
+< attemptsRange.min || attemptCount >
+attemptsRange.max) {
+            return false;
+          }
+          
+          // 키워드 검색
+          if (keyword) {
+            let searchText = `${question.title || ''} ${question.content || ''}`;
+            if (!caseMatch) {
+              searchText = searchText.toLowerCase();
+              keyword = keyword.toLowerCase();
+            }
+            if (exactMatch) {
+              if (!searchText.includes(keyword)) return false;
+            } else {
+              const keywords = keyword.split(' ').filter(k => k.length > 0);
+              if (!keywords.some(k => searchText.includes(k))) return false;
+            }
+          }
+          
+          return true;
+        });
+        
+        searchResults = filteredQuestions;
+        displayResults(filteredQuestions);
+        displayStats(filteredQuestions);
+        showSuccess(`고급 필터링된 문제 ${filteredQuestions.length}개 찾음`);
+        
+      } catch (error) {
+        console.error('고급 필터링 중 오류:', error);
+        showError('고급 필터링 중 오류가 발생했습니다.');
+      } finally {
+        hideLoading();
+      }
+    }
+    
+    function resetAdvancedFilters() {
+      // 학습 상태 초기화
+      document.getElementById('solvedCorrect').checked = false;
+      document.getElementById('solvedWrong').checked = false;
+      document.getElementById('neverAttempted').checked = false;
+      document.getElementById('multipleAttempts').checked = false;
+      
+      // 난이도 범위 초기화
+      document.getElementById('difficultyMin').value = 1;
+      document.getElementById('difficultyMax').value = 5;
+      document.getElementById('accuracyMin').value = 0;
+      document.getElementById('accuracyMax').value = 100;
+      
+      // 시도 횟수 범위 초기화
+      document.getElementById('attemptsMin').value = '';
+      document.getElementById('attemptsMax').value = '';
+      
+      // 키워드 검색 초기화
+      document.getElementById('keywordSearch').value = '';
+      document.getElementById('exactMatch').checked = false;
+      document.getElementById('caseMatch').checked = false;
+      
+      // 난이도 범위 조정
+      updateRangeValues();
+      showSuccess('고급 필터 설정이 초기화되었습니다.');
+    }
+    
+    function saveAdvancedPreset() {
+      const preset = {
+        learningStatus: {
+          solvedCorrect: document.getElementById('solvedCorrect').checked,
+          solvedWrong: document.getElementById('solvedWrong').checked,
+          neverAttempted: document.getElementById('neverAttempted').checked,
+          multipleAttempts: document.getElementById('multipleAttempts').checked
+        },
+        ranges: {
+          difficultyMin: document.getElementById('difficultyMin').value,
+          difficultyMax: document.getElementById('difficultyMax').value,
+          accuracyMin: document.getElementById('accuracyMin').value,
+          accuracyMax: document.getElementById('accuracyMax').value,
+          attemptsMin: document.getElementById('attemptsMin').value,
+          attemptsMax: document.getElementById('attemptsMax').value
+        },
+        keyword: {
+          text: document.getElementById('keywordSearch').value,
+          exactMatch: document.getElementById('exactMatch').checked,
+          caseMatch: document.getElementById('caseMatch').checked
+        }
+      };
+      
+      localStorage.setItem('advancedSearchPreset', JSON.stringify(preset));
+      showSuccess('고급 필터 설정이 저장되었습니다.');
+    }
+    
+    // 최근 문제 분석
+    function analyzeWeaknesses() {
+      try {
+        const results = document.getElementById('weaknessResults');
+        results.innerHTML = '최근 문제 분석 중...';
+        
+        if (Object.keys(userAnswers).length === 0) {
+          results.innerHTML = '최근 문제 분석 중 오류가 발생했습니다. 문제 데이터를 확인해주세요.';
+          return;
+        }
+        
+        // 카테고리별 통계 계산
+        const categoryStats = {};
+        
+        Object.entries(userAnswers).forEach(([questionId, answers]) =>
+{
+          const question = questionsData.find(q =>
+q.id === questionId);
+          if (!question || !question.middleCategory) return;
+          
+          const category = question.middleCategory
+          if (!categoryStats[category]) {
+            categoryStats[category] = { total: 0, correct: 0 };
+          }
+          
+          categoryStats[category].total += answers.length;
+          categoryStats[category].correct += answers.filter(a =>
+a.isCorrect).length;
+        });
+        
+        // 카테고리별 약점 찾기
+        const weaknesses = Object.entries(categoryStats)
+          .map(([category, stats]) =>
+({
+            category,
+            accuracy: stats.total >
+0 ? (stats.correct / stats.total * 100) : 0,
+            attempts: stats.total
+          }))
+          .filter(item =>
+item.attempts >= 3) // 3번 이상 시도한 문제
+          .sort((a, b) =>
+a.accuracy - b.accuracy)
+          .slice(0, 3);
+        
+        if (weaknesses.length === 0) {
+          results.innerHTML = '최근 문제 분석 중 오류가 발생했습니다. 문제 데이터를 확인해주세요.';
+        } else {
+          results.innerHTML = `
+<strong>최근 문제 분석:</strong>
+<br>
+${weaknesses.map(w =>
+`${w.category}: ${w.accuracy.toFixed(1)}% (${w.attempts}번 시도)`
+            ).join('<br>')}
+<br>
+<br>
+<em>최근 문제 분석 결과를 통해 약점을 파악하세요!</em>
+`;
+        }
+        
+      } catch (error) {
+        console.error('최근 문제 분석 중 오류:', error);
+        document.getElementById('weaknessResults').innerHTML = '최근 문제 분석 중 오류가 발생했습니다.';
+      }
+    }
+    
+    function analyzeStudyPattern() {
+      try {
+        const results = document.getElementById('patternResults');
+        results.innerHTML = '학습 패턴 분석 중...';
+        
+        if (Object.keys(userAnswers).length === 0) {
+          results.innerHTML = '학습 패턴 분석 중 오류가 발생했습니다. 문제 데이터를 확인해주세요.';
+          return;
+        }
+        
+        // 최근 답변 분석
+        const timePatterns = {};
+        let totalAnswers = 0;
+        let totalCorrect = 0;
+        
+        Object.values(userAnswers).forEach(answers =>
+{
+          answers.forEach(answer =>
+{
+            if (answer.submittedAt) {
+              const hour = new Date(answer.submittedAt).getHours();
+              const timeSlot = hour
+< 6 ? '초기' : 
+                             hour
+< 12 ? '중반' : 
+                             hour
+< 18 ? '후반' : '종료';
+              
+              if (!timePatterns[timeSlot]) {
+                timePatterns[timeSlot] = { total: 0, correct: 0 };
+              }
+              
+              timePatterns[timeSlot].total++;
+              if (answer.isCorrect) {
+                timePatterns[timeSlot].correct++;
+                totalCorrect++;
+              }
+              totalAnswers++;
+            }
+          });
+        });
+        
+        // 최적 학습 시간대 찾기
+        const bestTimeSlot = Object.entries(timePatterns)
+          .map(([timeSlot, stats]) =>
+({
+            timeSlot,
+            accuracy: stats.total >
+0 ? (stats.correct / stats.total * 100) : 0,
+            count: stats.total
+          }))
+          .filter(item =>
+item.count >= 5) // 5번 이상 시도한 문제
+          .sort((a, b) =>
+b.accuracy - a.accuracy)[0];
+        
+        const overallAccuracy = totalAnswers >
+0 ? (totalCorrect / totalAnswers * 100) : 0;
+        
+        results.innerHTML = `
+<strong>학습 패턴 분석:</strong>
+<br>
+최근 문제 정확도: ${overallAccuracy.toFixed(1)}%<br>
+${bestTimeSlot ? 
+            `최적 학습 시간대: ${bestTimeSlot.timeSlot} (${bestTimeSlot.accuracy.toFixed(1)}%)` :
+            '최적 학습 시간대를 찾을 수 없습니다.'
+          }<br>
+<br>
+<em>${bestTimeSlot ? `${bestTimeSlot.timeSlot} 학습 시간대에서 가장 효율적인 학습 방법을 찾아봅니다.` : '최적 학습 시간대를 찾는 방법을 알아봅니다.'}</em>
+`;
+        
+      } catch (error) {
+        console.error('학습 패턴 분석 중 오류:', error);
+        document.getElementById('patternResults').innerHTML = '학습 패턴 분석 중 오류가 발생했습니다.';
+      }
+    }
+    
+    function getRecommendations() {
+      try {
+        const results = document.getElementById('recommendationResults');
+        results.innerHTML = '추천 문제 분석 중...';
+        
+        // 약점 보완 및 실력 향상을 위한 추천 문제 찾기
+        analyzeWeaknesses(); // 최근 문제 분석
+        
+        setTimeout(() =>
+{
+          const recommendations = questionsData
+            .filter(q =>
+{
+              const userAnswer = userAnswers[q.id];
+              // 정답 유무 확인
+              return !userAnswer || !userAnswer.some(a =>
+a.isCorrect);
+            })
+            .sort(() =>
+Math.random() - 0.5) // 무작위 섞기
+            .slice(0, 5); // 5개 문제 선택
+          
+          if (recommendations.length === 0) {
+            results.innerHTML = '추천 문제를 찾을 수 없습니다. 문제 데이터를 확인해주세요.';
+          } else {
+            results.innerHTML = `
+<strong>추천 문제 (${recommendations.length}개):</strong>
+<br>
+${recommendations.map(q =>
+`${q.id}: ${q.middleCategory || '미제공'} (${q.difficulty || '?'})`
+              ).join('<br>')}
+<br>
+<br>
+<button class="btn btn-sm btn-primary" onclick="startRecommendedProblems()">
+추천 문제 시작
+</button>
+`;
+          }
+        }, 1000);
+        
+      } catch (error) {
+        console.error('추천 문제 분석 중 오류:', error);
+        document.getElementById('recommendationResults').innerHTML = '추천 문제 분석 중 오류가 발생했습니다.';
+      }
+    }
+    
+    function predictAchievement() {
+      try {
+        const results = document.getElementById('predictionResults');
+        results.innerHTML = '성취도 예측 중...';
+        
+        if (Object.keys(userAnswers).length
+< 10) {
+          results.innerHTML = '성취도 예측 중 오류가 발생했습니다. 문제 데이터를 확인해주세요.';
+          return;
+        }
+        
+        // 최근 답변 분석
+        const recentAnswers = Object.values(userAnswers)
+          .flat()
+          .filter(a =>
+a.submittedAt)
+          .sort((a, b) =>
+new Date(b.submittedAt) - new Date(a.submittedAt))
+          .slice(0, 20); // 최근 20개 답변
+        
+        if (recentAnswers.length
+< 5) {
+          results.innerHTML = '성취도 예측 중 오류가 발생했습니다. 문제 데이터를 확인해주세요.';
+          return;
+        }
+        
+        const recentAccuracy = (recentAnswers.filter(a =>
+a.isCorrect).length / recentAnswers.length) * 100;
+        const totalQuestions = questionsData.length;
+        const solvedQuestions = Object.keys(userAnswers).filter(id =>
+userAnswers[id].some(a =>
+a.isCorrect)
+        ).length;
+        
+        const remainingQuestions = totalQuestions - solvedQuestions;
+        const currentProgress = (solvedQuestions / totalQuestions) * 100;
+        
+        // 예상 성취도 계산
+        const avgDailyQuestions = recentAnswers.length / 7; // 최근 7일 평균 문제 수
+        const estimatedDays = remainingQuestions / Math.max(avgDailyQuestions, 1);
+        
+        results.innerHTML = `
+<strong>성취도 예측:</strong>
+<br>
+최근 문제 정확도: ${currentProgress.toFixed(1)}% (${solvedQuestions}/${totalQuestions})<br>
+최근 문제 정답률: ${recentAccuracy.toFixed(1)}%<br>
+남은 문제: ${remainingQuestions}개<br>
+<br>
+예상 완료 일자: ${Math.ceil(estimatedDays)}일<br>
+<em>(최근 문제 풀이 평균 소요 시간: ${avgDailyQuestions}문제/일)</em>
+`;
+        
+      } catch (error) {
+        console.error('성취도 예측 중 오류:', error);
+        document.getElementById('predictionResults').innerHTML = '성취도 예측 중 오류가 발생했습니다.';
+      }
+    }
+    
+    function startRecommendedProblems() {
+      // 추천 문제 시작
+      window.open('gsg.html', '_blank');
+    }
+    
+    // 난이도 범위 조정
+    function updateRangeValues() {
+      document.getElementById('difficultyMinValue').textContent = document.getElementById('difficultyMin').value;
+      document.getElementById('difficultyMaxValue').textContent = document.getElementById('difficultyMax').value;
+      document.getElementById('accuracyMinValue').textContent = document.getElementById('accuracyMin').value;
+      document.getElementById('accuracyMaxValue').textContent = document.getElementById('accuracyMax').value;
+    }
+    
+    // 난이도 범위 조정 이벤트 리스너
+    document.addEventListener('DOMContentLoaded', function() {
+      // 난이도 범위 조정
+      document.getElementById('difficultyMin')?.addEventListener('input', updateRangeValues);
+      document.getElementById('difficultyMax')?.addEventListener('input', updateRangeValues);
+      document.getElementById('accuracyMin')?.addEventListener('input', updateRangeValues);
+      document.getElementById('accuracyMax')?.addEventListener('input', updateRangeValues);
+    });
+
+    // 뒤로가기
+    window.goBack = function() {
+      window.history.back();
+    }
+</script>
+</body>
+</html>
+

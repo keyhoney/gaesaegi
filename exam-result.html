@@ -1,0 +1,850 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>모의고사 결과</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>📊</text>
+</svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="result-container">
+<div class="result-header">
+<h1>모의고사 결과</h1>
+<p>시험 결과를 확인하고 취약점을 분석해보세요.</p>
+</div>
+<div class="result-summary">
+<div class="summary-card">
+<h2>총점</h2>
+<p>
+<span id="totalScore" class="score-highlight">0</span>
+/ 100</p>
+</div>
+<div class="summary-card">
+<h2>정답률</h2>
+<p id="accuracy" class="score-highlight">0%</p>
+</div>
+<div class="summary-card">
+<h2>맞은 문제</h2>
+<p>
+<span id="correctCount">0</span>
+/
+<span id="totalCount">0</span>
+</p>
+</div>
+<div class="summary-card" id="pointRewardCard" style="display: none;">
+<h2>포인트 획득</h2>
+<p>
+<span id="pointReward" class="score-highlight">0</span>
+포인트</p>
+</div>
+</div>
+<div class="result-details">
+<h2>상세 결과</h2>
+<div id="resultTableContainer">
+<table class="result-table">
+<thead>
+<tr>
+<th>번호</th>
+<th>답안</th>
+<th>정답</th>
+<th>결과</th>
+<th>소요 시간</th>
+<th>다시 풀기</th>
+</tr>
+</thead>
+<tbody id="resultTableBody">
+<!-- 결과가 동적으로 추가됩니다 -->
+</tbody>
+</table>
+</div>
+</div>
+<div class="result-actions">
+<button class="btn btn-primary" onclick="startNewExam()">새 모의고사</button>
+<button class="btn btn-secondary" onclick="goToMain()">메인으로</button>
+<button class="btn btn-accent" onclick="shareResult()">결과 공유</button>
+</div>
+<!-- 취약점 분석 섹션 -->
+<div class="analysis-section" id="analysisSection" style="display: none;">
+<h2>취약점 분석</h2>
+<div class="analysis-grid">
+<div class="analysis-card">
+<h3>강점 영역</h3>
+<div id="strengthAreas">
+<!-- 강점 영역이 표시됩니다-->
+</div>
+</div>
+<div class="analysis-card">
+<h3>취약 영역</h3>
+<div id="weaknessAreas">
+<!-- 취약 영역이 표시됩니다-->
+</div>
+</div>
+</div>
+</div>
+<!-- 학습 추천 섹션 -->
+<div class="recommendation-section" id="recommendationSection" style="display: none;">
+<h2>학습 추천</h2>
+<div class="recommendation-grid">
+<div class="recommendation-card">
+<div class="recommendation-icon">📝</div>
+<h3>오답 노트 생성</h3>
+<p>틀린 문제들을 모아서 오답 노트를 만들어보세요.</p>
+<button class="btn btn-outline" onclick="createWrongAnswerNote()">오답 노트 만들기</button>
+</div>
+<div class="recommendation-card">
+<div class="recommendation-icon">🎯</div>
+<h3>취약점 보완 학습</h3>
+<p>틀린 문제 유형별로 학습을 추천해드립니다.</p>
+<button class="btn btn-outline" onclick="startWeaknessStudy()">취약점 학습 시작</button>
+</div>
+<div class="recommendation-card">
+<div class="recommendation-icon">🎉</div>
+<h3>성장 목표 설정</h3>
+<p>현재 점수를 기준으로 목표 점수를 설정하고 성장 목표를 달성해보세요.</p>
+<button class="btn btn-outline" onclick="setImprovementGoal()">성장 목표 설정</button>
+</div>
+</div>
+</div>
+<!-- 학습 기록 섹션 -->
+<div class="history-section" id="historySection" style="display: none;">
+<h2>학습 기록</h2>
+<div class="history-chart">
+<canvas id="scoreChart" width="400" height="200">
+</canvas>
+</div>
+<div class="history-stats">
+<div class="stat-item">
+<span class="stat-label">최고 점수</span>
+<span class="stat-value" id="highestScore">0</span>
+</div>
+<div class="stat-item">
+<span class="stat-label">평균 점수</span>
+<span class="stat-value" id="averageScore">0</span>
+</div>
+<div class="stat-item">
+<span class="stat-label">시험 횟수</span>
+<span class="stat-value" id="examCount">0</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 로딩 오버레이 -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+<div class="loading-spinner">
+</div>
+</div>
+<!-- 결과 공유 모달 -->
+<div id="shareModal" class="modal" style="display: none;">
+<div class="modal-content">
+<div class="modal-header">
+<h3>결과 공유</h3>
+<button class="modal-close" onclick="closeShareModal()">&times;</button>
+</div>
+<div class="modal-body">
+<div class="share-options">
+<button class="share-btn" onclick="shareToKakao()">
+<span class="share-icon">💬</span>
+카카오톡 공유
+</button>
+<button class="share-btn" onclick="shareToSNS()">
+<span class="share-icon">👍</span>
+SNS 공유
+</button>
+<button class="share-btn" onclick="copyToClipboard()">
+<span class="share-icon">📋</span>
+결과 복사
+</button>
+</div>
+</div>
+</div>
+</div>
+<script type="module">
+import { getFirebaseApp, getFirebaseAuth, getFirebaseDb } from './script.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        // Firebase 초기화 (재사용)
+        const app = await getFirebaseApp();
+        const auth = await getFirebaseAuth();
+        const db = await getFirebaseDb();
+
+        // 현재 사용자 정보
+        let currentUser = null;
+        let examResults = null;
+
+        // 로딩 표시
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // 메시지 표시
+        function showMessage(message, type = 'success') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `${type}-message`;
+            messageDiv.textContent = message;
+            
+            const container = document.querySelector('.result-container');
+            container.insertBefore(messageDiv, container.firstChild);
+            
+            setTimeout(() =>
+{
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // 에러 처리
+        function handleError(error, userMessage = '문제가 발생했습니다.') {
+            console.error('Error:', error);
+            showMessage(userMessage, 'error');
+            hideLoading();
+        }
+
+        // 시험 결과 가져오기
+        function getExamResults() {
+            try {
+                const results = JSON.parse(sessionStorage.getItem('examResults'));
+                if (!results || !Array.isArray(results)) {
+                    throw new Error('시험 결과를 찾을 수 없습니다.');
+                }
+                return results;
+            } catch (error) {
+                throw new Error('시험 결과 데이터가 손상되었습니다.');
+            }
+        }
+
+        // 포인트 계산
+        function calculatePointReward(score) {
+            if (score >= 90) return 200;
+            else if (score >= 80) return 150;
+            else if (score >= 70) return 100;
+            else if (score >= 60) return 50;
+            else return 20; // 최하 포인트
+        }
+
+        // 개선 보너스 계산
+        async function calculateImprovementBonus(score) {
+            try {
+                if (!currentUser) return 0;
+                
+                const userDocRef = doc(db, "userProfiles", currentUser.uid);
+                const userDoc = await getDoc(userDocRef);
+                
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    const previousScore = userData.lastExamScore || 0;
+                    const improvement = score - previousScore;
+                    
+                    if (improvement >= 20) return 100;
+                    else if (improvement >= 10) return 50;
+                    else return 0;
+                }
+                return 0;
+            } catch (error) {
+                console.error("개선 보너스 계산 중 오류:", error);
+                return 0;
+            }
+        }
+
+        // 포인트 추가
+        async function addPoints(amount, reason, score) {
+            try {
+                if (!currentUser) throw new Error('포인트를 추가할 수 없습니다.');
+                
+                const userDocRef = doc(db, "userProfiles", currentUser.uid);
+                const userSnap = await getDoc(userDocRef);
+                const prevData = userSnap.exists() ? userSnap.data() : {};
+                const currentPoints = prevData.points || 0;
+                const newPoints = currentPoints + amount;
+
+                await setDoc(userDocRef, {
+                    points: newPoints,
+                    lastExamScore: score,
+                    lastExamDate: serverTimestamp()
+                }, { merge: true });
+                
+                // 포인트 거래 기록 추가
+                const transactionData = {
+                    userId: currentUser.uid,
+                    type: "earn",
+                    amount: amount,
+                    reason: reason,
+                    timestamp: serverTimestamp()
+                };
+                
+                await addDoc(collection(db, "point_transactions"), transactionData);
+                
+                return newPoints;
+            } catch (error) {
+                console.error("포인트 추가 중 오류:", error);
+                throw error;
+            }
+        }
+
+        async function saveExamHistory(score) {
+            try {
+                if (!currentUser) return;
+                const userDocRef = doc(db, "userProfiles", currentUser.uid);
+                await setDoc(userDocRef, {
+                    examHistory: arrayUnion({
+                        score,
+                        total: examResults.length,
+                        correct: examResults.filter(r => r.isCorrect).length,
+                        createdAt: serverTimestamp()
+                    })
+                }, { merge: true });
+            } catch (error) {
+                console.error('시험 이력 저장 중 오류:', error);
+            }
+        }
+
+        // 결과 표시
+        async function displayResults() {
+            try {
+                showLoading();
+                
+                const totalQuestions = examResults.length;
+                const correctQuestions = examResults.filter(r =>
+r.isCorrect).length;
+                const accuracy = totalQuestions >
+0 ? Math.round((correctQuestions / totalQuestions) * 100) : 0;
+                const score = Math.round((correctQuestions / totalQuestions) * 100);
+
+                document.getElementById('totalScore').textContent = score;
+                document.getElementById('accuracy').textContent = `${accuracy}%`;
+                document.getElementById('correctCount').textContent = correctQuestions;
+                document.getElementById('totalCount').textContent = totalQuestions;
+
+                // 포인트 획득
+                if (currentUser) {
+                    const baseReward = calculatePointReward(score);
+                    const improvementBonus = await calculateImprovementBonus(score);
+                    const totalReward = baseReward + improvementBonus;
+
+                    if (totalReward >
+0) {
+                        document.getElementById('pointReward').textContent = totalReward;
+                        document.getElementById('pointRewardCard').style.display = 'block';
+                        
+                        // 포인트 추가
+                        try {
+                            await addPoints(totalReward, `모의고사 완료 (${score}점)`, score);
+                            showMessage(`모의고사 완료! ${totalReward}포인트를 획득했습니다!`);
+                        } catch (error) {
+                            console.error("포인트 추가 중 오류:", error);
+                            showMessage("포인트 추가에 실패했습니다.", 'error');
+                        }
+                    }
+                }
+
+                // 상세 결과 테이블 표시
+                const tableBody = document.getElementById('resultTableBody');
+                tableBody.innerHTML = '';
+                
+                examResults.forEach((result, index) =>
+{
+                    const row = document.createElement('tr');
+                    row.className = result.isCorrect ? 'correct-row' : 'incorrect-row';
+                    
+                    const statusClass = result.isCorrect ? 'correct' : 'incorrect';
+                    const statusText = result.isCorrect ? '정답' : '오답';
+                    
+                    row.innerHTML = `
+<td>${index + 1}</td>
+<td>${result.userAnswer ?? '-'}</td>
+<td>${result.correctAnswer}</td>
+<td><span class="result-status ${statusClass}">${statusText}</span></td>
+<td>${Number.isFinite(result.solvingTime) ? `${result.solvingTime}초` : '-'}</td>
+<td><button class="btn-retry" onclick="retryQuestion('${result.questionNumber}')">다시 풀기</button></td>
+`;
+                    tableBody.appendChild(row);
+                });
+
+                // 취약점 분석 및 학습 기록 로드
+                await analyzeResults();
+                await saveExamHistory(score);
+                await loadExamHistory();
+                showRecommendations();
+
+                hideLoading();
+            } catch (error) {
+                handleError(error, '결과를 표시할 수 없습니다.');
+            }
+        }
+
+        // 문제 다시 풀기
+        window.retryQuestion = function(questionNumber) {
+            try {
+                window.open(`gsg.html?question=${encodeURIComponent(questionNumber)}`, '_blank');
+            } catch (error) {
+                handleError(error, '문제를 다시 풀 수 없습니다.');
+            }
+        }
+
+        window.startNewExam = function() {
+            try {
+                window.location.href = 'mock-exam.html';
+            } catch (error) {
+                handleError(error, '새 모의고사를 시작할 수 없습니다.');
+            }
+        }
+
+        window.goToMain = function() {
+            try {
+                window.location.href = 'gsg.html';
+            } catch (error) {
+                handleError(error, '메인으로 돌아갈 수 없습니다.');
+            }
+        }
+
+        window.shareResult = function() {
+            try {
+                document.getElementById('shareModal').style.display = 'flex';
+            } catch (error) {
+                handleError(error, '결과를 공유할 수 없습니다.');
+            }
+        }
+
+        window.closeShareModal = function() {
+            try {
+                document.getElementById('shareModal').style.display = 'none';
+            } catch (error) {
+                handleError(error, '결과 공유 모달을 닫을 수 없습니다.');
+            }
+        }
+
+        window.shareToKakao = function() {
+            try {
+                const score = document.getElementById('totalScore').textContent;
+                const accuracy = document.getElementById('accuracy').textContent;
+                const shareText = `모의고사 결과: ${score}점 (${accuracy})`;
+                
+                // 카카오톡 공유 (카카오 SDK 사용)
+                if (window.Kakao) {
+                    window.Kakao.Link.sendDefault({
+                        objectType: 'text',
+                        text: shareText,
+                        link: {
+                            mobileWebUrl: window.location.href,
+                            webUrl: window.location.href
+                        }
+                    });
+                } else {
+                    // 대체 방법: URL 파라미터 사용
+                    const kakaoUrl = `kakaotalk://send?text=${encodeURIComponent(shareText)}`;
+                    window.open(kakaoUrl, '_blank');
+                }
+                
+                showMessage('카카오톡으로 결과를 공유했습니다.');
+                closeShareModal();
+            } catch (error) {
+                handleError(error, '카카오톡 공유에 실패했습니다.');
+            }
+        }
+
+        window.shareToSNS = function() {
+            try {
+                const score = document.getElementById('totalScore').textContent;
+                const accuracy = document.getElementById('accuracy').textContent;
+                const shareText = `모의고사 결과: ${score}점 (${accuracy})`;
+                
+                if (navigator.share) {
+                    navigator.share({
+                        title: '모의고사 결과',
+                        text: shareText,
+                        url: window.location.href
+                    });
+                } else {
+                    // 대체 방법: 트위터 공유 URL
+                    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}`;
+                    window.open(shareUrl, '_blank');
+                }
+                
+                showMessage('SNS에 결과를 공유했습니다.');
+                closeShareModal();
+            } catch (error) {
+                handleError(error, 'SNS 공유에 실패했습니다.');
+            }
+        }
+
+        window.copyToClipboard = function() {
+            try {
+                const score = document.getElementById('totalScore').textContent;
+                const accuracy = document.getElementById('accuracy').textContent;
+                const shareText = `모의고사 결과: ${score}점 (${accuracy})`;
+                
+                navigator.clipboard.writeText(shareText).then(() =>
+{
+                    showMessage('결과를 복사했습니다.');
+                    closeShareModal();
+                }).catch(() =>
+{
+                    showMessage('결과 복사에 실패했습니다.', 'error');
+                });
+            } catch (error) {
+                handleError(error, '결과 복사에 실패했습니다.');
+            }
+        }
+
+        // 오답 노트 생성
+        window.createWrongAnswerNote = function() {
+            try {
+                const wrongAnswers = examResults.filter(r =>
+!r.isCorrect);
+                if (wrongAnswers.length === 0) {
+                    showMessage('틀린 문제가 없습니다.', 'info');
+                    return;
+                }
+                
+                // 오답 노트 데이터 저장
+                sessionStorage.setItem('wrongAnswerNote', JSON.stringify(wrongAnswers));
+                window.open('note.html?type=wrong-answer', '_blank');
+            } catch (error) {
+                handleError(error, '오답 노트를 생성할 수 없습니다.');
+            }
+        }
+
+        window.startWeaknessStudy = function() {
+            try {
+                const wrongAnswers = examResults.filter(r =>
+!r.isCorrect);
+                if (wrongAnswers.length === 0) {
+                    showMessage('틀린 문제가 없습니다.', 'info');
+                    return;
+                }
+                
+                // 취약점 학습 모드로 이동
+                const weaknessQuestions = wrongAnswers.map(r =>
+r.questionNumber);
+                sessionStorage.setItem('weaknessStudy', JSON.stringify(weaknessQuestions));
+                window.location.href = 'gsg.html?mode=weakness-study';
+            } catch (error) {
+                handleError(error, '취약점 학습을 시작할 수 없습니다.');
+            }
+        }
+
+        window.setImprovementGoal = function() {
+            try {
+                const currentScore = parseInt(document.getElementById('totalScore').textContent);
+                const targetScore = Math.min(100, currentScore + 10);
+                
+                // 성장 목표 저장
+                sessionStorage.setItem('improvementGoal', JSON.stringify({
+                    currentScore: currentScore,
+                    targetScore: targetScore,
+                    date: new Date().toISOString()
+                }));
+                
+                showMessage(`${targetScore}점을 목표로 설정했습니다!`);
+            } catch (error) {
+                handleError(error, '성장 목표를 설정할 수 없습니다.');
+            }
+        }
+
+        // 취약점 분석
+        async function analyzeResults() {
+            try {
+                const correctAnswers = examResults.filter(r =>
+r.isCorrect);
+                const wrongAnswers = examResults.filter(r =>
+!r.isCorrect);
+                
+                // 강점 영역 분석
+                const strengthAreas = analyzeStrengthAreas(correctAnswers);
+                displayStrengthAreas(strengthAreas);
+                
+                // 취약점 영역 분석
+                const weaknessAreas = analyzeWeaknessAreas(wrongAnswers);
+                displayWeaknessAreas(weaknessAreas);
+                
+                // 분석 섹션 표시
+                document.getElementById('analysisSection').style.display = 'block';
+                document.getElementById('analysisSection').classList.add('fade-in');
+                
+            } catch (error) {
+                console.error('취약점 분석 중 오류:', error);
+            }
+        }
+
+        function analyzeStrengthAreas(correctAnswers) {
+            // 문제 유형별 정답률 계산
+            const typeAnalysis = {};
+            
+            correctAnswers.forEach(answer =>
+{
+                const type = answer.questionType || '문제 유형';
+                if (!typeAnalysis[type]) {
+                    typeAnalysis[type] = { count: 0, total: 0 };
+                }
+                typeAnalysis[type].count++;
+            });
+            
+            examResults.forEach(result =>
+{
+                const type = result.questionType || '문제 유형';
+                if (!typeAnalysis[type]) {
+                    typeAnalysis[type] = { count: 0, total: 0 };
+                }
+                typeAnalysis[type].total++;
+            });
+            
+            return Object.entries(typeAnalysis)
+                .filter(([_, data]) =>
+data.total >
+0)
+                .map(([type, data]) =>
+({
+                    type: type,
+                    accuracy: Math.round((data.count / data.total) * 100),
+                    count: data.count,
+                    total: data.total
+                }))
+                .filter(item =>
+item.accuracy >= 70) // 70% 이상 정답률 강점
+                .sort((a, b) =>
+b.accuracy - a.accuracy);
+        }
+
+        function analyzeWeaknessAreas(wrongAnswers) {
+            // 문제 유형별 오답률 계산
+            const typeAnalysis = {};
+            
+            wrongAnswers.forEach(answer =>
+{
+                const type = answer.questionType || '문제 유형';
+                if (!typeAnalysis[type]) {
+                    typeAnalysis[type] = { count: 0, total: 0 };
+                }
+                typeAnalysis[type].count++;
+            });
+            
+            examResults.forEach(result =>
+{
+                const type = result.questionType || '문제 유형';
+                if (!typeAnalysis[type]) {
+                    typeAnalysis[type] = { count: 0, total: 0 };
+                }
+                typeAnalysis[type].total++;
+            });
+            
+            return Object.entries(typeAnalysis)
+                .filter(([_, data]) =>
+data.total >
+0)
+                .map(([type, data]) =>
+({
+                    type: type,
+                    accuracy: Math.round((data.count / data.total) * 100),
+                    count: data.count,
+                    total: data.total
+                }))
+                .filter(item =>
+item.accuracy >
+0) // 오답률이 있는 유형만 표시
+                .sort((a, b) =>
+b.accuracy - a.accuracy);
+        }
+
+        function displayStrengthAreas(strengths) {
+            const container = document.getElementById('strengthAreas');
+            container.innerHTML = '';
+            
+            if (strengths.length === 0) {
+                container.innerHTML = '<p>강점 영역이 없습니다.</p>';
+                return;
+            }
+            
+            strengths.forEach(strength =>
+{
+                const item = document.createElement('div');
+                item.className = 'strength-item';
+                item.innerHTML = `
+<span>${strength.type}</span>
+<span>${strength.accuracy}% (${strength.count}/${strength.total})</span>
+`;
+                container.appendChild(item);
+            });
+        }
+
+        function displayWeaknessAreas(weaknesses) {
+            const container = document.getElementById('weaknessAreas');
+            container.innerHTML = '';
+            
+            if (weaknesses.length === 0) {
+                container.innerHTML = '<p>취약점 영역이 없습니다.</p>';
+                return;
+            }
+            
+            weaknesses.forEach(weakness =>
+{
+                const item = document.createElement('div');
+                item.className = 'weakness-item';
+                item.innerHTML = `
+<span>${weakness.type}</span>
+<span>${weakness.accuracy}% (${weakness.count}/${weakness.total})</span>
+`;
+                container.appendChild(item);
+            });
+        }
+
+        // 학습 기록 로드
+        async function loadExamHistory() {
+            try {
+                if (!currentUser) return;
+                
+                const userDocRef = doc(db, "userProfiles", currentUser.uid);
+                const userDoc = await getDoc(userDocRef);
+                
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    const examHistory = userData.examHistory || [];
+                    
+                    if (examHistory.length >
+0) {
+                        displayExamHistory(examHistory);
+                        document.getElementById('historySection').style.display = 'block';
+                        document.getElementById('historySection').classList.add('fade-in');
+                    }
+                }
+            } catch (error) {
+                console.error('학습 기록 로드 중 오류:', error);
+            }
+        }
+
+        function displayExamHistory(history) {
+            try {
+                const scores = history.map(h =>
+h.score);
+                const highestScore = Math.max(...scores);
+                const averageScore = Math.round(scores.reduce((a, b) =>
+a + b, 0) / scores.length);
+                const examCount = history.length;
+                
+                document.getElementById('highestScore').textContent = highestScore;
+                document.getElementById('averageScore').textContent = averageScore;
+                document.getElementById('examCount').textContent = examCount;
+                
+                // 점수 차트 그리기
+                drawScoreChart(history);
+                
+            } catch (error) {
+                console.error('학습 기록 표시 중 오류:', error);
+            }
+        }
+
+        function drawScoreChart(history) {
+            try {
+                const canvas = document.getElementById('scoreChart');
+                const ctx = canvas.getContext('2d');
+                
+                // 차트 영역 초기화
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                if (history.length
+< 2) {
+                    ctx.fillStyle = '#666';
+                    ctx.font = '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('학습 기록이 부족해 차트를 그릴 수 없습니다.', canvas.width / 2, canvas.height / 2);
+                    return;
+                }
+                
+                // 차트 영역 설정
+                const padding = 20;
+                const chartWidth = canvas.width - padding * 2;
+                const chartHeight = canvas.height - padding * 2;
+                
+                const maxScore = Math.max(...history.map(h =>
+h.score));
+                const minScore = Math.min(...history.map(h =>
+h.score));
+                const scoreRange = maxScore - minScore || 100;
+                
+                ctx.strokeStyle = '#FF6B9D';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                history.forEach((exam, index) =>
+{
+                    const x = padding + (index / (history.length - 1)) * chartWidth;
+                    const y = canvas.height - padding - ((exam.score - minScore) / scoreRange) * chartHeight;
+                    
+                    if (index === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                
+                ctx.stroke();
+                
+                // 점수 표시
+                ctx.fillStyle = '#FF6B9D';
+                ctx.font = '12px Arial';
+                history.forEach((exam, index) =>
+{
+                    const x = padding + (index / (history.length - 1)) * chartWidth;
+                    const y = canvas.height - padding - ((exam.score - minScore) / scoreRange) * chartHeight;
+                    
+                    ctx.fillText(exam.score, x, y - 10);
+                });
+                
+            } catch (error) {
+                console.error('점수 차트 그리기 중 오류:', error);
+            }
+        }
+
+        // 학습 추천 표시
+        function showRecommendations() {
+            try {
+                const wrongAnswers = examResults.filter(r =>
+!r.isCorrect);
+                
+                if (wrongAnswers.length >
+0) {
+                    document.getElementById('recommendationSection').style.display = 'block';
+                    document.getElementById('recommendationSection').classList.add('slide-up');
+                }
+            } catch (error) {
+                console.error('학습 추천 표시 중 오류:', error);
+            }
+        }
+
+        // 인증 상태 변경 감지
+        onAuthStateChanged(auth, async (user) =>
+{
+            currentUser = user;
+            
+            if (!user) {
+                showMessage("로그인이 필요합니다. 로그인 페이지로 이동합니다.", 'error');
+                setTimeout(() =>
+{
+                    window.location.href = "index.html";
+                }, 2000);
+                return;
+            }
+            
+            try {
+                examResults = getExamResults();
+                await displayResults();
+                // await analyzeResults(); // 결과 표시 시 취약점 분석 로드
+                // showRecommendations(); // 학습 추천 표시 시 취약점 분석 로드
+                await loadExamHistory(); // 학습 기록 로드
+            } catch (error) {
+                handleError(error, '시험 결과를 불러올 수 없습니다. 메인 페이지로 이동합니다.');
+                setTimeout(() =>
+{
+                    window.location.href = 'gsg.html';
+                }, 3000);
+            }
+        });
+</script>
+</body>
+</html>
+

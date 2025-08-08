@@ -1,0 +1,1209 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>코인 거래소 - 여학생 친화적 수학 학습 시스템</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>💰</text>
+</svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+</head>
+<body>
+<div class="trading-container">
+<!-- 모바일 메뉴 토글 버튼 -->
+<button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+<!-- 모바일 메뉴 -->
+<div class="mobile-menu" id="mobileMenu">
+<h3 style="margin-bottom: 1rem; color: #2D3748;">거래소 메뉴</h3>
+<a href="#" class="mobile-menu-item" onclick="showOrderForm()">주문 입력</a>
+<a href="#" class="mobile-menu-item" onclick="showChart()">차트 보기</a>
+<a href="#" class="mobile-menu-item" onclick="showOrderbook()">호가창</a>
+<a href="#" class="mobile-menu-item" onclick="showTrades()">거래 내역</a>
+<a href="#" class="mobile-menu-item" onclick="showStats()">통계</a>
+<hr style="margin: 1rem 0; border: none; border-top: 1px solid #E2E8F0;">
+<a href="dashboard.html" class="mobile-menu-item">대시보드</a>
+<a href="shop.html" class="mobile-menu-item">상점</a>
+<a href="lottery.html" class="mobile-menu-item">로또</a>
+<a href="profile.html" class="mobile-menu-item">프로필</a>
+</div>
+<div class="trading-header">
+<h1>코인 거래소</h1>
+<p>실시간 코인 거래 및 가격 차트</p>
+</div>
+<!-- 현재 가격 표시 -->
+<div class="price-display">
+<div class="current-price">
+현재 가격
+<span id="currentPrice">100</span>
+코인
+</div>
+<div class="price-change" id="priceChange">
+24시간 변동
+<span id="priceChangeValue">+0.00%</span>
+</div>
+</div>
+<!-- 거래 레이아웃 -->
+<div class="trading-layout">
+<!-- 주문 입력 폼 -->
+<div class="order-form">
+<h3>주문 입력</h3>
+<div class="order-tabs">
+<button class="order-tab buy active" onclick="switchTab(event, 'buy')">매수</button>
+<button class="order-tab sell" onclick="switchTab(event, 'sell')">매도</button>
+</div>
+<form id="orderForm">
+<div class="form-group">
+<label for="orderPrice">가격(코인)</label>
+<input type="number" id="orderPrice" min="50" max="200" value="100" step="1">
+</div>
+<div class="form-group">
+<label for="orderQuantity">수량 (코인)</label>
+<input type="number" id="orderQuantity" min="1" max="100" value="1" step="1">
+</div>
+<div class="form-group">
+<label>총 금액</label>
+<div id="totalAmount">100 코인</div>
+</div>
+<button type="submit" class="order-button buy" id="orderButton">매수 주문</button>
+</form>
+</div>
+<!-- 차트 -->
+<div class="chart-container">
+<div class="chart-header">
+<h3>가격 차트</h3>
+<div class="chart-controls">
+<select id="timeframeSelect" class="timeframe-select">
+<option value="1m">1분</option>
+<option value="5m">5분</option>
+<option value="15m">15분</option>
+<option value="1h">1시간</option>
+<option value="1d" selected>1일</option>
+</select>
+<button id="toggleIndicators" class="indicator-btn">지표 표시</button>
+</div>
+</div>
+<canvas id="priceChart" width="400" height="200">
+</canvas>
+<div class="technical-indicators" id="technicalIndicators" style="display: none;">
+<div class="indicator-item">
+<span class="indicator-label">RSI:</span>
+<span class="indicator-value" id="rsiValue">50</span>
+</div>
+<div class="indicator-item">
+<span class="indicator-label">MACD:</span>
+<span class="indicator-value" id="macdValue">0</span>
+</div>
+<div class="indicator-item">
+<span class="indicator-label">볼린저 밴드:</span>
+<span class="indicator-value" id="bbValue">이동평균선</span>
+</div>
+</div>
+</div>
+<!-- 호가창 -->
+<div class="orderbook">
+<h3>호가창</h3>
+<div class="orderbook-header">
+<span>가격</span>
+<span>수량</span>
+<span>총액</span>
+</div>
+<div id="orderbookContent">
+<!-- 호가창 데이터는 실시간으로 업데이트됩니다 -->
+</div>
+</div>
+</div>
+<!-- 거래 내역 -->
+<div class="trades-section">
+<h3>거래 내역</h3>
+<div id="tradesContent">
+<!-- 거래 내역 데이터는 실시간으로 업데이트됩니다 -->
+</div>
+</div>
+<!-- 통계 -->
+<div class="stats-section">
+<h3>거래 통계</h3>
+<div class="stats-grid">
+<div class="stat-card">
+<h4>총 거래량</h4>
+<p id="totalVolume">0</p>
+</div>
+<div class="stat-card">
+<h4>최고가</h4>
+<p id="highestPrice">0</p>
+</div>
+<div class="stat-card">
+<h4>최저가</h4>
+<p id="lowestPrice">0</p>
+</div>
+<div class="stat-card">
+<h4>거래 횟수</h4>
+<p id="tradeCount">0</p>
+</div>
+<div class="stat-card">
+<h4>평균 가격</h4>
+<p id="averagePrice">0</p>
+</div>
+<div class="stat-card">
+<h4>24시간 변동</h4>
+<p id="dailyChange">0%</p>
+</div>
+</div>
+</div>
+</div>
+<script type="module">
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { collection, addDoc, query, orderBy, limit, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirebaseApp, getFirebaseAuth, getFirebaseDb } from './script.js';
+
+        const app = await getFirebaseApp();
+        const auth = await getFirebaseAuth();
+        const db = await getFirebaseDb();
+
+        let currentUser = null;
+        let currentPrice = 100;
+        let priceHistory = [];
+        let orderbook = { buy: [], sell: [] };
+        let trades = [];
+        let priceChart = null;
+
+        // 인증 상태 변경 감지
+        onAuthStateChanged(auth, async (user) =>
+{
+            if (user) {
+                currentUser = user;
+                await initializeTrading();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        async function initializeTrading() {
+            await loadPriceHistory();
+            await loadOrderbook();
+            await loadTrades();
+            initializePriceChart();
+            updateStats(); // 통계 업데이트
+            setupRealTimeUpdates();
+            setupEventListeners();
+            updateTechnicalIndicatorsFromHistory();
+        }
+
+        // 가격 기록 로드
+        async function loadPriceHistory() {
+            // Firebase에서 가격 기록 로드
+            // 최근 24시간 데이터를 가져오도록 조정
+            const now = Date.now();
+            for (let i = 24; i >= 0; i--) {
+                const time = now - (i * 60 * 60 * 1000); // 1시간 간격
+                const price = 100 + Math.sin(i * 0.1) * 10 + Math.random() * 5;
+                priceHistory.push({ time, price });
+            }
+            currentPrice = priceHistory[priceHistory.length - 1].price;
+            updatePriceDisplay();
+        }
+
+        // 호가창 로드
+        async function loadOrderbook() {
+            // Firebase에서 호가창 데이터 로드
+            orderbook = {
+                buy: [
+                    { price: 99, quantity: 5, total: 495 },
+                    { price: 98, quantity: 3, total: 294 },
+                    { price: 97, quantity: 7, total: 679 }
+                ],
+                sell: [
+                    { price: 101, quantity: 4, total: 404 },
+                    { price: 102, quantity: 6, total: 612 },
+                    { price: 103, quantity: 2, total: 206 }
+                ]
+            };
+            updateOrderbook();
+        }
+
+        // 거래 내역 로드
+        async function loadTrades() {
+            try {
+                const q = query(
+                    collection(db, 'trades'),
+                    orderBy('timestamp', 'desc'),
+                    limit(20)
+                );
+                
+                const snapshot = await getDocs(q);
+                trades = snapshot.docs.map(doc =>
+({
+                    id: doc.id,
+                    ...doc.data(),
+                    timestamp: doc.data().timestamp.toDate()
+                }));
+                
+                updateTrades();
+            } catch (error) {
+                console.error('거래 내역 로드 오류:', error);
+            }
+        }
+
+        // 실시간 업데이트 설정
+        function setupRealTimeUpdates() {
+            // 가격 업데이트 (1분 간격)
+            setInterval(() =>
+{
+                const change = (Math.random() - 0.5) * 2;
+                currentPrice = Math.max(50, Math.min(200, currentPrice + change));
+                
+                const now = Date.now();
+                priceHistory.push({ time: now, price: currentPrice });
+                
+                // 24시간 데이터 유지
+                if (priceHistory.length >
+24) {
+                    priceHistory.shift();
+                }
+                
+                updatePriceDisplay();
+                updatePriceChart();
+            }, 60000);
+
+            // 호가창 업데이트 (5초 간격)
+            setInterval(() =>
+{
+                // 호가창 데이터는 실시간으로 업데이트되므로 여기서는 호출하지 않음
+                // updateOrderbook(); 
+            }, 5000);
+        }
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            const orderForm = document.getElementById('orderForm');
+            const orderPrice = document.getElementById('orderPrice');
+            const orderQuantity = document.getElementById('orderQuantity');
+
+            orderForm.addEventListener('submit', handleOrderSubmit);
+            orderPrice.addEventListener('input', updateTotalAmount);
+            orderQuantity.addEventListener('input', updateTotalAmount);
+
+            // 차트 시간 프레임 변경
+            document.getElementById('timeframeSelect').addEventListener('change', updateChartTimeframe);
+            document.getElementById('toggleIndicators').addEventListener('click', toggleTechnicalIndicators);
+        }
+
+        // 차트 시간 프레임 변경
+        function updateChartTimeframe() {
+            const timeframe = document.getElementById('timeframeSelect').value;
+            const newSeries = generatePriceSeries(timeframe);
+            priceHistory = newSeries;
+            if (priceChart) {
+                priceChart.data.labels = priceHistory.map(p => new Date(p.time).toLocaleString());
+                priceChart.data.datasets[0].data = priceHistory.map(p => p.price);
+                priceChart.update();
+            }
+            currentPrice = priceHistory[priceHistory.length - 1]?.price ?? currentPrice;
+            updatePriceDisplay();
+            updateTechnicalIndicatorsFromHistory();
+        }
+
+        // 지표 표시/숨김 토글
+        function toggleTechnicalIndicators() {
+            const indicators = document.getElementById('technicalIndicators');
+            const button = document.getElementById('toggleIndicators');
+            
+            if (indicators.style.display === 'none') {
+                indicators.style.display = 'flex';
+                button.textContent = '지표 숨김';
+            } else {
+                indicators.style.display = 'none';
+                button.textContent = '지표 표시';
+            }
+        }
+
+        // 탭 스위칭
+        window.switchTab = function(event, tab) {
+            const tabs = document.querySelectorAll('.order-tab');
+            const orderButton = document.getElementById('orderButton');
+            
+            tabs.forEach(t =>
+t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'buy') {
+                orderButton.textContent = '매수 주문';
+                orderButton.className = 'order-button buy';
+            } else {
+                orderButton.textContent = '매도 주문';
+                orderButton.className = 'order-button sell';
+            }
+        };
+
+        // 주문 제출 처리
+        async function handleOrderSubmit(event) {
+            event.preventDefault();
+            
+            const price = parseFloat(document.getElementById('orderPrice').value);
+            const quantity = parseInt(document.getElementById('orderQuantity').value);
+            const isBuy = document.querySelector('.order-tab.buy').classList.contains('active');
+            const orderType = isBuy ? '매수' : '매도';
+            
+            if (!currentUser) {
+                showMessage('로그인이 필요합니다.', 'error');
+                return;
+            }
+
+            // 주문 버튼 비활성화
+            const orderButton = document.querySelector('.order-button');
+            const originalText = orderButton.textContent;
+            orderButton.disabled = true;
+            orderButton.textContent = '주문 처리 중...';
+
+            try {
+                if (isBuy) {
+                    // 매수 주문 생성
+                    await createTradingOrder(currentUser.uid, 'buy', price, quantity);
+                    showMessage(`
+<div style="display: flex; align-items: center; gap: 8px;">
+<span style="font-size: 1.2em;">매수</span>
+<div>
+<div style="font-weight: bold; margin-bottom: 4px;">
+매수 주문 완료!
+</div>
+<div style="font-size: 0.9em; opacity: 0.9;">
+${quantity}코인 @ ${price} 코인<br>
+총액: ${(price * quantity).toLocaleString()} 코인
+</div>
+</div>
+</div>
+`, 'success', 4000);
+                } else {
+                    // 매도 주문 생성
+                    await createTradingOrder(currentUser.uid, 'sell', price, quantity);
+                    showMessage(`
+<div style="display: flex; align-items: center; gap: 8px;">
+<span style="font-size: 1.2em;">매도</span>
+<div>
+<div style="font-weight: bold; margin-bottom: 4px;">
+매도 주문 완료!
+</div>
+<div style="font-size: 0.9em; opacity: 0.9;">
+${quantity}코인 @ ${price} 코인<br>
+총액: ${(price * quantity).toLocaleString()} 코인
+</div>
+</div>
+</div>
+`, 'success', 4000);
+                }
+                
+                // 주문 폼 초기화
+                document.getElementById('orderPrice').value = '';
+                document.getElementById('orderQuantity').value = '';
+                document.getElementById('totalAmount').textContent = '0 코인';
+                
+                // 거래 내역 업데이트
+                await loadTrades();
+                
+            } catch (error) {
+                console.error('주문 처리 오류:', error);
+                showMessage(`
+<div style="display: flex; align-items: center; gap: 8px;">
+<span style="font-size: 1.2em;">오류</span>
+<div>
+<div style="font-weight: bold; margin-bottom: 4px;">
+주문 처리 실패
+</div>
+<div style="font-size: 0.9em; opacity: 0.9;">
+${error.message}
+</div>
+</div>
+</div>
+`, 'error', 5000);
+            } finally {
+                // 주문 버튼 활성화
+                orderButton.disabled = false;
+                orderButton.textContent = originalText;
+            }
+        }
+
+        // 총 금액 계산
+        function updateTotalAmount() {
+            const price = parseFloat(document.getElementById('orderPrice').value);
+            const quantity = parseInt(document.getElementById('orderQuantity').value);
+            const total = price * quantity;
+            document.getElementById('totalAmount').textContent = `${total} 코인`;
+        }
+
+        // 현재 가격 표시 업데이트
+        function updatePriceDisplay() {
+            document.getElementById('currentPrice').textContent = currentPrice.toFixed(2);
+            
+            const change = priceHistory.length >
+1 ? 
+                ((currentPrice - priceHistory[priceHistory.length - 2].price) / priceHistory[priceHistory.length - 2].price * 100) : 0;
+            
+            const changeElement = document.getElementById('priceChangeValue');
+            const changeContainer = document.getElementById('priceChange');
+            
+            changeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+            
+            changeContainer.className = `price-change ${change >= 0 ? 'positive' : 'negative'}`;
+        }
+
+        // 호가창 업데이트
+        function updateOrderbook() {
+            const content = document.getElementById('orderbookContent');
+            
+            let html = '';
+            
+            // 매도 호가 (판매자)
+            orderbook.sell.slice().reverse().forEach(order =>
+{
+                html += `
+<div class="orderbook-row sell" onclick="setOrderPrice(${order.price})">
+<span>${order.price}</span>
+<span>${order.quantity}</span>
+<span>${order.total}</span>
+</div>
+`;
+            });
+            
+            // 매수 호가 (구매자)
+            orderbook.buy.forEach(order =>
+{
+                html += `
+<div class="orderbook-row buy" onclick="setOrderPrice(${order.price})">
+<span>${order.price}</span>
+<span>${order.quantity}</span>
+<span>${order.total}</span>
+</div>
+`;
+            });
+            
+            content.innerHTML = html;
+        }
+
+        // 거래 내역 업데이트
+        function updateTrades() {
+            const content = document.getElementById('tradesContent');
+            
+            if (trades.length === 0) {
+                content.innerHTML = '<p>거래 내역이 없습니다.</p>';
+                return;
+            }
+            
+            let html = '';
+            trades.forEach(trade =>
+{
+                html += `
+<div class="trade-row">
+<span>${trade.timestamp.toLocaleString()}</span>
+<span class="trade-price ${trade.type}">${trade.price}</span>
+<span>${trade.quantity}</span>
+<span>${trade.total}</span>
+</div>
+`;
+            });
+            
+            content.innerHTML = html;
+            
+            // 통계 업데이트
+            updateStats();
+        }
+
+        // 차트 설정 (라인 차트)
+        function initializePriceChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: priceHistory.map(p => new Date(p.time).toLocaleString()),
+                    datasets: [{
+                        label: '코인 가격',
+                        data: priceHistory.map(p => p.price),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.15)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: true, text: '코인 가격 차트' },
+                        legend: { display: true, position: 'top' },
+                        tooltip: {
+                            callbacks: { label: (context) => `가격 ${context.parsed.y} 코인` }
+                        }
+                    },
+                    interaction: { intersect: false, mode: 'index' },
+                    scales: { y: { beginAtZero: false } }
+                }
+            });
+
+            updateTechnicalIndicatorsFromHistory();
+        }
+
+        // 가격 시계열 생성 (타임프레임별)
+        function generatePriceSeries(timeframe = '1d') {
+            const series = [];
+            const now = Date.now();
+            let interval, count;
+            switch (timeframe) {
+                case '1m': interval = 60 * 1000; count = 60; break;
+                case '5m': interval = 5 * 60 * 1000; count = 48; break;
+                case '15m': interval = 15 * 60 * 1000; count = 32; break;
+                case '1h': interval = 60 * 60 * 1000; count = 24; break;
+                case '1d': default: interval = 24 * 60 * 60 * 1000; count = 30; break;
+            }
+            for (let i = count; i >= 0; i--) {
+                const time = now - (i * interval);
+                const price = 100 + Math.sin(i * 0.1) * 10 + Math.random() * 5;
+                series.push({ time, price });
+            }
+            return series;
+        }
+
+        // 지표 업데이트 (priceHistory 기반)
+        function updateTechnicalIndicatorsFromHistory() {
+            const prices = priceHistory.map(p => p.price);
+            
+            // RSI 계산
+            const rsi = calculateRSI(prices, 14);
+            document.getElementById('rsiValue').textContent = rsi.toFixed(2);
+            document.getElementById('rsiValue').className = `indicator-value ${rsi > 70 ? 'overbought' : (rsi < 30 ? 'oversold' : 'neutral')}`;
+            
+            // MACD 계산
+            const macd = calculateMACD(prices);
+            document.getElementById('macdValue').textContent = macd.toFixed(2);
+            document.getElementById('macdValue').className = `indicator-value ${macd > 0 ? 'positive' : 'negative'}`;
+            
+            // 볼린저 밴드 계산
+            const bb = calculateBollingerBands(prices, 20);
+            const currentPrice = prices[prices.length - 1];
+            let bbPosition = '이동평균선';
+            if (currentPrice > bb.upper) bbPosition = '상단 밴드';
+            else if (currentPrice < bb.lower) bbPosition = '하단 밴드';
+            
+            document.getElementById('bbValue').textContent = bbPosition;
+        }
+
+        // RSI 계산
+        function calculateRSI(prices, period = 14) {
+            if (prices.length
+< period + 1) return 50;
+            
+            let gains = 0;
+            let losses = 0;
+            
+            for (let i = 1; i
+<= period; i++) {
+                const change = prices[i] - prices[i - 1];
+                if (change >
+0) {
+                    gains += change;
+                } else {
+                    losses -= change;
+                }
+            }
+            
+            const avgGain = gains / period;
+            const avgLoss = losses / period;
+            const rs = avgGain / avgLoss;
+            const rsi = 100 - (100 / (1 + rs));
+            
+            return rsi;
+        }
+
+        // MACD 계산
+        function calculateMACD(prices, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
+            if (prices.length
+< slowPeriod) return 0;
+            
+            const ema12 = calculateEMA(prices, fastPeriod);
+            const ema26 = calculateEMA(prices, slowPeriod);
+            const macdLine = ema12 - ema26;
+            
+            return macdLine;
+        }
+
+        // EMA 계산
+        function calculateEMA(prices, period) {
+            const multiplier = 2 / (period + 1);
+            let ema = prices[0];
+            
+            for (let i = 1; i
+< prices.length; i++) {
+                ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
+            }
+            
+            return ema;
+        }
+
+        // 볼린저 밴드 계산
+        function calculateBollingerBands(prices, period = 20) {
+            if (prices.length
+< period) {
+                return { upper: prices[prices.length - 1], middle: prices[prices.length - 1], lower: prices[prices.length - 1] };
+            }
+            
+            const recentPrices = prices.slice(-period);
+            const sma = recentPrices.reduce((sum, price) =>
+sum + price, 0) / period;
+            
+            const variance = recentPrices.reduce((sum, price) =>
+sum + Math.pow(price - sma, 2), 0) / period;
+            const standardDeviation = Math.sqrt(variance);
+            
+            return {
+                upper: sma + (standardDeviation * 2),
+                middle: sma,
+                lower: sma - (standardDeviation * 2)
+            };
+        }
+
+        // 차트 초기화 (위에서 재정의된 initializePriceChart 사용)
+
+        // 차트 업데이트
+        function updatePriceChart() {
+            if (priceChart) {
+                priceChart.data.labels = priceHistory.map(p =>
+new Date(p.time).toLocaleTimeString());
+                priceChart.data.datasets[0].data = priceHistory.map(p =>
+p.price);
+                priceChart.update();
+            }
+        }
+
+        // 호가창에서 가격 설정
+        window.setOrderPrice = function(price) {
+            document.getElementById('orderPrice').value = price;
+            updateTotalAmount();
+        };
+
+        // DOMContentLoaded 시 모바일 메뉴 토글 및 클릭 이벤트 처리
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            // 모바일 메뉴 토글
+            mobileMenuToggle.addEventListener('click', function() {
+                mobileMenu.classList.toggle('active');
+            });
+            
+            // 모바일 메뉴 외부 클릭 시 닫기
+            document.addEventListener('click', function(e) {
+                if (!mobileMenu.contains(e.target) && !mobileMenuToggle.contains(e.target)) {
+                    mobileMenu.classList.remove('active');
+                }
+            });
+            
+            // 터치 스크롤 처리
+            let startX = 0;
+            let startY = 0;
+            
+            document.addEventListener('touchstart', function(e) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            });
+            
+            document.addEventListener('touchend', function(e) {
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                const diffX = startX - endX;
+                const diffY = startY - endY;
+                
+                // 화면 좌우 스크롤 감지
+                if (Math.abs(diffX) >
+Math.abs(diffY) && Math.abs(diffX) >
+50) {
+                    if (diffX >
+0) {
+                        // 오른쪽으로 스크롤 (메뉴 열기)
+                        mobileMenu.classList.add('active');
+                    } else {
+                        // 왼쪽으로 스크롤 (메뉴 닫기)
+                        mobileMenu.classList.remove('active');
+                    }
+                }
+            });
+        });
+
+        // 주문 폼 표시
+        function showOrderForm() {
+            document.querySelector('.order-form').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('mobileMenu').classList.remove('active');
+        }
+        
+        function showChart() {
+            document.querySelector('.chart-container').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('mobileMenu').classList.remove('active');
+        }
+        
+        function showOrderbook() {
+            document.querySelector('.orderbook').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('mobileMenu').classList.remove('active');
+        }
+        
+        function showTrades() {
+            document.querySelector('.trades-section').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('mobileMenu').classList.remove('active');
+        }
+        
+        function showStats() {
+            // 통계 섹션으로 스크롤
+            const statsSection = document.querySelector('.stats-section');
+            if (statsSection) {
+                statsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+            document.getElementById('mobileMenu').classList.remove('active');
+        }
+        
+        // 탭 스위칭 (더 이상 사용되지 않음)
+        function switchTab(tabName) {
+            // 탭 내용 숨김
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content =>
+content.style.display = 'none');
+            
+            // 탭 버튼 클래스 제거
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button =>
+button.classList.remove('active'));
+            
+            // 선택된 탭 내용 표시
+            const selectedContent = document.getElementById(tabName + 'Tab');
+            if (selectedContent) {
+                selectedContent.style.display = 'block';
+            }
+            
+            // 선택된 탭 버튼 활성화
+            const selectedButton = document.querySelector('[onclick="switchTab(\'' + tabName + '\')\"]');
+            if (selectedButton) {
+                selectedButton.classList.add('active');
+            }
+        }
+        
+        // 실시간 업데이트 시작
+        async function startRealTimeUpdates() {
+            let updateIntervals = [];
+            
+            // 가격 업데이트 (5초 간격)
+            const priceInterval = setInterval(async () =>
+{
+                try {
+                    const newPrice = await updateTradingPrice(); // 실제 가격 업데이트 함수 호출
+                    currentPrice = newPrice;
+                    updatePriceDisplay();
+                    
+                    // 가격 기록 업데이트
+                    priceHistory.push({
+                        time: Date.now(),
+                        price: newPrice
+                    });
+                    
+                    // 최근 24시간 데이터 유지
+                    if (priceHistory.length >
+100) {
+                        priceHistory.shift();
+                    }
+                    
+                    updatePriceChart();
+                } catch (error) {
+                    console.error('가격 업데이트 오류:', error);
+                    showMessage('가격 업데이트 실패', 'error');
+                }
+            }, 5000);
+            updateIntervals.push(priceInterval);
+            
+            // 호가창 업데이트 (2초 간격)
+            const orderbookInterval = setInterval(async () =>
+{
+                try {
+                    const orderbookData = await getOrderbook(); // 실제 호가창 데이터 가져오기 함수 호출
+                    orderbook = orderbookData;
+                    updateOrderbook();
+                } catch (error) {
+                    console.error('호가창 업데이트 오류:', error);
+                    showMessage('호가창 업데이트 실패', 'error');
+                }
+            }, 2000);
+            updateIntervals.push(orderbookInterval);
+            
+            // 거래 내역 업데이트 (10초 간격)
+            const tradesInterval = setInterval(async () =>
+{
+                try {
+                    await loadTrades(); // 거래 내역 로드 함수 호출
+                } catch (error) {
+                    console.error('거래 내역 업데이트 오류:', error);
+                    showMessage('거래 내역 업데이트 실패', 'error');
+                }
+            }, 10000);
+            updateIntervals.push(tradesInterval);
+            
+            // 거래 매칭 처리 (30초 간격)
+            const matchingInterval = setInterval(async () =>
+{
+                try {
+                    const matches = await processTradingMatches(); // 거래 매칭 로직 호출
+                    if (matches && matches.length >
+0) {
+                        showMessage(`${matches.length}건의 거래가 완료되었습니다.`, 'success');
+                        // 거래 내역 업데이트
+                        await loadTrades();
+                    }
+                } catch (error) {
+                    console.error('거래 매칭 오류:', error);
+                    showMessage('거래 매칭 실패', 'error');
+                }
+            }, 30000);
+            updateIntervals.push(matchingInterval);
+            
+            // 브라우저 종료 시 인터벌 정리
+            window.addEventListener('beforeunload', () =>
+{
+                updateIntervals.forEach(interval =>
+clearInterval(interval));
+            });
+            
+            // 오류 발생 시 재시도
+            window.addEventListener('error', () =>
+{
+                setTimeout(() =>
+{
+                    console.log('실시간 업데이트 재시도...');
+                    updateIntervals.forEach(interval =>
+clearInterval(interval));
+                    startRealTimeUpdates();
+                }, 5000);
+            });
+        }
+
+        // 더미 구현: 가격/호가창/매칭 데이터 생성 (실서비스 연동 전까지 UI 정상 동작)
+        async function updateTradingPrice() {
+            const drift = (Math.random() - 0.5) * 2;
+            return Math.max(50, Math.min(200, currentPrice + drift));
+        }
+        async function getOrderbook() {
+            const base = Math.round(currentPrice);
+            const buys = Array.from({ length: 5 }, (_, i) => ({ price: base - (i + 1), quantity: 1 + Math.floor(Math.random() * 10), total: (base - (i + 1)) * (1 + Math.floor(Math.random() * 10)) }));
+            const sells = Array.from({ length: 5 }, (_, i) => ({ price: base + (i + 1), quantity: 1 + Math.floor(Math.random() * 10), total: (base + (i + 1)) * (1 + Math.floor(Math.random() * 10)) }));
+            return { buy: buys, sell: sells };
+        }
+        async function processTradingMatches() {
+            // 간단 샘플: 0~2건 랜덤 매칭
+            const n = Math.floor(Math.random() * 3);
+            const results = [];
+            for (let i = 0; i < n; i++) {
+                const amount = 1 + Math.floor(Math.random() * 5);
+                const price = Math.round(currentPrice + (Math.random() - 0.5) * 2);
+                const totalValue = amount * price;
+                results.push({ amount, price, totalValue, buyUserId: 'sim-buyer', sellUserId: 'sim-seller' });
+            }
+            return results;
+        }
+        
+        // 메시지 표시 함수
+        function showMessage(message, type = 'info', duration = 3000) {
+            // 기존 메시지 제거
+            const existingMessages = document.querySelectorAll('.message');
+            existingMessages.forEach(msg =>
+msg.remove());
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            // HTML 태그 허용
+            messageDiv.innerHTML = message;
+            
+            // 스타일 적용
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                max-width: 350px;
+                word-wrap: break-word;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            `;
+            
+            // 메시지 타입별 배경색
+            switch (type) {
+                case 'success':
+                    messageDiv.style.backgroundColor = '#48BB78';
+                    break;
+                case 'error':
+                    messageDiv.style.backgroundColor = '#F56565';
+                    break;
+                case 'warning':
+                    messageDiv.style.backgroundColor = '#ED8936';
+                    break;
+                case 'trade':
+                    messageDiv.style.backgroundColor = '#805AD5';
+                    break;
+                default:
+                    messageDiv.style.backgroundColor = '#4299E1';
+            }
+            
+            document.body.appendChild(messageDiv);
+            
+            // 메시지 사라지는 애니메이션
+            setTimeout(() =>
+{
+                messageDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() =>
+{
+                    if (messageDiv.parentNode) {
+                        messageDiv.remove();
+                    }
+                }, 300);
+            }, duration);
+        }
+        
+        // 거래 완료 토스트 메시지
+        function showTradeExecutedToast(tradeData) {
+            const { amount, price, totalValue, buyUserId, sellUserId } = tradeData;
+            
+            // 현재 사용자가 거래에 관여했는지 확인
+            const isCurrentUserInvolved = currentUser && 
+                (currentUser.uid === buyUserId || currentUser.uid === sellUserId);
+            
+            let message = '';
+            let type = 'trade';
+            
+            if (isCurrentUserInvolved) {
+                // 현재 사용자가 거래에 관여했을 경우
+                const isBuyer = currentUser.uid === buyUserId;
+                const action = isBuyer ? '매수' : '매도';
+                const icon = isBuyer ? '매수' : '매도';
+                
+                message = `
+<div style="display: flex; align-items: center; gap: 8px;">
+<span style="font-size: 1.2em;">${icon}</span>
+<div>
+<div style="font-weight: bold; margin-bottom: 4px;">
+거래 완료!
+</div>
+<div style="font-size: 0.9em; opacity: 0.9;">
+${action}: ${amount}코인 @ ${price} 코인<br>
+총액: ${totalValue.toLocaleString()} 코인
+</div>
+</div>
+</div>
+`;
+            } else {
+                // 현재 사용자가 거래에 관여하지 않았을 경우
+                message = `
+<div style="display: flex; align-items: center; gap: 8px;">
+<span style="font-size: 1.2em;">코</span>
+<div>
+<div style="font-weight: bold; margin-bottom: 4px;">
+${amount}코인 @ ${price} 코인 거래 완료
+</div>
+<div style="font-size: 0.9em; opacity: 0.9;">
+총액: ${totalValue.toLocaleString()} 코인
+</div>
+</div>
+</div>
+`;
+            }
+            
+            showMessage(message, type, 5000); // 거래 완료 토스트는 5초 표시
+        }
+        
+        // 통계 업데이트
+        function updateStats() {
+            if (trades.length === 0) {
+                document.getElementById('totalVolume').textContent = '0';
+                document.getElementById('highestPrice').textContent = '0';
+                document.getElementById('lowestPrice').textContent = '0';
+                document.getElementById('tradeCount').textContent = '0';
+                document.getElementById('averagePrice').textContent = '0';
+                document.getElementById('dailyChange').textContent = '0%';
+                return;
+            }
+            
+            // 총 거래량
+            const totalVolume = trades.reduce((sum, trade) =>
+sum + trade.quantity, 0);
+            
+            // 가격 데이터
+            const prices = trades.map(trade =>
+trade.price);
+            const highestPrice = Math.max(...prices);
+            const lowestPrice = Math.min(...prices);
+            
+            // 거래 횟수
+            const tradeCount = trades.length;
+            
+            // 평균 가격
+            const averagePrice = (prices.reduce((sum, price) =>
+sum + price, 0) / prices.length).toFixed(2);
+            
+            // 24시간 변동 계산 (가격 기록 사용)
+            let dailyChange = '0%';
+            if (priceHistory.length >
+1) {
+                const yesterdayPrice = priceHistory[0]?.price || currentPrice;
+                const changePercent = ((currentPrice - yesterdayPrice) / yesterdayPrice * 100).toFixed(2);
+                dailyChange = `${changePercent >= 0 ? '+' : ''}${changePercent}%`;
+            }
+            
+            // UI 업데이트
+            document.getElementById('totalVolume').textContent = totalVolume.toLocaleString();
+            document.getElementById('highestPrice').textContent = highestPrice.toFixed(2);
+            document.getElementById('lowestPrice').textContent = lowestPrice.toFixed(2);
+            document.getElementById('tradeCount').textContent = tradeCount.toLocaleString();
+            document.getElementById('averagePrice').textContent = averagePrice;
+            document.getElementById('dailyChange').textContent = dailyChange;
+        }
+        
+        // 스타일 정의
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+            @keyframes coinEarned {
+                0% {
+                    transform: translate(-50%, -50%) scale(0.5);
+                    opacity: 0;
+                }
+                20% {
+                    transform: translate(-50%, -50%) scale(1.2);
+                    opacity: 1;
+                }
+                80% {
+                    transform: translate(-50%, -50%) scale(1);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translate(-50%, -50%) scale(0.8);
+                    opacity: 0;
+                }
+            }
+            .coin-animation-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            .coin-icon {
+                font-size: 2rem;
+                animation: bounce 0.6s ease-in-out;
+            }
+            .coin-amount {
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #2D3748;
+            }
+            .coin-reason {
+                font-size: 0.9rem;
+                opacity: 0.8;
+                text-align: center;
+            }
+            @keyframes bounce {
+                0%, 20%, 50%, 80%, 100% {
+                    transform: translateY(0);
+                }
+                40% {
+                    transform: translateY(-10px);
+                }
+                60% {
+                    transform: translateY(-5px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // 거래 이벤트 리스너 설정
+        function setupTradeEventListeners() {
+            // 거래 완료 이벤트 수신
+            window.addEventListener('tradeExecuted', (event) =>
+{
+                const tradeData = event.detail;
+                showTradeExecutedToast(tradeData);
+                
+                // 거래 내역 업데이트 및 통계 다시 계산
+                setTimeout(() =>
+{
+                    loadTrades();
+                    updateStats();
+                }, 1000);
+            });
+            
+            // 코인 획득 이벤트 수신
+            window.addEventListener('coinsEarned', (event) =>
+{
+                const { amount, reason } = event.detail;
+                showCoinEarnedAnimation(amount, reason);
+            });
+        }
+        
+        // 코인 획득 애니메이션
+        function showCoinEarnedAnimation(amount, reason) {
+            // 기존 애니메이션 제거
+            const existingAnimations = document.querySelectorAll('.coin-earned-animation');
+            existingAnimations.forEach(anim =>
+anim.remove());
+            
+            const animationDiv = document.createElement('div');
+            animationDiv.className = 'coin-earned-animation';
+            animationDiv.innerHTML = `
+<div class="coin-animation-content">
+<div class="coin-icon">코</div>
+<div class="coin-amount">+${amount}</div>
+<div class="coin-reason">${reason}</div>
+</div>
+`;
+            
+            // 스타일 적용
+            animationDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #FFD700, #FFA500);
+                color: #2D3748;
+                padding: 20px 30px;
+                border-radius: 15px;
+                font-weight: bold;
+                font-size: 1.2rem;
+                z-index: 10001;
+                box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+                animation: coinEarned 2s ease-out forwards;
+                text-align: center;
+            `;
+            
+            document.body.appendChild(animationDiv);
+            
+            // 2초 후 애니메이션 제거
+            setTimeout(() =>
+{
+                if (animationDiv.parentNode) {
+                    animationDiv.remove();
+                }
+            }, 2000);
+        }
+        
+        // DOMContentLoaded 시 거래 시스템 초기화
+        document.addEventListener('DOMContentLoaded', async function() {
+            initializeTrading();
+            setupEventListeners();
+            setupTradeEventListeners();
+        });
+</script>
+</body>
+</html>
+

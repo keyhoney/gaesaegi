@@ -1,0 +1,114 @@
+{
+  "name": "송현여고 수학 학습 시스템",
+  "short_name": "수학학습",
+  "description": "송현여고 학생들을 위한 개인화된 수학 학습 및 게임화 시스템",
+  "id": "./",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#4299E1",
+  "theme_color": "#4299E1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity", "games"],
+  "lang": "ko",
+  "dir": "ltr",
+  "scope": "./",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><rect width='400' height='300' fill='#FF6B9D'/><text x='200' y='150' text-anchor='middle' font-size='24' fill='white'>수학 학습 시스템</text></svg>",
+      "sizes": "400x300",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 400'><rect width='300' height='400' fill='#A8E6CF'/><text x='150' y='200' text-anchor='middle' font-size='20' fill='#333'>모바일 학습</text></svg>",
+      "sizes": "300x400",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "학습 시작",
+      "short_name": "학습",
+      "description": "수학 문제 학습 시작",
+      "url": "gsg.html",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "대시보드",
+      "short_name": "대시보드",
+      "description": "학습 진행상황 확인",
+      "url": "dashboard.html",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "거래소",
+      "short_name": "거래소",
+      "description": "코인 거래소 이용",
+      "url": "trading.html",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "로또",
+      "short_name": "로또",
+      "description": "코인 로또 구매",
+      "url": "lottery.html",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎰</text></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "상점",
+      "short_name": "상점",
+      "description": "아이템 구매",
+      "url": "shop.html",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛍️</text></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
+} 

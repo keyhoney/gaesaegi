@@ -1,0 +1,1025 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학습 게임화 - 송현여고 수학 학습 시스템</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>🎮</text>
+</svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- 홈 버튼 -->
+<div class="home-button">
+<a href="dashboard.html" class="btn btn-home">🏠 돌아가기</a>
+</div>
+<!-- 로딩 화면 -->
+<div class="loading-overlay" id="loadingOverlay">
+<div class="loading-spinner">
+<div class="spinner">
+</div>
+<div class="loading-text">게임화 데이터를 불러오는 중...</div>
+</div>
+</div>
+<div class="gamification-container">
+<div class="header">
+<h1>🎮 학습 게임화</h1>
+<p>학습을 재미있게, 성취를 즐겁게</p>
+<div class="user-info" id="userInfo">
+<!-- 사용자 정보가 여기에 표시됩니다 -->
+</div>
+</div>
+<div class="stats-overview">
+<div class="stat-card">
+<div class="stat-number" id="currentLevel">1</div>
+<div class="stat-label">현재 레벨</div>
+</div>
+<div class="stat-card">
+<div class="stat-number" id="totalXP">0</div>
+<div class="stat-label">총 경험치</div>
+</div>
+<div class="stat-card">
+<div class="stat-number" id="currentStreak">0</div>
+<div class="stat-label">연속 학습</div>
+</div>
+<div class="stat-card">
+<div class="stat-number" id="badgesEarned">0</div>
+<div class="stat-label">배지 획득</div>
+</div>
+<div class="stat-card coin-card">
+<div class="stat-number" id="coinBalance">0</div>
+<div class="stat-label">코인 잔액</div>
+<div class="coin-info">레벨업과 배지 획득 보상</div>
+</div>
+<div class="stat-card points-card">
+<div class="stat-number" id="pointsBalance">0</div>
+<div class="stat-label">포인트 잔액</div>
+<div class="points-info">학습 활동 보상</div>
+</div>
+</div>
+<div class="level-section">
+<div class="level-header">
+<div class="level-title">레벨 진행도</div>
+<div class="level-subtitle">다음 레벨까지 필요한 경험치</div>
+</div>
+<div class="level-progress">
+<div class="progress-bar">
+<div class="progress-fill" id="levelProgress" style="width: 0%">
+</div>
+</div>
+<div class="progress-text" id="levelProgressText">0 / 100 XP</div>
+</div>
+</div>
+<div class="badges-section">
+<h2>🏆 배지 목록</h2>
+<div class="badge-info">
+<p>배지 획득 시 <strong>1코인</strong>을 보상받습니다!</p>
+<p>코인이 부족할 때마다, 레벨업과 배지 획득으로 코인을 획득할 수 있습니다.</p>
+</div>
+<div class="badges-grid" id="badgesGrid">
+<!-- 배지들이 동적으로 추가됩니다 -->
+</div>
+</div>
+<div class="achievements-section">
+<h2>🎯 코인 관련 업적</h2>
+<div class="achievement-info">
+<p>코인 관련 업적을 달성하면
+<strong>추가 코인</strong>을 보상받습니다!</p>
+<p>업적은 자동으로 체크되며, 코인을 획득할 때마다 업적을 확인합니다</p>
+</div>
+<div class="achievements-grid" id="achievementsGrid">
+<!-- 업적들이 동적으로 추가됩니다 -->
+</div>
+<div class="achievement-stats">
+<div class="achievement-stat">
+<span class="stat-label">달성한 업적:</span>
+<span class="stat-value" id="unlockedAchievements">0</span>
+</div>
+<div class="achievement-stat">
+<span class="stat-label">총 업적:</span>
+<span class="stat-value" id="totalAchievements">0</span>
+</div>
+<div class="achievement-stat">
+<span class="stat-label">업적 달성률</span>
+<span class="stat-value" id="achievementRate">0%</span>
+</div>
+</div>
+</div>
+<div class="challenges-section">
+<h2>🎯 도전 과제</h2>
+<div class="challenge-info">
+<p>도전 과제 완료 시 <strong>XP와 포인트</strong>를 보상받습니다!</p>
+<p>포인트는 학습 활동 보상으로 사용되며, 코인과는 별도로 관리됩니다</p>
+<div class="challenge-stats">
+<div class="challenge-stat">
+<span class="stat-label">오늘 완료:</span>
+<span class="stat-value" id="todayCompletedChallenges">0</span>
+</div>
+<div class="challenge-stat">
+<span class="stat-label">이번 주 완료:</span>
+<span class="stat-value" id="weekCompletedChallenges">0</span>
+</div>
+</div>
+</div>
+<div id="challengesList">
+<!-- 도전 과제들이 동적으로 추가됩니다 -->
+</div>
+</div>
+<div class="streak-section">
+<h2>📅 연속 학습</h2>
+<div class="streak-display">
+<div class="streak-number" id="streakNumber">0</div>
+<div class="streak-label">일 연속 학습</div>
+</div>
+<div class="streak-calendar" id="streakCalendar">
+<!-- 연속 학습 캘린더가 여기에 표시됩니다 -->
+</div>
+</div>
+<div class="leaderboard-section">
+<h2>🏆 리더보드</h2>
+<table class="leaderboard-table" id="leaderboardTable">
+<thead>
+<tr>
+<th>순위</th>
+<th>사용자</th>
+<th>레벨</th>
+<th>경험치</th>
+<th>연속</th>
+</tr>
+</thead>
+<tbody id="leaderboardBody">
+</tbody>
+</table>
+</div>
+</div>
+<div class="overlay" id="overlay">
+</div>
+<div class="achievement-popup" id="achievementPopup">
+<div class="achievement-icon">🏆</div>
+<div class="achievement-title" id="achievementTitle">업적 달성!</div>
+<div class="achievement-desc" id="achievementDesc">새로운 배지를 획득했습니다!</div>
+<button class="btn btn-primary" onclick="closeAchievement()">확인</button>
+</div>
+<script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, doc, getDoc, updateDoc, setDoc, query, where, orderBy, limit, getDocs, onSnapshot, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { firebaseConfig, getFirebaseApp, getFirebaseAuth, getFirebaseDb, getUserCoins, addCoins, onCoinsChange, initializeUserCoins } from './script.js';
+
+    let app, auth, db;
+    
+    // Firebase 초기화(비동기)
+    async function initializeFirebaseServices() {
+      try {
+        app = await getFirebaseApp();
+        auth = await getFirebaseAuth();
+        db = await getFirebaseDb();
+        console.log('Firebase 서비스 초기화 성공');
+      } catch (error) {
+        console.error('Firebase 초기화 실패:', error);
+        throw error;
+      }
+    }
+
+    let currentUser = null;
+    let userProfile = null;
+    let userAnswers = [];
+
+    const GAMIFICATION_CONFIG = {
+      XP_PER_CORRECT_ANSWER: 10,
+      XP_PER_STREAK_DAY: 5,
+      LEVEL_XP_BASE: 100,
+      LEVEL_XP_MULTIPLIER: 1.5,
+      MAX_LEVEL: 100
+    };
+
+    // 업적 목록 함수 정의
+    function getAchievementList() {
+        return {
+            first_correct: {
+                id: 'first_correct',
+                name: '첫 정답!',
+                description: '첫 문제를 맞췄습니다!',
+                reward: 10
+            },
+            streak_3: {
+                id: 'streak_3',
+                name: '열심히 공부',
+                description: '3일 연속 학습했습니다.',
+                reward: 20
+            },
+            streak_7: {
+                id: 'streak_7',
+                name: '일주일 연속',
+                description: '1주일 연속 학습했습니다.',
+                reward: 50
+            },
+            accuracy_90: {
+                id: 'accuracy_90',
+                name: '정확도 마스터',
+                description: '정답률을90%를 달성했습니다.',
+                reward: 100
+            },
+            problems_100: {
+                id: 'problems_100',
+                name: '백문제 달성',
+                description: '100문제를 풀었습니다.',
+                reward: 200
+            }
+        };
+    }
+
+    async function getUserAchievements(userId) {
+        try {
+            const userRef = doc(db, 'userProfiles', userId);
+            const userDoc = await getDoc(userRef);
+            
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                return {
+                    unlockedAchievements: userData.unlockedAchievements || []
+                };
+            }
+            return { unlockedAchievements: [] };
+        } catch (error) {
+            console.error('사용자 업적 조회 실패:', error);
+            return { unlockedAchievements: [] };
+        }
+    }
+
+    async function getUserStatsForAchievements(userId) {
+        try {
+            const userRef = doc(db, 'userProfiles', userId);
+            const userDoc = await getDoc(userRef);
+            
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                return {
+                    correctAnswers: userData.correctAnswers || 0,
+                    totalProblems: userData.totalProblems || 0,
+                    streak: userData.streak || 0,
+                    accuracy: userData.totalProblems > 0 ? (userData.correctAnswers / userData.totalProblems) * 100 : 0
+                };
+            }
+            return { correctAnswers: 0, totalProblems: 0, streak: 0, accuracy: 0 };
+        } catch (error) {
+            console.error('사용자 통계 조회 실패:', error);
+            return { correctAnswers: 0, totalProblems: 0, streak: 0, accuracy: 0 };
+        }
+    }
+
+    async function checkAndRewardAchievements(userId, achievementType, userStats) {
+        try {
+            const achievements = getAchievementList();
+            const userAchievements = await getUserAchievements(userId);
+            
+            Object.values(achievements).forEach(achievement => {
+                if (!userAchievements.unlockedAchievements.includes(achievement.id)) {
+                    let shouldAward = false;
+                    
+                    switch (achievement.id) {
+                        case 'first_correct':
+                            shouldAward = userStats.correctAnswers >= 1;
+                            break;
+                        case 'streak_3':
+                            shouldAward = userStats.streak >= 3;
+                            break;
+                        case 'streak_7':
+                            shouldAward = userStats.streak >= 7;
+                            break;
+                        case 'accuracy_90':
+                            shouldAward = userStats.accuracy >= 90;
+                            break;
+                        case 'problems_100':
+                            shouldAward = userStats.totalProblems >= 100;
+                            break;
+                    }
+                    
+                    if (shouldAward) {
+                        awardAchievement(userId, achievement);
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('업적 확인 및 보상 실패:', error);
+        }
+    }
+
+    async function awardAchievement(userId, achievement) {
+        try {
+            const userRef = doc(db, 'userProfiles', userId);
+            const userDoc = await getDoc(userRef);
+            
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const unlockedAchievements = userData.unlockedAchievements || [];
+                
+                if (!unlockedAchievements.includes(achievement.id)) {
+                    unlockedAchievements.push(achievement.id);
+                    
+                    await updateDoc(userRef, {
+                        unlockedAchievements: unlockedAchievements
+                    });
+                    
+                    // 코인 보상 지급
+                    await rewardCoinsForAchievement(userId, achievement.name);
+                    
+                    console.log(`업적 달성: ${achievement.name}`);
+                }
+            }
+        } catch (error) {
+            console.error('업적 지급 실패:', error);
+        }
+    }
+
+    async function rewardCoinsForBadge(userId, badgeName) {
+        try {
+            await addCoins(userId, 1, `배지 획득: ${badgeName}`);
+            console.log(`배지 코인 보상 지급 ${badgeName}`);
+        } catch (error) {
+            console.error('배지 코인 보상 실패:', error);
+            throw error;
+        }
+    }
+
+    async function rewardCoinsForLevelUp(userId, newLevel) {
+        try {
+            const coinReward = Math.floor(newLevel * 2); // 레벨 * 2 코인
+            await addCoins(userId, coinReward, `레벨업 보상: 레벨 ${newLevel}`);
+            console.log(`레벨업 코인 보상 지급 레벨 ${newLevel} - ${coinReward} 코인`);
+        } catch (error) {
+            console.error('레벨업 코인 보상 실패:', error);
+            throw error;
+        }
+    }
+
+    async function rewardCoinsForAchievement(userId, achievementName) {
+        try {
+            await addCoins(userId, 5, `업적 달성: ${achievementName}`);
+            console.log(`업적 코인 보상 지급 ${achievementName}`);
+        } catch (error) {
+            console.error('업적 코인 보상 실패:', error);
+            throw error;
+        }
+    }
+
+    const BADGES = {
+        FIRST_CORRECT: { id: 'first_correct', name: '첫 정답!', description: '첫 문제를 맞췄습니다!', icon: '🎯', requirement: (stats) => stats.correctAnswers >= 1, xpReward: 50 },
+        STREAK_3: { id: 'streak_3', name: '열심히 공부', description: '3일 연속 학습했습니다.', icon: '📅', requirement: (stats) => stats.streak >= 3, xpReward: 100 },
+        STREAK_7: { id: 'streak_7', name: '일주일 연속', description: '1주일 연속 학습했습니다.', icon: '📅📅', requirement: (stats) => stats.streak >= 7, xpReward: 200 },
+        ACCURACY_90: { id: 'accuracy_90', name: '정확도 마스터', description: '정답률을90%를 달성했습니다.', icon: '🎯', requirement: (stats) => stats.accuracy >= 90, xpReward: 300 },
+        PROBLEMS_100: { id: 'problems_100', name: '백문제 달성', description: '100문제를 풀었습니다.', icon: '📚', requirement: (stats) => stats.totalProblems >= 100, xpReward: 300 },
+    };
+
+    const CHALLENGES = {
+        DAILY_5_PROBLEMS: { id: 'daily_5_problems', name: '오늘 5문제 풀기', type: 'daily', target: 5, xpReward: 50, progress: (answers) => answers.today.total },
+        DAILY_3_CORRECT: { id: 'daily_3_correct', name: '오늘 3문제 맞히기', type: 'daily', target: 3, xpReward: 50, progress: (answers) => answers.today.correct },
+        WEEKLY_20_CORRECT: { id: 'weekly_20_correct', name: '이번 주20문제 맞히기', type: 'weekly', target: 20, xpReward: 200, progress: (answers) => answers.thisWeek.correct },
+    };
+    
+    // Firebase 초기화 및 인증 상태 확인 시작
+    async function startApp() {
+      try {
+        await initializeFirebaseServices();
+        showLoading();
+        onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        hideLoading();
+        showError("로그인이 필요합니다.", () => {
+          window.location.href = "index.html";
+        });
+        return;
+      }
+      
+      currentUser = user;
+      updateUserInfo(user);
+      
+          try {
+        await loadInitialData();
+        await loadLeaderboard();
+        setupRealTimeUpdates();
+        hideLoading();
+      } catch (error) {
+        console.error("데이터 로딩 실패:", error);
+        hideLoading();
+        showError("데이터를 불러올 수 없습니다. 오류가 발생했습니다.", () => {
+          window.location.reload();
+        });
+      }
+        });
+      } catch (error) {
+        console.error('앱 시작 실패:', error);
+        hideLoading();
+        showError('앱을 시작할 수 없습니다. 페이지를 새로고침해주세요.', () => {
+          window.location.reload();
+        });
+      }
+    }
+
+    // 앱 시작
+    startApp();
+
+    function showLoading() {
+      document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      setTimeout(() => {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+      }, 500);
+    }
+
+    function updateUserInfo(user) {
+      const userInfo = document.getElementById('userInfo');
+      const userEmail = user.email || '익명 사용자';
+      const joinDate = user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString('ko-KR') : '정보 없음';
+      
+      userInfo.innerHTML = `
+<div class="user-detail">
+<span class="label">사용자</span>
+<span class="value">${userEmail}</span>
+</div>
+<div class="user-detail">
+<span class="label">가입일:</span>
+<span class="value">${joinDate}</span>
+</div>
+<div class="user-detail">
+<span class="label">마지막 로그인</span>
+<span class="value">${new Date().toLocaleDateString('ko-KR')}</span>
+</div>
+`;
+    }
+
+    function showError(message, retryCallback) {
+      const container = document.querySelector('.gamification-container');
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error-message';
+      errorDiv.innerHTML = `
+<div>${message}</div>
+<button class="retry-button" onclick="handleRetry()">다시 시도</button>
+`;
+      container.insertBefore(errorDiv, container.firstChild);
+      
+      window.handleRetry = retryCallback;
+    }
+
+    async function loadInitialData() {
+        try {
+            const userDocRef = doc(db, "userProfiles", currentUser.uid);
+            const userDoc = await getDoc(userDocRef);
+
+            if (userDoc.exists()) {
+                userProfile = userDoc.data();
+            } else {
+                userProfile = {
+                    level: 1, xp: 0, streak: 0, badges: [],
+                    lastLogin: serverTimestamp(),
+                    dailyChallenges: {}, weeklyChallenges: {}
+                };
+                await setDoc(userDocRef, userProfile);
+            }
+            
+            // 현재 사용자 코인 필드만 보정(전역 초기화 방지)
+            try { await initializeUserCoins(currentUser.uid); } catch (_) {}
+            
+            // 사용자 답변 데이터 로딩 (오류 처리 포함)
+            try {
+                await loadUserAnswers();
+            } catch (error) {
+                console.warn("답변 데이터 로딩 실패, 빈 배열로 초기화", error);
+                userAnswers = [];
+            }
+            
+            await checkStreaksAndChallenges();
+            updateAllDisplays();
+            
+            // 실시간 코인 업데이트 설정
+            setupCoinRealtimeUpdates();
+
+        } catch (error) {
+            console.error("사용자 프로필 로딩 실패:", error);
+            throw error; // 상위로 오류 전파
+        }
+    }
+    
+    function setupCoinRealtimeUpdates() {
+        onCoinsChange(currentUser.uid, (newBalance) => {
+            document.getElementById('coinBalance').textContent = newBalance;
+        });
+    }
+    
+    async function loadUserAnswers() {
+        try {
+            const answersQuery = query(collection(db, "answers"), where("userId", "==", currentUser.uid));
+            const snapshot = await getDocs(answersQuery);
+            userAnswers = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    ...data, 
+                    submittedAt: data.submittedAt ? data.submittedAt.toDate() : new Date()
+                };
+            });
+        } catch (error) {
+            console.error("답변 데이터 로딩 실패:", error);
+            userAnswers = []; // 빈 배열로 초기화
+        }
+    }
+
+    async function checkStreaksAndChallenges() {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            
+            // lastLogin이 없는 경우 기본값 설정
+            const lastLoginDate = userProfile.lastLogin ? 
+                (userProfile.lastLogin.toDate ? userProfile.lastLogin.toDate() : new Date(userProfile.lastLogin)) :
+                new Date();
+                
+            const lastLogin = lastLoginDate.toISOString().split('T')[0];
+            
+            if (today !== lastLogin) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                if (lastLogin !== yesterday.toISOString().split('T')[0]) {
+                    userProfile.streak = 0; // 연속 학습 초기화
+                }
+                userProfile.dailyChallenges = {}; // 일일 도전 과제 초기화
+                
+                // 주간 도전 과제 초기화(필요시에만)
+                if (new Date().getDay() === 1) {
+                    userProfile.weeklyChallenges = {};
+                }
+
+                await updateDoc(doc(db, "userProfiles", currentUser.uid), {
+                    streak: userProfile.streak,
+                    dailyChallenges: userProfile.dailyChallenges,
+                    weeklyChallenges: userProfile.weeklyChallenges,
+                    lastLogin: serverTimestamp()
+                });
+            }
+        } catch (error) {
+            console.error("연속 학습 및 도전 과제 확인 실패:", error);
+            // 오류가 발생해도 프로그램이 계속 실행되도록 기본값 설정
+            userProfile.streak = userProfile.streak || 0;
+            userProfile.dailyChallenges = userProfile.dailyChallenges || {};
+            userProfile.weeklyChallenges = userProfile.weeklyChallenges || {};
+        }
+    }
+
+    function getAnswerStats() {
+        const today = new Date();
+        const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const startOfWeek = new Date(startOfToday);
+        startOfWeek.setDate(startOfWeek.getDate() - today.getDay());
+
+        const todayAnswers = userAnswers.filter(a => a.submittedAt >= startOfToday);
+        const weekAnswers = userAnswers.filter(a => a.submittedAt >= startOfWeek);
+
+        return {
+            total: userAnswers.length,
+            correct: userAnswers.filter(a => a.isCorrect).length,
+            today: {
+                total: todayAnswers.length,
+                correct: todayAnswers.filter(a => a.isCorrect).length,
+            },
+            thisWeek: {
+                total: weekAnswers.length,
+                correct: weekAnswers.filter(a => a.isCorrect).length
+            }
+        };
+    }
+
+    function updateAllDisplays() {
+        if (!userProfile) return;
+        
+        updateStatsDisplay();
+        updateBadgesDisplay();
+        updateChallengesDisplay();
+        updateStreakCalendar();
+    }
+
+    function updateStatsDisplay() {
+        const level = userProfile.level || 1;
+        const xp = userProfile.xp || 0;
+        const requiredXp = getRequiredXpForLevel(level);
+        const prevRequiredXp = getRequiredXpForLevel(level - 1);
+        const progress = Math.max(0, (xp - prevRequiredXp) / (requiredXp - prevRequiredXp)) * 100;
+
+        document.getElementById('currentLevel').textContent = level;
+        document.getElementById('totalXP').textContent = xp;
+        document.getElementById('currentStreak').textContent = userProfile.streak || 0;
+        document.getElementById('badgesEarned').textContent = userProfile.badges?.length || 0;
+        document.getElementById('levelProgress').style.width = `${progress}%`;
+        document.getElementById('levelProgressText').textContent = `${xp - prevRequiredXp} / ${requiredXp - prevRequiredXp} XP`;
+        
+        updateCoinDisplay();
+    }
+    
+    async function updateCoinDisplay() {
+        try {
+            const coinBalance = await getUserCoins(currentUser.uid);
+            document.getElementById('coinBalance').textContent = coinBalance;
+            
+            // 포인트 잔액도 함께 업데이트
+            const pointsBalance = await getUserPoints(currentUser.uid);
+            document.getElementById('pointsBalance').textContent = pointsBalance;
+        } catch (error) {
+            console.error('코인/포인트 잔액 조회 실패:', error);
+            document.getElementById('coinBalance').textContent = '0';
+            document.getElementById('pointsBalance').textContent = '0';
+        }
+    }
+
+    // 포인트 시스템 함수들
+    async function getUserPoints(userId) {
+        try {
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                return userData.points || 0;
+            }
+            return 0;
+        } catch (error) {
+            console.error('포인트 잔액 조회 실패:', error);
+            return 0;
+        }
+    }
+
+    async function addPoints(userId, amount, reason) {
+        try {
+            const userRef = doc(db, 'users', userId);
+            const userDoc = await getDoc(userRef);
+            const currentPoints = userDoc.exists() ? (userDoc.data().points || 0) : 0;
+            const newPoints = currentPoints + amount;
+
+            // 문서가 없어도 안전하게 생성/병합
+            await setDoc(userRef, {
+                points: newPoints,
+                lastPointsUpdate: serverTimestamp()
+            }, { merge: true });
+
+            await addDoc(collection(db, 'points_transactions'), {
+                userId,
+                type: 'earn',
+                amount,
+                reason,
+                balance: newPoints,
+                timestamp: serverTimestamp()
+            });
+
+            return newPoints;
+        } catch (error) {
+            console.error('포인트 지급 실패:', error);
+            throw error;
+        }
+    }
+    
+    function getRequiredXpForLevel(level) {
+        if (level === 0) return 0;
+        return Math.floor(GAMIFICATION_CONFIG.LEVEL_XP_BASE * Math.pow(GAMIFICATION_CONFIG.LEVEL_XP_MULTIPLIER, level - 1));
+    }
+
+    async function updateBadgesDisplay() {
+        const badgesGrid = document.getElementById('badgesGrid');
+        badgesGrid.innerHTML = '';
+        const answerStats = getAnswerStats();
+        const userStats = {
+            correctAnswers: answerStats.correct,
+            totalProblems: answerStats.total,
+            streak: userProfile.streak,
+            accuracy: answerStats.total > 0 ? (answerStats.correct / answerStats.total) * 100 : 0,
+        };
+
+        Object.values(BADGES).forEach(badge => {
+            const isEarned = userProfile.badges?.includes(badge.id);
+            const badgeElement = document.createElement('div');
+            badgeElement.className = `badge-item ${isEarned ? 'earned' : 'locked'}`;
+            badgeElement.innerHTML = `
+<div class="badge-icon">${badge.icon}</div>
+<div class="badge-info">
+<div class="badge-name">${badge.name}</div>
+<div class="badge-desc">${badge.description}</div>
+${!isEarned ? `<div class="badge-xp">+${badge.xpReward} XP</div>` : ''}
+</div>
+`;
+            badgesGrid.appendChild(badgeElement);
+
+            if (!isEarned && badge.requirement(userStats)) {
+                awardBadge(badge);
+            }
+        });
+    }
+
+    async function awardBadge(badge) {
+        if (userProfile.badges?.includes(badge.id)) return;
+        
+        const newBadges = [...(userProfile.badges || []), badge.id];
+        const newXp = (userProfile.xp || 0) + badge.xpReward;
+
+        await updateDoc(doc(db, "userProfiles", currentUser.uid), {
+            badges: newBadges,
+            xp: newXp
+        });
+
+        userProfile.badges = newBadges;
+        userProfile.xp = newXp;
+        
+        // 배지 획득 시 코인 지급(자동 보상)
+        try {
+            await rewardCoinsForBadge(currentUser.uid, badge.name);
+            updateCoinDisplay();
+            showAchievementPopup(badge.name, `${badge.description} +1 코인을 획득했습니다!`, badge.icon);
+        } catch (error) {
+            console.error('배지 코인 보상 실패:', error);
+            showAchievementPopup(badge.name, badge.description, badge.icon);
+        }
+        
+        checkLevelUp();
+    }
+    
+    function updateChallengesDisplay() {
+        const challengesList = document.getElementById('challengesList');
+        challengesList.innerHTML = '';
+        const answerStats = getAnswerStats();
+
+        let todayCompleted = 0;
+        let weekCompleted = 0;
+
+        Object.values(CHALLENGES).forEach(challenge => {
+            const progress = challenge.progress(answerStats);
+            const isCompleted = userProfile[challenge.type + 'Challenges']?.[challenge.id];
+
+            if (isCompleted) {
+                if (challenge.type === 'daily') {
+                    todayCompleted++;
+                } else if (challenge.type === 'weekly') {
+                    weekCompleted++;
+                }
+            }
+
+            const progressPercentage = Math.min((progress / challenge.target) * 100, 100);
+            const pointsReward = Math.floor(challenge.xpReward / 2);
+            
+            const challengeElement = document.createElement('div');
+            challengeElement.className = `challenge-item ${isCompleted ? 'completed' : ''}`;
+            challengeElement.innerHTML = `
+<div class="challenge-info">
+<div class="challenge-name">${challenge.name}</div>
+<div class="challenge-progress">
+<div class="progress-bar">
+<div class="progress-fill" style="width: ${progressPercentage}%">
+</div>
+</div>
+<div class="progress-text">${progress} / ${challenge.target}</div>
+</div>
+</div>
+<div class="challenge-reward">
+${isCompleted ? '완료됨' : `+${challenge.xpReward} XP, +${pointsReward} 포인트`}
+</div>
+`;
+            challengesList.appendChild(challengeElement);
+
+            if (!isCompleted && progress >= challenge.target) {
+                completeChallenge(challenge);
+            }
+        });
+
+        // 도전 과제 통계 업데이트
+        document.getElementById('todayCompletedChallenges').textContent = todayCompleted;
+        document.getElementById('weekCompletedChallenges').textContent = weekCompleted;
+    }
+
+    async function completeChallenge(challenge) {
+        if (userProfile[challenge.type + 'Challenges']?.[challenge.id]) return;
+
+        const newXp = (userProfile.xp || 0) + challenge.xpReward;
+        const challengeUpdate = { ...userProfile[challenge.type + 'Challenges'], [challenge.id]: true };
+        
+        let updateData = { xp: newXp };
+        if (challenge.type === 'daily') {
+            updateData.dailyChallenges = challengeUpdate;
+        } else if (challenge.type === 'weekly') {
+            updateData.weeklyChallenges = challengeUpdate;
+        }
+
+        await updateDoc(doc(db, "userProfiles", currentUser.uid), updateData);
+        
+        userProfile.xp = newXp;
+        userProfile[challenge.type + 'Challenges'] = challengeUpdate;
+        
+        // 도전 과제 완료 시 포인트 보상 지급
+        try {
+            const pointsReward = Math.floor(challenge.xpReward / 2); // XP의 절반만큼 포인트 지급
+            await addPoints(currentUser.uid, pointsReward, `도전 과제 완료: ${challenge.name}`);
+            updateCoinDisplay();
+            showAchievementPopup("도전 과제 완료!", `${challenge.name} - +${challenge.xpReward} XP, +${pointsReward} 포인트를 획득했습니다!`, '🎯');
+        } catch (error) {
+            console.error('포인트 보상 실패:', error);
+            showAchievementPopup("도전 과제 완료!", `${challenge.name} - +${challenge.xpReward} XP를 획득했습니다!`, '🎯');
+        }
+        
+        checkLevelUp();
+    }
+
+    async function checkLevelUp() {
+        const currentLevel = userProfile.level || 1;
+        const currentXp = userProfile.xp || 0;
+        const requiredXp = getRequiredXpForLevel(currentLevel);
+
+        if (currentXp >= requiredXp && currentLevel < GAMIFICATION_CONFIG.MAX_LEVEL) {
+            const newLevel = currentLevel + 1;
+            await updateDoc(doc(db, "userProfiles", currentUser.uid), { level: newLevel });
+            userProfile.level = newLevel;
+            
+            // 레벨업 시 코인 지급(자동 보상)
+            try {
+                await rewardCoinsForLevelUp(currentUser.uid, newLevel);
+                updateCoinDisplay();
+                const coinReward = Math.floor(newLevel * 2);
+                showAchievementPopup(`레벨 ${newLevel} 달성!`, `축하합니다! 새로운 레벨에 도달했습니다. +${coinReward} 코인을 획득했습니다!`, '🎊');
+            } catch (error) {
+                console.error('레벨업 코인 보상 실패:', error);
+                showAchievementPopup(`레벨 ${newLevel} 달성!`, '축하합니다! 새로운 레벨에 도달했습니다.', '🎊');
+            }
+        }
+    }
+
+    function updateStreakCalendar() {
+      const streakCalendar = document.getElementById('streakCalendar');
+      streakCalendar.innerHTML = '';
+      const studyDays = new Set(userAnswers.map(a => a.submittedAt.toISOString().split('T')[0]));
+      
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateString = date.toISOString().split('T')[0];
+        
+        const dayElement = document.createElement('div');
+        dayElement.className = 'calendar-day';
+        dayElement.title = date.toLocaleDateString('ko-KR');
+        dayElement.innerHTML = `<div class="day-date">${date.getDate()}</div>`;
+        if (studyDays.has(dateString)) {
+          dayElement.classList.add('studied');
+        }
+        streakCalendar.appendChild(dayElement);
+      }
+    }
+    
+    async function loadLeaderboard() {
+      const usersQuery = query(collection(db, "userProfiles"), orderBy("xp", "desc"), limit(10));
+      const snapshot = await getDocs(usersQuery);
+      const leaderboardBody = document.getElementById('leaderboardBody');
+      leaderboardBody.innerHTML = '';
+      
+      let rank = 1;
+      snapshot.forEach(doc => {
+        const userData = doc.data();
+        const row = document.createElement('tr');
+        row.innerHTML = `
+<td>${rank}</td>
+<td>${userData.displayName || '익명'}</td>
+<td>${userData.level || 1}</td>
+<td>${userData.xp || 0}</td>
+<td>${userData.streak || 0}</td>
+`;
+        leaderboardBody.appendChild(row);
+        rank++;
+      });
+    }
+
+    function setupRealTimeUpdates() {
+      const userDocRef = doc(db, "userProfiles", currentUser.uid);
+      onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+          userProfile = doc.data();
+          updateAllDisplays();
+        }
+      });
+    }
+
+    function showAchievementPopup(title, description, icon) {
+      document.getElementById('achievementTitle').textContent = title;
+      document.getElementById('achievementDesc').textContent = description;
+      document.getElementById('achievementPopup').querySelector('.achievement-icon').textContent = icon;
+      document.getElementById('overlay').style.display = 'block';
+      document.getElementById('achievementPopup').style.display = 'flex';
+    }
+
+    window.closeAchievement = function() {
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('achievementPopup').style.display = 'none';
+    }
+
+    // 다른 곳에서 호출할 수 있도록 함수를window 객체에 할당
+    window.recordProblemCompletion = async function(isCorrect, solvingTime, questionData) {
+        if (!currentUser || !userProfile) return;
+
+        let xpGained = 0;
+        if (isCorrect) {
+            xpGained += GAMIFICATION_CONFIG.XP_PER_CORRECT_ANSWER;
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        const lastLogin = userProfile.lastLogin.toDate().toISOString().split('T')[0];
+
+        let streak = userProfile.streak || 0;
+        if (today !== lastLogin) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (lastLogin === yesterday.toISOString().split('T')[0]) {
+                streak++;
+                xpGained += GAMIFICATION_CONFIG.XP_PER_STREAK_DAY;
+            } else {
+                streak = 1;
+            }
+        }
+        
+        const newXp = (userProfile.xp || 0) + xpGained;
+
+        await updateDoc(doc(db, "userProfiles", currentUser.uid), {
+            xp: newXp,
+            streak: streak,
+            lastLogin: serverTimestamp()
+        });
+
+        userProfile.xp = newXp;
+        userProfile.streak = streak;
+
+        // 새로운 답변 추가 및 통계 업데이트
+        userAnswers.push({ 
+            isCorrect, 
+            solvingTime, 
+            questionData, 
+            submittedAt: new Date() 
+        });
+
+        updateAllDisplays();
+        checkLevelUp();
+    };
+
+    // 코인 관련 업적 목록 함수들
+    async function loadAchievements() {
+        try {
+            const achievements = getAchievementList();
+            const userAchievements = await getUserAchievements(currentUser.uid);
+            const userStats = await getUserStatsForAchievements(currentUser.uid);
+            
+            displayAchievements(achievements, userAchievements.unlockedAchievements);
+            updateAchievementStats(userAchievements.unlockedAchievements.length, Object.keys(achievements).length);
+            
+            // 업적 달성 확인
+            await checkAndRewardAchievements(currentUser.uid, 'coin_earned', userStats);
+            await checkAndRewardAchievements(currentUser.uid, 'lottery_played', userStats);
+            await checkAndRewardAchievements(currentUser.uid, 'lottery_won', userStats);
+            await checkAndRewardAchievements(currentUser.uid, 'consecutive_lottery', userStats);
+            
+        } catch (error) {
+            console.error('업적 로딩 실패:', error);
+        }
+    }
+
+    function displayAchievements(achievements, unlockedAchievements) {
+        const achievementsGrid = document.getElementById('achievementsGrid');
+        achievementsGrid.innerHTML = '';
+        
+        Object.values(achievements).forEach(achievement => {
+            const isUnlocked = unlockedAchievements.includes(achievement.id);
+            
+            const achievementElement = document.createElement('div');
+            achievementElement.className = `achievement-item ${isUnlocked ? 'unlocked' : 'locked'}`;
+            achievementElement.innerHTML = `
+<div class="achievement-icon">${isUnlocked ? '🏆' : '🔒'}</div>
+<div class="achievement-content">
+<div class="achievement-name">${achievement.name}</div>
+<div class="achievement-description">${achievement.description}</div>
+<div class="achievement-reward">보상: +${achievement.reward} 코인</div>
+</div>
+<div class="achievement-status">
+${isUnlocked ? '<span class="unlocked-badge">달성</span>' : '<span class="locked-badge">잠김</span>'}
+</div>
+`;
+            
+            achievementsGrid.appendChild(achievementElement);
+        });
+    }
+
+    function updateAchievementStats(unlockedCount, totalCount) {
+        document.getElementById('unlockedAchievements').textContent = unlockedCount;
+        document.getElementById('totalAchievements').textContent = totalCount;
+        document.getElementById('achievementRate').textContent = `${Math.round((unlockedCount / totalCount) * 100)}%`;
+    }
+
+    // 인증 상태가 완전히 로드된 후 업적 목록 초기화
+    setTimeout(async () => {
+        if (currentUser) {
+            try {
+                await loadAchievements();
+            } catch (error) {
+                console.warn("업적 목록 로딩 실패:", error);
+            }
+        }
+    }, 1000);
+</script>
+</body>
+</html>
+

@@ -1,0 +1,865 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>개인 맞춤 추천</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>🎯</text>
+</svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="recommendations-container">
+<div class="recommendations-header">
+<h1>🎯 개인 맞춤 추천</h1>
+<p>학습 패턴을 분석하여 맞춤형 문제를 추천해드립니다</p>
+<button class="refresh-btn" onclick="refreshRecommendations()">
+추천 새로고침
+</button>
+</div>
+<div id="loadingIndicator" class="loading" style="display: none;">
+<div class="loading-spinner">
+</div>
+<p>추천을 분석하고 있습니다...</p>
+</div>
+<div id="errorMessage" class="error-message" style="display: none;">
+<strong>오류가 발생했습니다.</strong>
+<p>잠시 후 다시 시도해주세요.</p>
+</div>
+<div class="recommendation-section">
+<div class="section-header">
+취약점 분석 및 우선순위 추천
+</div>
+<div class="section-content">
+<div class="weakness-analysis" id="weaknessAnalysis">
+<div class="weakness-title">취약점 분석 결과</div>
+<ul class="weakness-list" id="weaknessList">
+<!-- 취약점 분석 결과가 표시됩니다-->
+</ul>
+</div>
+<div class="recommendation-grid" id="priorityRecommendations">
+<!-- 우선순위 추천 문제들이 표시됩니다-->
+</div>
+</div>
+</div>
+<div class="recommendation-section">
+<div class="section-header">
+복습 문제 추천
+</div>
+<div class="section-content">
+<div class="progress-section">
+<div class="progress-text">복습 문제 진행률</div>
+<div class="progress-bar">
+<div class="progress-fill" id="reviewProgress" style="width: 0%">
+</div>
+</div>
+</div>
+<div class="recommendation-grid" id="reviewRecommendations">
+<!-- 복습 추천 문제들이 표시됩니다-->
+</div>
+</div>
+</div>
+<div class="recommendation-section">
+<div class="section-header">
+난이도 추천
+</div>
+<div class="section-content">
+<div class="recommendation-grid" id="difficultyRecommendations">
+<!-- 난이도 추천 문제들이 표시됩니다-->
+</div>
+</div>
+</div>
+<div class="recommendation-section">
+<div class="section-header">
+개인화 추천
+</div>
+<div class="section-content">
+<div class="recommendation-grid" id="personalizedRecommendations">
+<!-- 개인화 추천 문제들이 표시됩니다-->
+</div>
+</div>
+</div>
+<div class="recommendation-section">
+<div class="section-header">
+학습 계획 추천
+</div>
+<div class="section-content">
+<div class="recommendation-grid" id="studyPlanRecommendations">
+<!-- 학습 계획 추천이 표시됩니다-->
+</div>
+</div>
+</div>
+</div>
+<script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { collection, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirebaseApp, getFirebaseAuth, getFirebaseDb } from './script.js';
+
+    let app, auth, db;
+    async function initializeFirebaseServices() {
+      app = await getFirebaseApp();
+      auth = await getFirebaseAuth();
+      db = await getFirebaseDb();
+    }
+
+    let questionsData = [];
+    let userAnswers = {};
+    let userStats = {};
+
+    // 로그인 상태 변경 감지
+    (async () => {
+      await initializeFirebaseServices();
+      onAuthStateChanged(auth, async (user) =>
+{
+      if (!user) {
+        alert("로그인이 필요합니다.");
+        location.href = "index.html";
+        return;
+      }
+      
+      showLoading();
+      try {
+        await loadData();
+        generateRecommendations();
+        hideLoading();
+      } catch (error) {
+        console.error("데이터 로딩 중 오류:", error);
+        showError("데이터를 불러오는데 실패했습니다.");
+        hideLoading();
+      }
+    });
+    })();
+
+    // 로딩 표시 및 에러 메시지 관리
+    function showLoading() {
+      document.getElementById('loadingIndicator').style.display = 'block';
+      document.getElementById('errorMessage').style.display = 'none';
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingIndicator').style.display = 'none';
+    }
+
+    function showError(message) {
+      const errorElement = document.getElementById('errorMessage');
+      errorElement.querySelector('p').textContent = message;
+      errorElement.style.display = 'block';
+    }
+
+    // 데이터 로딩
+    async function loadData() {
+      try {
+        // 문제 데이터 로딩
+        const response = await fetch('questions.json');
+        if (!response.ok) {
+          throw new Error('문제 데이터를 불러오는데 실패했습니다.');
+        }
+        const raw = await response.json();
+        // JSON을 추천 엔진용 구조로 변환: [{ category, problems: [{id, difficulty, ...}]}]
+        questionsData = transformQuestionsForRecommendations(raw);
+        
+        // 사용자 답변 데이터 로딩
+        const q = query(collection(db, "answers"), where("userId", "==", auth.currentUser.uid));
+        const snapshot = await getDocs(q);
+        
+        userAnswers = {};
+        userStats = {
+          totalAttempts: 0,
+          totalCorrect: 0,
+          categoryStats: {},
+          difficultyStats: {},
+          recentWrong: [],
+          recentAnswers: []
+        };
+        
+        snapshot.forEach(doc =>
+{
+          const data = doc.data();
+          if (!userAnswers[data.questionId]) {
+            userAnswers[data.questionId] = [];
+          }
+          userAnswers[data.questionId].push(data);
+          
+          // 답변 통계 계산
+          userStats.totalAttempts++;
+          if (data.isCorrect) userStats.totalCorrect++;
+          
+          // 카테고리별 통계
+          const category = data.middleCategory || data.category;
+          if (category) {
+            if (!userStats.categoryStats[category]) {
+              userStats.categoryStats[category] = { attempts: 0, correct: 0 };
+            }
+            userStats.categoryStats[category].attempts++;
+            if (data.isCorrect) userStats.categoryStats[category].correct++;
+          }
+          
+          // 난이도별 통계
+          const difficulty = data.difficulty;
+          if (difficulty) {
+            if (!userStats.difficultyStats[difficulty]) {
+              userStats.difficultyStats[difficulty] = { attempts: 0, correct: 0 };
+            }
+            userStats.difficultyStats[difficulty].attempts++;
+            if (data.isCorrect) userStats.difficultyStats[difficulty].correct++;
+          }
+          
+          // 최근 틀린 문제 기록
+          if (!data.isCorrect && data.submittedAt) {
+            userStats.recentWrong.push({
+              questionId: data.questionId,
+              submittedAt: data.submittedAt,
+              category: data.category,
+              difficulty: data.difficulty
+            });
+          }
+          
+          // 최근 답변 기록
+          if (data.submittedAt) {
+            userStats.recentAnswers.push({
+              questionId: data.questionId,
+              isCorrect: data.isCorrect,
+              submittedAt: data.submittedAt,
+              difficulty: data.difficulty,
+              middleCategory: data.middleCategory || data.category
+            });
+          }
+        });
+        
+        console.log("데이터 로딩 완료");
+      } catch (error) {
+        console.error("데이터 로딩 중 오류:", error);
+        throw error;
+      }
+    }
+
+    // 추천 생성
+    function generateRecommendations() {
+      generateWeaknessAnalysis();
+      generatePriorityRecommendations();
+      generateReviewRecommendations();
+      generateDifficultyRecommendations();
+      generatePersonalizedRecommendations();
+      generateStudyPlanRecommendations();
+    }
+
+    // 취약점 분석
+    function generateWeaknessAnalysis() {
+      const weaknessList = document.getElementById('weaknessList');
+      weaknessList.innerHTML = '';
+      
+      if (userStats.totalAttempts === 0) {
+        weaknessList.innerHTML = `
+          <li class="weakness-item">
+            <span class="weakness-name">학습 기록이 없습니다.</span>
+          </li>
+        `;
+        return;
+      }
+      
+      // 카테고리별 오답률 계산
+      const weaknesses = [];
+      Object.keys(userStats.categoryStats).forEach(category =>
+{
+        const stats = userStats.categoryStats[category];
+        const errorRate = stats.attempts >
+0 ? ((stats.attempts - stats.correct) / stats.attempts * 100) : 0;
+        
+        if (errorRate >
+30) { // 30% 이상 오답률이면 취약점으로 판단
+          weaknesses.push({
+            category: category,
+            errorRate: errorRate,
+            attempts: stats.attempts
+          });
+        }
+      });
+      
+      // 오답률 순으로 정렬
+      weaknesses.sort((a, b) =>
+b.errorRate - a.errorRate);
+      
+      if (weaknesses.length === 0) {
+        weaknessList.innerHTML = `
+          <li class="weakness-item">
+            <span class="weakness-name">취약점을 찾을 수 없습니다.</span>
+          </li>
+        `;
+        return;
+      }
+      
+      weaknesses.forEach(weakness =>
+{
+        const li = document.createElement('li');
+        li.className = 'weakness-item';
+        li.innerHTML = `
+<span class="weakness-name">${weakness.category}</span>
+<span class="weakness-rate">${Math.round(weakness.errorRate)}% 오답률</span>
+`;
+        weaknessList.appendChild(li);
+      });
+    }
+
+    // 우선순위 추천
+    function generatePriorityRecommendations() {
+      const priorityContainer = document.getElementById('priorityRecommendations');
+      priorityContainer.innerHTML = '';
+      
+      if (userStats.totalAttempts === 0) {
+        priorityContainer.innerHTML = `
+<div class="empty-state">
+<div class="empty-icon">💡</div>
+<h3>학습 기록이 없습니다.</h3>
+<p>학습 기록이 없으면 우선순위 추천을 제공할 수 없습니다.</p>
+</div>
+`;
+        return;
+      }
+      
+      const weaknesses = Object.entries(userStats.categoryStats)
+        .map(([category, stats]) =>
+({
+          category,
+          accuracy: stats.attempts >
+0 ? (stats.correct / stats.attempts) * 100 : 100
+        }))
+        .filter(item =>
+item.accuracy
+< 70) // 정확도가 70% 미만인 카테고리 필터링
+        .sort((a, b) =>
+a.accuracy - b.accuracy)
+        .slice(0, 3); // 상위 3개 카테고리 선택
+
+      if (weaknesses.length === 0) {
+        priorityContainer.innerHTML = `
+<div class="empty-state">
+<div class="empty-icon">💡</div>
+<h3>우선순위 추천 문제를 찾을 수 없습니다.</h3>
+<p>학습 기록이 많지 않거나, 정확도가 높은 카테고리입니다.</p>
+</div>
+`;
+        return;
+      }
+
+      weaknesses.forEach(weakness =>
+{
+        const recommendedQuestion = findUnsolvedOrWrongQuestion(weakness.category);
+        if (recommendedQuestion) {
+          const card = createRecommendationCard(recommendedQuestion, '우선순위 추천', 'high');
+          priorityContainer.appendChild(card);
+        }
+      });
+    }
+
+    // 문제 찾기 (풀지 못한 문제 또는 틀린 문제)
+    function findUnsolvedOrWrongQuestion(category) {
+      const categoryQuestions = questionsData
+        .filter(q =>
+q.category === category)
+        .flatMap(q =>
+q.problems);
+
+      // 풀지 못한 문제 찾기
+      const unsolved = categoryQuestions.find(q =>
+!userAnswers[q.id]);
+      if (unsolved) return unsolved;
+
+      // 틀린 문제 찾기
+      const wrong = categoryQuestions.find(q =>
+userAnswers[q.id] && userAnswers[q.id].some(a =>
+!a.isCorrect)
+      );
+      return wrong;
+    }
+
+    // 개인화 추천
+    function generatePersonalizedRecommendations() {
+      const container = document.getElementById('personalizedRecommendations');
+      container.innerHTML = '';
+      
+      if (userStats.totalAttempts === 0) {
+        container.innerHTML = `
+<div class="empty-state">
+<div class="empty-icon">🎯</div>
+<h3>개인화 추천 문제를 찾을 수 없습니다.</h3>
+<p>학습 기록이 많지 않아 개인화 추천을 제공할 수 없습니다.</p>
+</div>
+`;
+        return;
+      }
+      
+      // 학습 패턴 분석
+      const learningPattern = analyzeLearningPattern();
+      
+      // 학습 패턴에 따른 문제 선택
+      const recommendedQuestions = selectQuestionsByPattern(learningPattern);
+      
+      if (recommendedQuestions.length === 0) {
+        container.innerHTML = `
+<div class="empty-state">
+<div class="empty-icon">🎯</div>
+<h3>개인화 추천 문제를 찾을 수 없습니다.</h3>
+<p>학습 패턴에 맞는 문제를 찾을 수 없습니다.</p>
+</div>
+`;
+        return;
+      }
+      
+      recommendedQuestions.forEach(question =>
+{
+        const card = createRecommendationCard(question, '개인화 추천', 'personalized');
+        container.appendChild(card);
+      });
+    }
+
+    // 학습 패턴 분석
+    function analyzeLearningPattern() {
+      const pattern = {
+        preferredDifficulty: '중간',
+        preferredTime: '오후',
+        preferredCategory: '',
+        studyFrequency: '',
+        accuracyTrend: ''
+      };
+      
+      if (userStats.recentAnswers.length === 0) {
+        return pattern;
+      }
+      
+      // 난이도별 정확도 계산
+      const difficultyStats = {};
+      userStats.recentAnswers.forEach(answer =>
+{
+        const difficulty = answer.difficulty || '중간';
+        if (!difficultyStats[difficulty]) {
+          difficultyStats[difficulty] = { attempts: 0, correct: 0 };
+        }
+        difficultyStats[difficulty].attempts++;
+        if (answer.isCorrect) difficultyStats[difficulty].correct++;
+      });
+      
+      // 가장 높은 정확도를 가진 난이도 찾기
+      let bestDifficulty = '중간';
+      let bestAccuracy = 0;
+      Object.keys(difficultyStats).forEach(difficulty =>
+{
+        const accuracy = difficultyStats[difficulty].correct / difficultyStats[difficulty].attempts;
+        if (accuracy >
+bestAccuracy) {
+          bestAccuracy = accuracy;
+          bestDifficulty = difficulty;
+        }
+      });
+      pattern.preferredDifficulty = bestDifficulty;
+      
+      // 시간대별 학습 빈도 계산
+      const timeStats = {};
+      userStats.recentAnswers.forEach(answer =>
+{
+        const hour = new Date(answer.submittedAt).getHours();
+        const timeSlot = hour
+< 12 ? '오전' : hour
+< 18 ? '오후' : '오전';
+        if (!timeStats[timeSlot]) timeStats[timeSlot] = 0;
+        timeStats[timeSlot]++;
+      });
+      
+      let preferredTime = '오후';
+      let maxCount = 0;
+      Object.keys(timeStats).forEach(time =>
+{
+        if (timeStats[time] >
+maxCount) {
+          maxCount = timeStats[time];
+          preferredTime = time;
+        }
+      });
+      pattern.preferredTime = preferredTime;
+      
+      // 카테고리별 학습 빈도 계산
+      const categoryStats = {};
+      userStats.recentAnswers.forEach(answer =>
+{
+        const category = answer.middleCategory;
+        if (!categoryStats[category]) categoryStats[category] = 0;
+        categoryStats[category]++;
+      });
+      
+      let preferredCategory = '';
+      let maxCategoryCount = 0;
+      Object.keys(categoryStats).forEach(category =>
+{
+        if (categoryStats[category] >
+maxCategoryCount) {
+          maxCategoryCount = categoryStats[category];
+          preferredCategory = category;
+        }
+      });
+      pattern.preferredCategory = preferredCategory;
+      
+      return pattern;
+    }
+
+    // 학습 패턴에 따른 문제 선택
+    function selectQuestionsByPattern(pattern) {
+      const recommendedQuestions = [];
+      
+      // 난이도별 문제 선택
+       const difficultyQuestions = questionsData
+        .flatMap(c => c.problems)
+        .filter(q => q.difficulty === pattern.preferredDifficulty && !userAnswers[q.id])
+        .slice(0, 2);
+      
+      recommendedQuestions.push(...difficultyQuestions);
+      
+      // 카테고리별 문제 선택
+      if (pattern.preferredCategory) {
+        const categoryQuestions = questionsData
+          .filter(c => c.category === pattern.preferredCategory)
+          .flatMap(c => c.problems)
+          .filter(q => !userAnswers[q.id])
+          .slice(0, 2);
+        
+        recommendedQuestions.push(...categoryQuestions);
+      }
+      
+      return recommendedQuestions.slice(0, 4); // 총 4개 문제 선택
+    }
+
+    // 학습 계획 추천
+    function generateStudyPlanRecommendations() {
+      const container = document.getElementById('studyPlanRecommendations');
+      container.innerHTML = '';
+      
+      if (userStats.totalAttempts === 0) {
+        container.innerHTML = `
+<div class="empty-state">
+<div class="empty-icon">📚</div>
+<h3>학습 계획 추천을 찾을 수 없습니다.</h3>
+<p>학습 기록이 많지 않아 학습 계획을 제공할 수 없습니다.</p>
+</div>
+`;
+        return;
+      }
+      
+      // 주간 학습 계획 생성
+      const weeklyPlan = generateWeeklyPlan();
+      
+      weeklyPlan.forEach((dayPlan, index) =>
+{
+        const dayCard = document.createElement('div');
+        dayCard.className = 'recommendation-card';
+        dayCard.innerHTML = `
+<div class="card-header">
+<div class="card-title">${dayPlan.day}</div>
+<div class="card-priority personalized">${dayPlan.questions.length}문제</div>
+</div>
+<div class="card-stats">
+<div class="stat-item">
+<div class="stat-number">${dayPlan.category}</div>
+<div class="stat-label">카테고리</div>
+</div>
+<div class="stat-item">
+<div class="stat-number">${dayPlan.difficulty}</div>
+<div class="stat-label">난이도</div>
+</div>
+</div>
+<div class="card-actions">
+<button class="btn btn-primary" onclick="startStudyPlan(${index})">학습 시작</button>
+</div>
+`;
+        container.appendChild(dayCard);
+      });
+    }
+
+    // 주간 학습 계획 생성
+    function generateWeeklyPlan() {
+      const weekdays = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
+      const plan = [];
+      
+      // 취약점 카테고리 중 오답률이 높은 것 우선 배치
+      const weaknesses = Object.keys(userStats.categoryStats)
+        .filter(category =>
+{
+          const stats = userStats.categoryStats[category];
+          const errorRate = stats.attempts >
+0 ? ((stats.attempts - stats.correct) / stats.attempts * 100) : 0;
+          return errorRate >
+30;
+        });
+      
+      weekdays.forEach((day, index) =>
+{
+        const category = weaknesses[index % weaknesses.length] || '임의 카테고리';
+        const questions = questionsData
+          .filter(q =>
+q.category === category)
+          .flatMap(q =>
+q.problems)
+          .filter(q =>
+!userAnswers[q.id])
+          .slice(0, 3); // 3문제 선택
+        
+        const avgDifficulty = questions.length >
+0 ? 
+          questions.reduce((sum, q) =>
+sum + (q.difficulty.length || 1), 0) / questions.length : 1;
+        
+        plan.push({
+          day: day,
+          category: category,
+          questions: questions,
+          difficulty: '중간'.repeat(Math.round(avgDifficulty)),
+          estimatedTime: Math.round(avgDifficulty * 5) // 문제당 5분 예상
+        });
+      });
+      
+      return plan;
+    }
+
+    // 학습 계획 시작
+    window.startStudyPlan = function(dayIndex) {
+      // 선택된 계획 가져오기
+      const plan = generateWeeklyPlan()[dayIndex];
+      const questionIds = plan.questions.map(q =>
+q.id);
+      
+      // URL 파라미터로 전달
+      const params = new URLSearchParams();
+      params.set('plan', JSON.stringify(plan));
+      params.set('questions', JSON.stringify(questionIds));
+      
+      window.location.href = `gsg.html?${params.toString()}`;
+    }
+
+    // 복습 문제 추천
+    function generateReviewRecommendations() {
+      const container = document.getElementById('reviewRecommendations');
+      container.innerHTML = '';
+      
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const recentWrong = userStats.recentWrong
+        .filter(wrong =>
+{
+          const submittedDate = wrong.submittedAt.toDate ? wrong.submittedAt.toDate() : new Date(wrong.submittedAt);
+          return submittedDate >
+thirtyDaysAgo;
+        })
+        .sort((a, b) =>
+(b.submittedAt.toDate ? b.submittedAt.toDate() : new Date(b.submittedAt)) - (a.submittedAt.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt)))
+        .slice(0, 6);
+      
+      const totalWrongCount = userStats.recentWrong.length;
+      const reviewedCount = totalWrongCount - recentWrong.length;
+      const progressPercent = totalWrongCount >
+0 ? (reviewedCount / totalWrongCount) * 100 : 0;
+      
+      document.getElementById('reviewProgress').style.width = progressPercent + '%';
+      
+      if(recentWrong.length === 0 && userStats.totalAttempts >
+0) {
+        container.innerHTML = `
+<div class="empty-state">
+<div class="empty-icon">💡</div>
+<h3>복습할 문제가 없습니다.</h3>
+<p>최근 틀린 문제가 없습니다.</p>
+</div>
+`;
+        return;
+      }
+
+      if (recentWrong.length === 0 && userStats.totalAttempts === 0) {
+        container.innerHTML = `
+<div class="empty-state">
+<div class="empty-icon">💡</div>
+<h3>복습할 문제를 찾을 수 없습니다.</h3>
+<p>학습 기록이 많지 않아 복습할 문제를 찾을 수 없습니다.</p>
+</div>
+`;
+        return;
+      }
+
+      recentWrong.forEach(wrong =>
+{
+        const questionInfo = findQuestionById(wrong.questionId);
+        if (questionInfo) {
+          const card = createRecommendationCard(questionInfo.question, '복습 추천', 'review');
+          container.appendChild(card);
+        }
+      });
+    }
+
+    // 난이도 추천
+    function generateDifficultyRecommendations() {
+      const container = document.getElementById('difficultyRecommendations');
+      container.innerHTML = '';
+      
+      if (userStats.totalAttempts === 0) {
+        container.innerHTML = `
+<div class="empty-state">
+<div class="empty-icon">💡</div>
+<h3>난이도 추천 문제를 찾을 수 없습니다.</h3>
+<p>학습 기록이 많지 않아 난이도 추천을 제공할 수 없습니다.</p>
+</div>
+`;
+        return;
+      }
+      
+      const difficultyLevels = ['쉬움', '보통', '어려움', '매우어려움'];
+      let recommendationsMade = 0;
+
+      difficultyLevels.forEach(difficulty =>
+{
+        if (recommendationsMade >= 3) return;
+
+        const stats = userStats.difficultyStats[difficulty] || { attempts: 0, correct: 0 };
+        const accuracy = stats.attempts >
+0 ? (stats.correct / stats.attempts) * 100 : 100;
+
+        if (accuracy
+< 80 || stats.attempts
+< 5) {
+          const question = findUnsolvedQuestionByDifficulty(difficulty);
+          
+          if (question) {
+            const card = createRecommendationCard(question, `추천! ${difficulty} 문제`, 'medium');
+            container.appendChild(card);
+            recommendationsMade++;
+          }
+        }
+      });
+
+      if (recommendationsMade === 0) {
+        container.innerHTML = `
+<div class="empty-state">
+<div class="empty-icon">💡</div>
+<h3>난이도 추천 문제를 찾을 수 없습니다.</h3>
+<p>학습 기록이 많지 않아 난이도 추천을 제공할 수 없습니다.</p>
+</div>
+`;
+      }
+    }
+
+    // 난이도별 문제 찾기
+    function findUnsolvedQuestionByDifficulty(difficulty) {
+      const questions = questionsData
+        .flatMap(c => c.problems)
+        .filter(q => q.difficulty === difficulty && !userAnswers[q.id]);
+      
+      if (questions.length >
+0) {
+        return questions[Math.floor(Math.random() * questions.length)];
+      }
+      return null;
+    }
+
+    // 문제 정보 찾기
+    function findQuestionById(questionId) {
+      for (const cat of questionsData) {
+        for (const question of cat.problems) {
+          if (String(question.id) === String(questionId)) {
+            return { question, category: cat.category};
+          }
+        }
+      }
+      return null;
+    }
+
+    // 추천 카드 생성
+    function createRecommendationCard(question, category, priority) {
+      const card = document.createElement('div');
+      card.className = 'recommendation-card';
+      
+      const userData = userAnswers[question.id] || [];
+      const attempts = userData.length;
+      const accuracy = attempts >
+0 ? Math.round((userData.filter(a =>
+a.isCorrect).length / attempts) * 100) : 0;
+      
+      const priorityText = priority === 'high' ? '우선순위' : priority === 'medium' ? '추천' : priority === 'review' ? '복습' : '개인화';
+      const priorityColor = priority === 'high' ? 'high' : priority === 'medium' ? 'medium' : priority === 'review' ? 'review' : 'personalized';
+      
+      card.innerHTML = `
+<div class="card-header">
+<div class="card-title">${question.id}</div>
+<div class="card-priority ${priorityColor}">${priorityText}</div>
+</div>
+<div class="card-stats">
+<div class="stat-item">
+<div class="stat-number">${attempts}</div>
+<div class="stat-label">시도 횟수</div>
+</div>
+<div class="stat-item">
+<div class="stat-number">${accuracy}%</div>
+<div class="stat-label">정확도</div>
+</div>
+</div>
+<div class="card-actions">
+<a href="gsg.html?question=${encodeURIComponent(question.id)}" class="btn btn-primary">문제 풀기</a>
+<button class="btn btn-secondary" onclick="addToFavorites('${question.id}')">즐겨찾기</button>
+</div>
+`;
+      
+      return card;
+    }
+
+    // 추천 새로고침
+    window.refreshRecommendations = function() {
+      showLoading();
+      generateRecommendations();
+      hideLoading();
+    }
+
+    // 즐겨찾기 추가
+    window.addToFavorites = async function(questionId) {
+      try {
+        const user = auth.currentUser;
+        if (!user) { alert('로그인이 필요합니다.'); return; }
+        await addDoc(collection(db, 'favorites'), {
+          userId: user.uid,
+          questionNumber: String(questionId),
+          createdAt: serverTimestamp()
+        });
+        alert('즐겨찾기에 추가되었습니다.');
+      } catch (e) {
+        console.error('즐겨찾기 추가 실패:', e);
+        alert('즐겨찾기 추가에 실패했습니다.');
+      }
+    }
+
+    // 원본 questions.json을 추천 페이지에서 사용하는 구조로 변환
+    function transformQuestionsForRecommendations(raw) {
+      const categoryMap = new Map();
+      const getLevelFromHearts = (val) => {
+        const s = String(val || '');
+        const count = (s.match(/♥/g) || []).length;
+        if (count <= 2) return '쉬움';
+        if (count === 3) return '중간';
+        if (count === 4) return '어려움';
+        if (count === 5) return '매우 어려움';
+        return '중간';
+      };
+      (raw || []).forEach(section => {
+        const mid = section['중분류'] || section['대분류'] || section['과목'] || '기타';
+        const list = section['문항들'] || section['문항목록'] || section['problems'] || [];
+        if (!categoryMap.has(mid)) categoryMap.set(mid, { category: mid, problems: [] });
+        const bucket = categoryMap.get(mid);
+        list.forEach(q => {
+          const id = q['문항번호'] ?? q['id'] ?? q['번호'];
+          const difficulty = getLevelFromHearts(q['난이도'] ?? q['difficulty']);
+          bucket.problems.push({
+            id: String(id),
+            difficulty,
+          });
+        });
+      });
+      return Array.from(categoryMap.values());
+    }
+</script>
+</body>
+</html>
+

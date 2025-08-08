@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시스템 사용법 - 송현여고 수학 학습 시스템</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>ℹ️</text>
+</svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>ℹ️ 시스템 사용법</h1>
+<p>효율적인 학습을 위해 시스템의 주요 기능과 사용법을 안내해드립니다</p>
+</div>
+<div class="card">
+<h2>📚 문제 메뉴 구성</h2>
+<ul>
+<li>
+<span class="highlight">문제 선택</span>: 과목별로 정리된 문제 목록에서 원하는 문제를 선택하여 풀 수 있습니다. 각 문제는 난이도와 정답률이 표시됩니다
+</li>
+<li>
+<span class="highlight">즐겨찾기 문제</span>: 자주 틀리는 문제나 중요하다고 생각하는 문제를 즐겨찾기에 추가하면 나중에 쉽게 찾아서 복습할 수 있습니다. 즐겨찾기에 추가된 문제는 메뉴에서 별도로 확인할 수 있습니다
+</li>
+<li>
+<span class="highlight">오답 노트</span>: 최근 틀린 문제들을 모아서 카테고리별로 정리하고 전체 정답률과 정답률을 확인할 수 있는 문제들의 목록을 제공합니다
+</li>
+<li>
+<span class="highlight">문제 검색</span>: 문제 메뉴에서 원하는 문제를 검색할 수 있습니다. 필요한 경우 문제를 다시 검색해서 문제를 찾아서 풀 수 있습니다.
+</li>
+</ul>
+</div>
+<div class="card">
+<h2>🧭 새로 바뀐 항목</h2>
+<ul>
+<li><span class="highlight">디자인 토큰/다크 모드</span>: 전반적인 색상/컴포넌트가 토큰 기반으로 개선되었습니다.</li>
+<li><span class="highlight">데이터 일관화</span>: `questions.json` 구조를 평탄화해 검색/추천/풀이 화면에 일관 적용합니다.</li>
+<li><span class="highlight">보상 시스템</span>: 정답 보상/연속 정답 보너스/일일 보상이 안정화되었습니다.</li>
+<li><span class="highlight">백업/복원</span>: 데이터베이스 백업/복원이 Firebase Storage 기반으로 개선되었습니다.</li>
+<li><span class="highlight">PWA</span>: 오프라인 페이지와 캐시 전략이 업데이트되었습니다.</li>
+</ul>
+</div>
+<div class="card">
+<h2>⚠️ 유의사항</h2>
+<ul>
+<li>로그인이 필요한 화면은 인증되지 않으면 `index.html`로 이동합니다.</li>
+<li>문제/해설은 동일 출처 정책에 따라 iframe로딩이 제한될 수 있습니다.</li>
+<li>네트워크 불안정 시 잠시 후 다시 시도하거나 새로고침하세요.</li>
+</ul>
+</div>
+<div class="card">
+<h2>문제 선택 및 문제 풀이</h2>
+<ul>
+<li>
+문제를 선택하면 해당 문제의 기본 정보와 함께 문제가 표시됩니다
+</li>
+<li>
+문제 하단에는 문제 풀이 횟수, 오답 풀이 횟수, 최근 풀이 시간, 최근 정답 여부가 표시됩니다
+</li>
+<li>
+<span class="highlight">정답 입력</span>에서는 답을 입력하거나 입력한 답과 정답을 비교해서 정답 여부를 확인할 수 있습니다
+</li>
+</ul>
+</div>
+<div class="btn-container">
+<a class="btn btn-primary" href="gsg.html">메인 페이지로 이동</a>
+</div>
+</div>
+</body>
+</html>
+

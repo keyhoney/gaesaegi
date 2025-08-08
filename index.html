@@ -1,0 +1,132 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>송현여고 수학 학습 시스템</title>
+<!-- PWA 설정 메타 태그 -->
+<meta name="theme-color" content="#4299E1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="수학학습">
+<meta name="msapplication-TileColor" content="#4299E1">
+<!-- browserconfig.xml 미제공으로 msapplication-config는 사용하지 않음 -->
+<!-- PWA 아이콘 -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>📚</text>
+</svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>📚</text>
+</svg>">
+<!-- PWA 매니페스트 -->
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="login-page">
+<div class="login-container">
+<div class="logo">📚</div>
+<h1>송현여고 수학 학습 시스템</h1>
+<p class="subtitle">개인화된 학습 경험으로 수학 실력을 향상시켜보세요</p>
+<button class="btn btn-primary login-button" onclick="googleSignUp()" id="loginBtn">
+<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
+<span>Google 계정으로 시작하기</span>
+</button>
+<div class="message" id="message">
+</div>
+<div class="grid grid-3">
+<div class="card">
+<div class="feature-icon">🎯</div>
+<div class="feature-title">개인화 학습</div>
+<div class="feature-desc">맞춤형 수학 문제 제공</div>
+</div>
+<div class="card">
+<div class="feature-icon">📝</div>
+<div class="feature-title">실전 연습</div>
+<div class="feature-desc">실제 시험 유형 문제</div>
+</div>
+<div class="card">
+<div class="feature-icon">📊</div>
+<div class="feature-title">학습 기록</div>
+<div class="feature-desc">개인별 학습 진도</div>
+</div>
+</div>
+</div>
+<script type="module">
+import { firebaseConfig, ERROR_MESSAGES, getFirebaseApp, getFirebaseAuth } from './script.js';
+import {
+  GoogleAuthProvider,
+  signInWithRedirect,
+  getRedirectResult,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
+
+let app, auth, analytics;
+const loginBtn = document.getElementById('loginBtn');
+if (loginBtn) { loginBtn.disabled = true; loginBtn.setAttribute('aria-busy', 'true'); }
+
+function showError(message) {
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'error-message';
+  errorDiv.textContent = message;
+  document.getElementById('message').appendChild(errorDiv);
+}
+
+async function initializeFirebaseServices() {
+  try {
+    if (!firebaseConfig.apiKey || !firebaseConfig.authDomain) {
+      throw new Error('Firebase 설정이 올바르지 않습니다.');
+    }
+
+    app = await getFirebaseApp();
+    auth = await getFirebaseAuth();
+
+    // Redirect 결과 처리 (모바일/사파리 호환)
+    try {
+      const redirectResult = await getRedirectResult(auth);
+      if (redirectResult && redirectResult.user) {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+    } catch (redirectErr) {
+      console.warn('Redirect 결과 처리 실패:', redirectErr);
+    }
+
+    try { analytics = getAnalytics(app); } catch (e) { /* 무시 */ }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) { window.location.href = 'dashboard.html'; }
+    });
+
+    if (loginBtn) { loginBtn.disabled = false; loginBtn.removeAttribute('aria-busy'); }
+
+    if ('serviceWorker' in navigator) {
+      try { await navigator.serviceWorker.register('sw.js'); } catch (_) {}
+    }
+  } catch (error) {
+    console.error('Firebase 초기화 실패:', error);
+    showError('서비스 초기화에 실패했습니다. 페이지를 새로고침해주세요.');
+  }
+}
+
+const initPromise = initializeFirebaseServices();
+
+window.googleSignUp = async function () {
+  try {
+    await initPromise;
+    const provider = new GoogleAuthProvider();
+    await signInWithRedirect(auth, provider);
+  } catch (error) {
+    console.error('로그인 실패:', error);
+    showError(ERROR_MESSAGES.AUTH_ERROR);
+  }
+};
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && loginBtn && !loginBtn.disabled) { loginBtn.click(); }
+});
+</script>
+</body>
+</html>
+

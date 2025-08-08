@@ -1,0 +1,776 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="수학 모의고사 시험 페이지">
+<meta name="theme-color" content="#FF6B9D">
+<title>모의고사 - 수학 학습 시스템</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>📝</text>
+</svg>">
+<link rel="stylesheet" href="styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="exam-container">
+<!-- 시험 헤더 -->
+<div class="exam-header">
+<div class="exam-info">
+<h1>
+<span class="exam-icon">📝</span>
+모의고사
+</h1>
+<div class="exam-meta">
+<span class="exam-subject" id="examSubject">수학</span>
+<span class="exam-categories" id="examCategories">과목</span>
+</div>
+</div>
+<div class="exam-timer">
+<div class="timer-label">
+<span class="timer-icon">⏰</span>
+남은 시간
+</div>
+<div class="timer-display" id="timer">--:--</div>
+</div>
+</div>
+<!-- 진행률을 표시 -->
+<div class="exam-progress">
+<div class="progress-container">
+<div class="progress-info">
+<div class="progress-text" id="progressText">문제 1/20</div>
+<div class="progress-percentage" id="progressPercentage">5%</div>
+</div>
+<div class="progress-bar-container">
+<div class="progress-bar" id="progressBar">
+</div>
+<div class="progress-fill" id="progressFill">
+</div>
+</div>
+</div>
+<div class="progress-actions">
+<button id="pauseButton" class="btn btn-outline" aria-label="시험 일시정지">
+<span class="btn-icon">⏸️</span>
+<span class="btn-text">일시정지</span>
+</button>
+<button id="exitButton" class="btn btn-outline" aria-label="시험 종료">
+<span class="btn-icon">❌</span>
+<span class="btn-text">종료</span>
+</button>
+</div>
+</div>
+<!-- 문제 내용 -->
+<div class="exam-content">
+<div class="question-container">
+<div class="question-header">
+<div class="question-info">
+<div class="question-number" id="questionNumber">1</div>
+<div class="question-difficulty" id="questionDifficulty">
+<span class="difficulty-icon">⭐</span>
+<span class="difficulty-text">보통</span>
+</div>
+</div>
+<div class="question-navigation">
+<button id="prevQuestion" class="nav-btn" disabled aria-label="이전 문제">
+<span class="nav-icon">◀</span>
+</button>
+<button id="nextQuestion" class="nav-btn" aria-label="다음 문제">
+<span class="nav-icon">▶</span>
+</button>
+</div>
+</div>
+<div class="question-image-container">
+<div class="image-loading" id="imageLoading">
+<div class="loading-spinner">
+</div>
+<p>이미지 로딩 중...</p>
+</div>
+<img id="questionImage" src="" alt="문제 이미지" class="question-image" style="display: none;">
+<div class="image-error" id="imageError" style="display: none;">
+<span class="error-icon">⚠️</span>
+<p>이미지를 불러올 수 없습니다</p>
+</div>
+</div>
+</div>
+<!-- 답안 입력 내용 -->
+<div class="answer-container">
+<div class="answer-input-group">
+<label for="answerInput" class="answer-label">
+<span class="label-icon">🖊️</span>
+답안을 입력하세요
+</label>
+<div class="input-wrapper">
+<input type="text" id="answerInput" class="input answer-input" 
+                               placeholder="답안을 입력하세요" 
+                               autocomplete="off"
+                               aria-describedby="inputHint">
+<div class="input-focus-indicator">
+</div>
+</div>
+<div class="input-hint" id="inputHint">
+<span class="hint-icon">ℹ️</span>
+정답 힌트 (예: 3, 24, 1.5)
+</div>
+</div>
+<div class="answer-actions">
+<button id="submitAnswer" class="btn btn-primary" aria-label="제출하기">
+<span class="btn-icon">✅</span>
+<span class="btn-text">제출하기</span>
+<span class="btn-loading" style="display: none;">
+<span class="loading-spinner">
+</span>
+처리 중...
+</span>
+</button>
+<button id="skipButton" class="btn btn-outline" aria-label="다음 문제로 건너뛰기">
+<span class="btn-icon">⏭️</span>
+<span class="btn-text">다음 문제로 건너뛰기</span>
+</button>
+</div>
+</div>
+</div>
+<!-- 일시정지 모달 -->
+<div id="pauseModal" class="modal" style="display: none;" role="dialog" aria-labelledby="pauseModalTitle">
+<div class="modal-content">
+<div class="modal-header">
+<h3 id="pauseModalTitle">
+<span class="modal-icon">⏸️</span>
+일시정지
+</h3>
+</div>
+<div class="modal-body">
+<p>시험을 일시정지하시겠습니까?</p>
+<div class="warning-message">
+<span class="warning-icon">⚠️</span>
+<p class="pause-warning">일시정지 시 남은 시간은 증가하지 않습니다.</p>
+</div>
+</div>
+<div class="modal-footer">
+<button id="resumeButton" class="btn btn-primary" aria-label="시험 재개">
+<span class="btn-icon">▶</span>
+<span class="btn-text">시험 재개</span>
+</button>
+<button id="confirmExitButton" class="btn btn-outline" aria-label="시험 종료">
+<span class="btn-icon">❌</span>
+<span class="btn-text">시험 종료</span>
+</button>
+</div>
+</div>
+</div>
+<!-- 종료 모달 -->
+<div id="exitModal" class="modal" style="display: none;" role="dialog" aria-labelledby="exitModalTitle">
+<div class="modal-content">
+<div class="modal-header">
+<h3 id="exitModalTitle">
+<span class="modal-icon">❌</span>
+시험 종료
+</h3>
+</div>
+<div class="modal-body">
+<p>시험을 종료하시겠습니까?</p>
+<div class="info-message">
+<span class="info-icon">ℹ️</span>
+<p class="exit-warning">종료 후에는 다시 시험을 시작할 수 없습니다.</p>
+</div>
+</div>
+<div class="modal-footer">
+<button id="cancelExitButton" class="btn btn-outline" aria-label="취소">
+<span class="btn-icon">❌</span>
+<span class="btn-text">취소</span>
+</button>
+<button id="confirmExitFinalButton" class="btn btn-primary" aria-label="시험 종료 확인">
+<span class="btn-icon">❌</span>
+<span class="btn-text">시험 종료</span>
+</button>
+</div>
+</div>
+</div>
+<!-- 키보드 단축키 -->
+<div class="keyboard-shortcuts">
+<button id="shortcutsToggle" class="shortcuts-toggle" aria-label="키보드 단축키 토글">
+<span class="shortcuts-icon">🔑</span>
+</button>
+<div id="shortcutsPanel" class="shortcuts-panel" style="display: none;">
+<h4>키보드 단축키</h4>
+<ul>
+<li>
+<kbd>Enter</kbd>
+- 제출하기</li>
+<li>
+<kbd>Esc</kbd>
+- 다음 문제로 건너뛰기</li>
+<li>
+<kbd>←</kbd>
+- 이전 문제</li>
+<li>
+<kbd>→</kbd>
+- 다음 문제</li>
+<li>
+<kbd>Space</kbd>
+- 일시정지/재개</li>
+</ul>
+</div>
+</div>
+<!-- 로딩 오버레이 -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+<div class="loading-content">
+<div class="loading-spinner">
+</div>
+<p>처리 중...</p>
+</div>
+</div>
+</div>
+<script type="module">
+// ImageOptimizer??script.js???듯빀?섏뿀?듬땲?? ?꾩슂??Utils ?대옒?ㅻ? ?ъ슜?섏꽭??
+        
+        // ?쒗뿕 ?곗씠??濡쒕뱶
+        let questions, timeLimit, examSettings;
+        
+        try {
+            questions = JSON.parse(sessionStorage.getItem('mockExamQuestions'));
+            timeLimit = parseInt(sessionStorage.getItem('mockExamTimeLimit'));
+            examSettings = JSON.parse(sessionStorage.getItem('mockExamSettings'));
+        } catch (error) {
+            console.error('?쒗뿕 ?곗씠??濡쒕뱶 ?ㅽ뙣:', error);
+            showError('?쒗뿕 ?곗씠?곕? 遺덈윭?????놁뒿?덈떎.');
+        }
+        
+        // ImageOptimizer 전역 주입 가드
+        if (typeof ImageOptimizer !== 'undefined') {
+            window.ImageOptimizer = ImageOptimizer;
+        }
+
+        if (!questions || !timeLimit) {
+            showError('모의고사 문제 데이터가 없습니다. 시험 페이지로 돌아갑니다.');
+            setTimeout(() =>
+{
+                window.location.href = 'mock-exam.html';
+            }, 2000);
+        }
+
+        // ?쒗뿕 ?곹깭 蹂??
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let timeLeft = timeLimit * 60;
+        let isPaused = false;
+        let timerInterval;
+        let isSubmitting = false;
+        let questionStartAt = Date.now();
+
+        // DOM ?붿냼??
+        const timerElement = document.getElementById('timer');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const progressPercentage = document.getElementById('progressPercentage');
+        const questionNumber = document.getElementById('questionNumber');
+        const questionDifficulty = document.getElementById('questionDifficulty');
+        const questionImage = document.getElementById('questionImage');
+        const imageLoading = document.getElementById('imageLoading');
+        const imageError = document.getElementById('imageError');
+        const answerInput = document.getElementById('answerInput');
+        const submitButton = document.getElementById('submitAnswer');
+        const skipButton = document.getElementById('skipButton');
+        const prevButton = document.getElementById('prevQuestion');
+        const nextButton = document.getElementById('nextQuestion');
+
+        // ?좏떥由ы떚 ?⑥닔??
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+<div class="error-content">
+<span class="error-icon">⚠️</span>
+<div class="error-text">
+<h3>오류</h3>
+<p>${message}</p>
+</div>
+</div>
+`;
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() =>
+{
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = `
+<div class="success-content">
+<span class="success-icon">✅</span>
+<p>${message}</p>
+</div>
+`;
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() =>
+{
+                successDiv.remove();
+            }, 3000);
+        }
+
+        // ?쒗뿕 ?뺣낫 ?쒖떆
+        function displayExamInfo() {
+            if (examSettings) {
+                document.getElementById('examSubject').textContent = examSettings.subject;
+                document.getElementById('examCategories').textContent = examSettings.categories.join(', ');
+            }
+        }
+
+        // ??대㉧ ?쒖옉
+        function startTimer() {
+            timerInterval = setInterval(() =>
+{
+                if (!isPaused) {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    
+                    if (timeLeft
+<= 0) {
+                        clearInterval(timerInterval);
+                        endExam();
+                    }
+                }
+            }, 1000);
+        }
+
+        // ??대㉧ ?쒖떆 ?낅뜲?댄듃
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timeString = `${minutes}:${seconds
+< 10 ? '0' : ''}${seconds}`;
+            timerElement.textContent = timeString;
+            
+            // ?쒓컙???곸쓣 ??寃쎄퀬 ?됱긽怨??좊땲硫붿씠??
+            if (timeLeft
+<= 300) { // 5遺??댄븯
+                timerElement.style.color = 'var(--error-color)';
+                timerElement.classList.add('urgent');
+            } else if (timeLeft
+<= 600) { // 10遺??댄븯
+                timerElement.style.color = 'var(--warning-color)';
+                timerElement.classList.remove('urgent');
+            } else {
+                timerElement.style.color = 'var(--text-primary)';
+                timerElement.classList.remove('urgent');
+            }
+        }
+
+        // 문제 표시
+        function displayQuestion() {
+            const question = questions[currentQuestionIndex];
+            
+            // 문제 번호 및 난이도 표시
+            questionNumber.textContent = currentQuestionIndex + 1;
+            
+            // 난이도 텍스트 및 아이콘 업데이트
+            const difficultyText = questionDifficulty.querySelector('.difficulty-text');
+            const difficultyIcon = questionDifficulty.querySelector('.difficulty-icon');
+            
+            switch(question.difficulty) {
+                case 'easy':
+                    difficultyText.textContent = '쉬움';
+                    difficultyIcon.textContent = '⭐';
+                    break;
+                case 'medium':
+                    difficultyText.textContent = '보통';
+                    difficultyIcon.textContent = '⭐⭐';
+                    break;
+                case 'hard':
+                    difficultyText.textContent = '어려움';
+                    difficultyIcon.textContent = '⭐⭐⭐';
+                    break;
+                default:
+                    difficultyText.textContent = '보통';
+                    difficultyIcon.textContent = '⭐⭐';
+            }
+            
+            // 문제 이미지 로딩 및 오류 처리
+            imageLoading.style.display = 'flex';
+            imageError.style.display = 'none';
+            questionImage.style.display = 'none';
+            
+            // 문제 이미지 최적화 및 로딩
+            if (window.ImageOptimizer) {
+                window.ImageOptimizer.loadOptimizedImage(question.imageUrl, questionImage)
+                    .then(() =>
+{
+                        questionImage.src = question.imageUrl;
+                        questionImage.onload = () =>
+{
+                            imageLoading.style.display = 'none';
+                            questionImage.style.display = 'block';
+                            questionImage.classList.add('loaded');
+                        };
+                        questionImage.onerror = () =>
+{
+                            imageLoading.style.display = 'none';
+                            imageError.style.display = 'flex';
+                        };
+                    })
+                    .catch(() =>
+{
+                        // 이미지 로딩 실패 시 오류 메시지 표시
+                        questionImage.src = question.imageUrl;
+                        questionImage.onload = () =>
+{
+                            imageLoading.style.display = 'none';
+                            questionImage.style.display = 'block';
+                            questionImage.classList.add('loaded');
+                        };
+                        questionImage.onerror = () =>
+{
+                            imageLoading.style.display = 'none';
+                            imageError.style.display = 'flex';
+                        };
+                    });
+            } else {
+                questionImage.src = question.imageUrl;
+                questionImage.onload = () =>
+{
+                    imageLoading.style.display = 'none';
+                    questionImage.style.display = 'block';
+                    questionImage.classList.add('loaded');
+                };
+                questionImage.onerror = () =>
+{
+                    imageLoading.style.display = 'none';
+                    imageError.style.display = 'flex';
+                };
+            }
+            
+            // 진행률 표시
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            progressText.textContent = `문제 ${currentQuestionIndex + 1}/${questions.length}`;
+            progressPercentage.textContent = `${Math.round(progress)}%`;
+            progressFill.style.width = `${progress}%`;
+            
+            // 네비게이션 버튼 활성화/비활성화
+            prevButton.disabled = currentQuestionIndex === 0;
+            nextButton.disabled = currentQuestionIndex === questions.length - 1;
+            
+            // 답안 입력 필드 초기화 및 포커스
+            answerInput.value = '';
+            answerInput.focus();
+            
+            // 제출 버튼 텍스트 및 스킵 버튼 표시
+            if (currentQuestionIndex === questions.length - 1) {
+                submitButton.querySelector('.btn-text').textContent = '정답 확인';
+                skipButton.style.display = 'none';
+            } else {
+                submitButton.querySelector('.btn-text').textContent = '제출하기';
+                skipButton.style.display = 'inline-block';
+            }
+
+            // 문항 시작 시각 갱신
+            questionStartAt = Date.now();
+        }
+
+        // 답안 제출
+        function submitAnswer() {
+            if (isSubmitting) return;
+            
+            const userAnswer = answerInput.value.trim();
+            const currentQuestion = questions[currentQuestionIndex];
+            
+            // 답안 유효성 검사
+            if (!userAnswer) {
+                showError('답안을 입력해야 합니다.');
+                answerInput.focus();
+                return;
+            }
+            
+            // 숫자 형식 검사
+            const numericAnswer = userAnswer.replace(/[^\d.-]/g, '');
+            if (!numericAnswer) {
+                showError('정답 형식에 맞지 않습니다.');
+                answerInput.focus();
+                return;
+            }
+            
+            isSubmitting = true;
+            
+            // 제출 버튼 상태 변경
+            const btnText = submitButton.querySelector('.btn-text');
+            const btnLoading = submitButton.querySelector('.btn-loading');
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'flex';
+            
+            // 답안 저장
+            const timeSpent = Math.max(0, Math.floor((Date.now() - questionStartAt) / 1000));
+            userAnswers.push({
+                questionNumber: currentQuestion.id,
+                userAnswer: userAnswer,
+                correctAnswer: currentQuestion.answer,
+                isCorrect: userAnswer === currentQuestion.answer,
+                timeSpent,
+                difficulty: currentQuestion.difficulty,
+                submittedAt: new Date().toISOString()
+            });
+
+            // 성공/실패 메시지 표시
+            if (userAnswer === currentQuestion.answer) {
+                showSuccess('정답입니다!');
+            } else {
+                showError(`오답입니다. 정답: ${currentQuestion.answer}`);
+            }
+
+            // 다음 문제로 이동 또는 시험 종료
+            setTimeout(() =>
+{
+                if (currentQuestionIndex
+< questions.length - 1) {
+                    currentQuestionIndex++;
+                    displayQuestion();
+                } else {
+                    endExam();
+                }
+                
+                // 제출 버튼 상태 복원
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
+                isSubmitting = false;
+            }, 1500);
+        }
+
+        // 다음 문제로 건너뛰기
+        function skipQuestion() {
+            if (isSubmitting) return;
+            
+            const currentQuestion = questions[currentQuestionIndex];
+            
+            // 건너뛰기 확인
+            if (!confirm('다음 문제로 건너뛰시겠습니까?')) {
+                return;
+            }
+            
+            const timeSpent = Math.max(0, Math.floor((Date.now() - questionStartAt) / 1000));
+            userAnswers.push({
+                questionNumber: currentQuestion.id,
+                userAnswer: '',
+                correctAnswer: currentQuestion.answer,
+                isCorrect: false,
+                timeSpent,
+                difficulty: currentQuestion.difficulty,
+                skipped: true,
+                submittedAt: new Date().toISOString()
+            });
+
+            showSuccess('다음 문제로 건너뛰었습니다.');
+
+            if (currentQuestionIndex
+< questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion();
+            } else {
+                endExam();
+            }
+        }
+
+        // 시험 종료
+        function endExam() {
+            clearInterval(timerInterval);
+            
+            // 결과 계산
+            const correctAnswers = userAnswers.filter(answer =>
+answer.isCorrect).length;
+            const skippedAnswers = userAnswers.filter(answer =>
+answer.skipped).length;
+            const accuracy = Math.round((correctAnswers / questions.length) * 100);
+            
+            // 메타/결과 분리 저장 (exam-result 호환)
+            const examMeta = {
+                totalQuestions: questions.length,
+                correctAnswers,
+                skippedAnswers,
+                accuracy,
+                timeLimit,
+                timeUsed: timeLimit * 60 - timeLeft,
+                settings: examSettings,
+                completedAt: new Date().toISOString(),
+                averageTimePerQuestion: Math.round((timeLimit * 60 - timeLeft) / questions.length)
+            };
+            sessionStorage.setItem('examResults', JSON.stringify(userAnswers));
+            sessionStorage.setItem('examMeta', JSON.stringify(examMeta));
+            
+            // 성공 메시지 표시
+            showSuccess('시험이 종료되었습니다. 결과를 확인해주세요.');
+            
+            // 결과 페이지로 이동
+            setTimeout(() =>
+{
+                window.location.href = 'exam-result.html';
+            }, 2000);
+        }
+
+        // 일시정지
+        function pauseExam() {
+            isPaused = true;
+            document.getElementById('pauseModal').style.display = 'block';
+        }
+
+        // 일시정지 해제
+        function resumeExam() {
+            isPaused = false;
+            document.getElementById('pauseModal').style.display = 'none';
+        }
+
+        // 시험 종료 확인
+        function confirmExit() {
+            document.getElementById('exitModal').style.display = 'block';
+        }
+
+        // 버튼 이벤트 리스너
+        submitButton.addEventListener('click', submitAnswer);
+        skipButton.addEventListener('click', skipQuestion);
+        
+        // 네비게이션 버튼 이벤트 리스너
+        prevButton.addEventListener('click', () =>
+{
+            if (currentQuestionIndex >
+0) {
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        });
+        
+        nextButton.addEventListener('click', () =>
+{
+            if (currentQuestionIndex
+< questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion();
+            }
+        });
+        
+        // 키보드 단축키 이벤트 리스너
+        document.addEventListener('keydown', (e) =>
+{
+            // 모달이 열려있을 때는 키보드 단축키 무시
+            if (document.querySelector('.modal[style*="display: block"]')) {
+                return;
+            }
+            
+            switch(e.key) {
+                case 'Enter':
+                    if (document.activeElement === answerInput && !isSubmitting) {
+                        e.preventDefault();
+                        submitAnswer();
+                    }
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    skipQuestion();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    if (currentQuestionIndex >
+0) {
+                        currentQuestionIndex--;
+                        displayQuestion();
+                    }
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    if (currentQuestionIndex
+< questions.length - 1) {
+                        currentQuestionIndex++;
+                        displayQuestion();
+                    }
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    if (!isPaused) {
+                        pauseExam();
+                    } else {
+                        resumeExam();
+                    }
+                    break;
+            }
+        });
+        
+        // 일시정지 버튼 이벤트 리스너
+        document.getElementById('pauseButton').addEventListener('click', pauseExam);
+        document.getElementById('exitButton').addEventListener('click', confirmExit);
+        
+        document.getElementById('resumeButton').addEventListener('click', resumeExam);
+        document.getElementById('confirmExitButton').addEventListener('click', endExam);
+        document.getElementById('cancelExitButton').addEventListener('click', () =>
+{
+            document.getElementById('exitModal').style.display = 'none';
+        });
+        document.getElementById('confirmExitFinalButton').addEventListener('click', endExam);
+        
+        // 모달 외부 클릭 시 닫기
+        document.querySelectorAll('.modal').forEach(modal =>
+{
+            modal.addEventListener('click', (e) =>
+{
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+
+        // 키보드 단축키 토글 이벤트 리스너
+        const shortcutsToggle = document.getElementById('shortcutsToggle');
+        const shortcutsPanel = document.getElementById('shortcutsPanel');
+        
+        shortcutsToggle.addEventListener('click', () =>
+{
+            const isVisible = shortcutsPanel.style.display === 'block';
+            shortcutsPanel.style.display = isVisible ? 'none' : 'block';
+            shortcutsToggle.classList.toggle('active');
+        });
+
+        // 키보드 단축키 패널 외부 클릭 시 닫기
+        document.addEventListener('click', (e) =>
+{
+            if (!shortcutsToggle.contains(e.target) && !shortcutsPanel.contains(e.target)) {
+                shortcutsPanel.style.display = 'none';
+                shortcutsToggle.classList.remove('active');
+            }
+        });
+
+        // 브라우저 뒤로가기 방지
+        window.addEventListener('beforeunload', (e) =>
+{
+            if (currentQuestionIndex
+< questions.length && !isSubmitting) {
+                e.preventDefault();
+                e.returnValue = '시험 페이지를 벗어나면 제출되지 않습니다. 페이지를 떠나시겠습니까?';
+            }
+        });
+
+        // 페이지 활성화/비활성화 시 처리
+        document.addEventListener('visibilitychange', () =>
+{
+            if (document.hidden && !isPaused) {
+                // 페이지가 숨겨지고 시험이 진행 중이면 시험 일시정지
+                console.log('페이지가 숨겨졌습니다. 시험을 일시정지합니다.');
+                pauseExam();
+            }
+        });
+
+        // 문제 표시 및 타이머 시작
+        try {
+            displayExamInfo();
+            startTimer();
+            displayQuestion();
+            
+            // 페이지 로딩 완료 시 클래스 추가
+            document.body.classList.add('loaded');
+        } catch (error) {
+            console.error('문제 표시 및 타이머 시작 중 오류:', error);
+            showError('문제를 불러올 수 없습니다.');
+        }
+</script>
+</body>
+</html>
+

@@ -1,0 +1,556 @@
+0) 디자인 토큰 (CSS)
+src/styles/tokens.css
+
+css
+복사
+편집
+:root {
+  /* Core palette — Sandstone Luxe */
+  --color-bg: #F8F5F2;
+  --color-bg-elev: #FFFEFD;
+  --color-text: #1E1B16;
+  --color-text-muted: #6C6358;
+
+  --color-primary: #C89F7A;
+  --color-primary-deep: #A4764F;
+  --color-secondary: #7A9EAF;
+  --color-accent: #B88A3B;
+
+  --color-border: #E8E2DB;
+  --color-border-strong: #CFC6BC;
+
+  --color-success: #4E8A5B;
+  --color-warning: #C98C3A;
+  --color-error:   #B75A4A;
+
+  --radius: 14px;
+  --shadow-soft: 0 8px 28px rgba(0,0,0,.06);
+  --shadow-strong: 0 12px 40px rgba(0,0,0,.14);
+
+  --gradient-primary: linear-gradient(135deg, #C89F7A 0%, #B88A3B 100%);
+  --gradient-bg: linear-gradient(135deg, #F6EFE8 0%, #EEE6DD 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #121110;
+    --color-bg-elev: #181614;
+    --color-text: #EFEAE3;
+    --color-text-muted: #B9B1A6;
+
+    --color-primary: #D1A882;
+    --color-primary-deep: #B6845A;
+    --color-secondary: #88A6B5;
+    --color-accent: #CFA14A;
+
+    --color-border: #2A2622;
+    --color-border-strong: #3A332D;
+
+    --shadow-soft: 0 10px 36px rgba(0,0,0,.35);
+    --shadow-strong: 0 16px 52px rgba(0,0,0,.45);
+  }
+}
+
+/* High contrast users still 보이도록 기본 포커스 링 */
+:root {
+  --ring: 0 0 0 3px color-mix(in oklab, var(--color-primary) 28%, transparent);
+}
+1) Tailwind 설정
+tailwind.config.js
+
+js
+복사
+편집
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./index.html","./src/**/*.{ts,tsx,js,jsx}"],
+  theme: {
+    extend: {
+      colors: {
+        bg: "var(--color-bg)",
+        bge: "var(--color-bg-elev)",
+        text: "var(--color-text)",
+        muted: "var(--color-text-muted)",
+        primary: "var(--color-primary)",
+        primaryDeep: "var(--color-primary-deep)",
+        secondary: "var(--color-secondary)",
+        accent: "var(--color-accent)",
+        border: "var(--color-border)",
+        borderStrong: "var(--color-border-strong)",
+        success: "var(--color-success)",
+        warning: "var(--color-warning)",
+        error: "var(--color-error)",
+      },
+      borderRadius: {
+        xl: "var(--radius)",
+        '2xl': "calc(var(--radius) + 6px)"
+      },
+      boxShadow: {
+        soft: "var(--shadow-soft)",
+        strong: "var(--shadow-strong)",
+        ring: "var(--ring)"
+      },
+      backgroundImage: {
+        'gradient-primary': "var(--gradient-primary)",
+        'gradient-bg': "var(--gradient-bg)"
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' }
+        }
+      },
+      animation: {
+        shimmer: 'shimmer 1.2s linear infinite'
+      }
+    }
+  },
+  plugins: [
+    function({ addVariant }) {
+      addVariant('hocus', ['&:hover', '&:focus-visible']);
+    }
+  ]
+}
+tokens.css를 전역으로 import 해두면 전체 색이 자동 반영돼요.
+
+2) 유틸 클래스 (선택)
+src/styles/util.css
+
+css
+복사
+편집
+/* 포커스 링 + 접근성 */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+3) 컴포넌트
+3.1 Button
+src/components/ui/Button.tsx
+
+tsx
+복사
+편집
+import React from "react";
+import clsx from "clsx";
+
+type Variant = "solid" | "outline" | "ghost";
+type Size = "sm" | "md" | "lg";
+
+interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: Variant;
+  size?: Size;
+  loading?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+}
+
+const base =
+  "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all focus-visible:outline-none focus-visible:ring-0 focus-visible:[box-shadow:var(--ring)] disabled:opacity-60 disabled:cursor-not-allowed";
+
+const sizes: Record<Size, string> = {
+  sm: "h-9 px-3 text-sm",
+  md: "h-10 px-4 text-sm",
+  lg: "h-12 px-5 text-base",
+};
+
+const variants: Record<Variant, string> = {
+  solid:
+    "bg-primary text-[var(--color-bg)] hocus:bg-primaryDeep shadow-soft active:scale-[.98] relative overflow-hidden",
+  outline:
+    "border border-borderStrong text-text hocus:border-primary hocus:text-primary bg-bge",
+  ghost:
+    "text-text hocus:text-primary bg-transparent hocus:bg-[color-mix(in_oklab,var(--color-primary)10%,transparent)]",
+};
+
+export function Button({
+  variant = "solid",
+  size = "md",
+  loading,
+  leftIcon,
+  rightIcon,
+  className,
+  children,
+  ...rest
+}: Props) {
+  return (
+    <button
+      className={clsx(base, sizes[size], variants[variant], className)}
+      disabled={loading || rest.disabled}
+      {...rest}
+    >
+      {loading ? (
+        <span className="relative inline-flex items-center gap-2">
+          <span className="h-4 w-4 rounded-full border-2 border-b-transparent animate-spin" />
+          <span className="opacity-90">Loading…</span>
+        </span>
+      ) : (
+        <>
+          {leftIcon ? <span className="shrink-0">{leftIcon}</span> : null}
+          <span>{children}</span>
+          {rightIcon ? <span className="shrink-0">{rightIcon}</span> : null}
+        </>
+      )}
+    </button>
+  );
+}
+variant="solid|outline|ghost", size="sm|md|lg", loading 지원.
+
+3.2 Card
+src/components/ui/Card.tsx
+
+tsx
+복사
+편집
+import React from "react";
+import clsx from "clsx";
+
+export function Card({
+  className,
+  children
+}: React.PropsWithChildren<{ className?: string }>) {
+  return (
+    <div className={clsx(
+      "rounded-2xl bg-bge/80 backdrop-blur border border-border shadow-soft",
+      "transition-shadow",
+      "hover:shadow-strong",
+      className
+    )}>
+      {children}
+    </div>
+  );
+}
+
+export function CardHeader({
+  title, subtitle, action
+}: { title?: React.ReactNode; subtitle?: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div className="relative p-5 border-b border-border">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-primary rounded-t-2xl" />
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          {title && <h3 className="text-base font-semibold text-text">{title}</h3>}
+          {subtitle && <p className="text-sm text-muted mt-1">{subtitle}</p>}
+        </div>
+        {action}
+      </div>
+    </div>
+  );
+}
+
+export function CardContent({ children }: React.PropsWithChildren) {
+  return <div className="p-5 text-sm text-text">{children}</div>;
+}
+
+export function CardFooter({ children }: React.PropsWithChildren) {
+  return <div className="p-4 border-t border-border">{children}</div>;
+}
+3.3 Input (라벨/에러/헬프)
+src/components/ui/Input.tsx
+
+tsx
+복사
+편집
+import React from "react";
+import clsx from "clsx";
+
+interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  help?: string;
+  error?: string;
+}
+
+export const Input = React.forwardRef<HTMLInputElement, Props>(function Input(
+  { label, help, error, className, ...rest }, ref
+) {
+  const state = error ? "border-error ring-error/20" : "border-border focus:border-primary";
+  return (
+    <label className="block space-y-2">
+      {label && <span className="text-sm font-medium text-text">{label}</span>}
+      <input
+        ref={ref}
+        className={clsx(
+          "h-10 w-full rounded-xl bg-bge/90 border px-3 text-sm text-text placeholder:opacity-60",
+          "focus:outline-none focus:[box-shadow:var(--ring)] transition-all",
+          state,
+          className
+        )}
+        {...rest}
+      />
+      {error ? (
+        <span className="text-xs text-error">{error}</span>
+      ) : help ? (
+        <span className="text-xs text-muted">{help}</span>
+      ) : null}
+    </label>
+  );
+});
+3.4 Badge / Chip
+src/components/ui/Badge.tsx
+
+tsx
+복사
+편집
+import clsx from "clsx";
+
+type Tone = "neutral" | "primary" | "success" | "warning" | "error";
+
+export function Badge({ tone = "neutral", children }: { tone?: Tone; children: React.ReactNode }) {
+  const map: Record<Tone, string> = {
+    neutral: "bg-[color-mix(in_oklab,var(--color-text)10%,transparent)] text-text",
+    primary: "bg-[color-mix(in_oklab,var(--color-primary)16%,transparent)] text-primary",
+    success: "bg-[color-mix(in_oklab,var(--color-success)16%,transparent)] text-success",
+    warning: "bg-[color-mix(in_oklab,var(--color-warning)16%,transparent)] text-warning",
+    error:   "bg-[color-mix(in_oklab,var(--color-error)16%,transparent)] text-error",
+  };
+  return (
+    <span className={clsx("inline-flex items-center rounded-full px-2.5 h-7 text-xs font-medium", map[tone])}>
+      {children}
+    </span>
+  );
+}
+3.5 Progress
+src/components/ui/Progress.tsx
+
+tsx
+복사
+편집
+export function Progress({ value }: { value: number }) {
+  const v = Math.max(0, Math.min(100, value));
+  return (
+    <div className="w-full h-3 rounded-full bg-[color-mix(in_oklab,var(--color-text)8%,transparent)] overflow-hidden">
+      <div
+        className="h-full bg-gradient-primary"
+        style={{ width: `${v}%` }}
+        aria-valuenow={v}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        role="progressbar"
+      />
+    </div>
+  );
+}
+3.6 Modal
+src/components/ui/Modal.tsx
+
+tsx
+복사
+편집
+import React from "react";
+import { createPortal } from "react-dom";
+import { Button } from "./Button";
+
+export function Modal({
+  open, onClose, title, children, footer
+}: { open: boolean; onClose: () => void; title?: React.ReactNode; children: React.ReactNode; footer?: React.ReactNode; }) {
+  if (!open) return null;
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 grid place-items-center p-6"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
+      <div
+        className="relative w-full max-w-lg rounded-2xl bg-bge shadow-strong border border-border"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-5 border-b border-border relative">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-primary rounded-t-2xl" />
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="text-base font-semibold text-text">{title}</h3>
+            <Button variant="ghost" aria-label="Close" onClick={onClose}>✕</Button>
+          </div>
+        </div>
+        <div className="p-5">{children}</div>
+        {footer ? <div className="p-4 border-t border-border">{footer}</div> : null}
+      </div>
+    </div>,
+    document.body
+  );
+}
+3.7 Table (헤더 얇은 그라데이션 바 + 행 hover 틴트)
+src/components/ui/Table.tsx
+
+tsx
+복사
+편집
+import React from "react";
+import clsx from "clsx";
+
+export function Table({
+  columns, data, className
+}: {
+  columns: { key: string; header: string; align?: "left"|"center"|"right" }[];
+  data: Record<string, React.ReactNode>[];
+  className?: string;
+}) {
+  return (
+    <div className={clsx("rounded-2xl border border-border bg-bge overflow-hidden shadow-soft", className)}>
+      <div className="h-1 bg-gradient-primary" />
+      <table className="w-full text-sm text-text">
+        <thead className="bg-[color-mix(in_oklab,var(--color-primary)8%,transparent)]">
+          <tr>
+            {columns.map(col => (
+              <th key={col.key} className={clsx(
+                "px-4 py-3 text-left font-semibold text-text",
+                col.align === "center" && "text-center",
+                col.align === "right" && "text-right"
+              )}>
+                {col.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, i) => (
+            <tr
+              key={i}
+              className="border-t border-border hover:bg-[color-mix(in_oklab,var(--color-primary)6%,transparent)] transition-colors"
+            >
+              {columns.map(col => (
+                <td key={col.key} className={clsx(
+                  "px-4 py-3 align-middle",
+                  col.align === "center" && "text-center",
+                  col.align === "right" && "text-right"
+                )}>
+                  {row[col.key]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+3.8 Tabs (간결)
+src/components/ui/Tabs.tsx
+
+tsx
+복사
+편집
+import React from "react";
+import clsx from "clsx";
+
+export function Tabs({
+  value, onChange, items, className
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  items: { value: string; label: string }[];
+  className?: string;
+}) {
+  return (
+    <div className={clsx("inline-flex items-center gap-1 p-1 rounded-xl bg-[color-mix(in_oklab,var(--color-text)8%,transparent)]", className)}>
+      {items.map(it => {
+        const active = it.value === value;
+        return (
+          <button
+            key={it.value}
+            onClick={() => onChange(it.value)}
+            className={clsx(
+              "px-3 h-9 rounded-lg text-sm transition-all focus-visible:outline-none focus-visible:[box-shadow:var(--ring)]",
+              active
+                ? "bg-bge text-text shadow-soft border border-border"
+                : "text-muted hover:text-text"
+            )}
+          >
+            {it.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+4) 사용 예시
+src/App.tsx
+
+tsx
+복사
+편집
+import { Button } from "./components/ui/Button";
+import { Card, CardContent, CardHeader, CardFooter } from "./components/ui/Card";
+import { Input } from "./components/ui/Input";
+import { Badge } from "./components/ui/Badge";
+import { Progress } from "./components/ui/Progress";
+import { Table } from "./components/ui/Table";
+import { Tabs } from "./components/ui/Tabs";
+import React from "react";
+
+export default function App() {
+  const [tab, setTab] = React.useState("today");
+
+  return (
+    <div className="min-h-svh bg-gradient-bg text-text">
+      <div className="max-w-5xl mx-auto p-6 space-y-8">
+        <h1 className="text-2xl font-bold">송현여고 수학 학습 시스템 — 샘플 UI</h1>
+
+        <Card>
+          <CardHeader title="빠른 시작" subtitle="토큰 기반 색 시스템 + 접근성" action={<Badge tone="primary">베타</Badge>} />
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Input label="검색" placeholder="문항번호 / 키워드" />
+                <div className="flex gap-2">
+                  <Button>검색</Button>
+                  <Button variant="outline">필터</Button>
+                  <Button variant="ghost">고급 검색</Button>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span>오늘 목표</span><span>60%</span>
+                </div>
+                <Progress value={60} />
+                <Tabs
+                  value={tab}
+                  onChange={setTab}
+                  items={[
+                    { value: "today", label: "오늘" },
+                    { value: "week", label: "이번 주" },
+                    { value: "month", label: "이번 달" },
+                  ]}
+                />
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button>시작하기</Button>
+          </CardFooter>
+        </Card>
+
+        <Table
+          columns={[
+            { key: "no", header: "문항번호" },
+            { key: "topic", header: "단원" },
+            { key: "acc", header: "정답률", align: "right" },
+          ]}
+          data={[
+            { no: "20231113", topic: "지수/로그", acc: "42%" },
+            { no: "20221007", topic: "수열", acc: "68%" },
+            { no: "20210912", topic: "미분", acc: "31%" },
+          ]}
+        />
+      </div>
+    </div>
+  );
+}
+5) 프로젝트에 적용 순서 (초간단)
+tokens.css와 util.css를 전역으로 import
+
+Vite/CRA 기준 src/main.tsx 또는 index.tsx에 import "./styles/tokens.css"; import "./styles/util.css";
+
+tailwind.config.js를 교체하고 postcss.config.cjs/index.css 구성 유지
+
+위 컴포넌트 폴더(src/components/ui) 추가
+
+필요 페이지에서 바로 사용
+
+6) Cursor AI에 붙여넣는 적용 프롬프트
+diff
+복사
+편집
+You are a senior product designer & frontend engineer.
+Goal: Add a token-driven React + Tailwind UI kit to my project, aligned to the “Sandstone Luxe” palette. Keep typography/layout as-is; only color & component styles.

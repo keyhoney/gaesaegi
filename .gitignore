@@ -1,0 +1,94 @@
+# ================================
+# Web App .gitignore (Security-focused)
+# ================================
+
+# Node / package manager
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs / caches
+dist/
+build/
+.cache/
+.parcel-cache/
+coverage/
+.tmp/
+.turbo/
+
+# Framework outputs (keep if unused)
+.next/
+out/
+public/build/
+public/dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Environment & secrets (do not commit)
+.env
+.env.*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+secrets/
+secrets/**
+secret/
+secret/**
+*.secret
+*.secrets
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.keystore
+serviceAccount*.json
+firebase-service-account*.json
+google-service-account*.json
+google-services.json
+GoogleService-Info.plist
+
+# Firebase local/emulator
+.firebase/
+firebase-debug.log*
+
+# Editors/IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.code-workspace
+
+# Misc temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Lint/TypeScript caches
+.eslintcache
+.stylelintcache
+tsconfig.tsbuildinfo
+
+# Source maps (keep if needed for debugging)
+*.map
+
+# PWA generated artifacts (keep your source files like manifest.json, sw.js)
+public/manifest.webmanifest
+public/sw.*
+sw.js.map
+
+# Local backups
+backups/
+*.backup
+*.bak.*
+

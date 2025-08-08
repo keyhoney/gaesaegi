@@ -1,0 +1,724 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>질문-답변 시스템</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>❓</text>
+</svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>❓ 질문-답변 시스템</h1>
+<p>문제 풀이에 대한 질문을 하고 답변을 받아보세요</p>
+</div>
+<div class="qa-section">
+<div class="section-header">
+<div class="section-title">질문 목록</div>
+<button class="btn" onclick="showAskQuestionModal()">질문하기</button>
+</div>
+<div class="search-bar">
+<input type="text" class="search-input" id="searchInput" placeholder="질문을 검색해보세요...">
+<button class="search-btn" onclick="searchQuestions()">검색</button>
+</div>
+<div class="filter-bar">
+<div class="filter-item">
+<label for="statusFilter">상태</label>
+<select id="statusFilter" onchange="filterQuestions()">
+<option value="all">전체</option>
+<option value="unanswered">답변 대기</option>
+<option value="answered">답변 완료</option>
+<option value="teacher">교사 답변</option>
+</select>
+</div>
+<div class="filter-item">
+<label for="categoryFilter">카테고리</label>
+<select id="categoryFilter" onchange="filterQuestions()">
+<option value="all">전체</option>
+<option value="수학Ⅰ">수학Ⅰ</option>
+<option value="수학Ⅱ">수학Ⅱ</option>
+</select>
+</div>
+<div class="filter-item">
+<label for="sortFilter">정렬</label>
+<select id="sortFilter" onchange="sortQuestions()">
+<option value="recent">최신순</option>
+<option value="popular">인기순</option>
+<option value="unanswered">답변 대기순</option>
+<option value="views">조회순</option>
+</select>
+</div>
+</div>
+<div class="questions-grid" id="questionsGrid">
+<!-- 질문들이 표시됩니다-->
+</div>
+<div class="pagination" id="pagination">
+<!-- 페이지네이션이 표시됩니다-->
+</div>
+</div>
+</div>
+<!-- 질문하기 모달 -->
+<div class="modal" id="askQuestionModal">
+<div class="modal-content">
+<div class="modal-header">
+<div class="modal-title">질문하기</div>
+<button class="close-btn" onclick="closeModal('askQuestionModal')">&times;</button>
+</div>
+<form id="askQuestionForm">
+<div class="form-group">
+<label for="questionTitle">제목</label>
+<input type="text" id="questionTitle" required placeholder="질문 제목을 입력해주세요">
+</div>
+<div class="form-group">
+<label for="questionContent">질문 내용</label>
+<textarea id="questionContent" required placeholder="질문 내용을 상세하게 작성해주세요">
+</textarea>
+</div>
+<div class="form-group">
+<label for="questionCategory">카테고리</label>
+<select id="questionCategory" required>
+<option value="">카테고리 선택</option>
+<option value="수학Ⅰ">수학Ⅰ</option>
+<option value="수학Ⅱ">수학Ⅱ</option>
+</select>
+</div>
+<div class="form-group">
+<label for="questionTags">태그 (쉼표로 구분)</label>
+<input type="text" id="questionTags" placeholder="예: 지수함수, 로그함수, 미분">
+</div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" onclick="closeModal('askQuestionModal')">취소</button>
+<button type="submit" class="btn">질문 등록</button>
+</div>
+</form>
+</div>
+</div>
+<!-- 답변하기 모달 -->
+<div class="modal" id="answerModal">
+<div class="modal-content">
+<div class="modal-header">
+<div class="modal-title">답변하기</div>
+<button class="close-btn" onclick="closeModal('answerModal')">&times;</button>
+</div>
+<form id="answerForm">
+<div class="form-group">
+<label for="answerContent">답변 내용</label>
+<textarea id="answerContent" required placeholder="답변 내용을 작성해주세요">
+</textarea>
+</div>
+<div class="form-group">
+<label>
+<input type="checkbox" id="isTeacherAnswer">
+교사 답변으로 등록
+</label>
+</div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" onclick="closeModal('answerModal')">취소</button>
+<button type="submit" class="btn">답변 등록</button>
+</div>
+</form>
+</div>
+</div>
+<!-- 질문 상세 모달 -->
+<div class="modal" id="questionDetailModal">
+<div class="modal-content">
+<div class="modal-header">
+<div class="modal-title" id="detailQuestionTitle">질문 제목</div>
+<button class="close-btn" onclick="closeModal('questionDetailModal')">&times;</button>
+</div>
+<div id="questionDetailContent">
+<!-- 질문 내용과 답변들이 표시됩니다-->
+</div>
+<div class="modal-actions">
+<button class="btn" onclick="showAnswerModal()">답변하기</button>
+<button class="btn btn-secondary" onclick="closeModal('questionDetailModal')">닫기</button>
+</div>
+</div>
+</div>
+<script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { collection, query, where, getDocs, addDoc, updateDoc, doc, orderBy, limit, increment, serverTimestamp, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirebaseApp, getFirebaseAuth, getFirebaseDb } from './script.js';
+
+    let app, auth, db;
+    async function initializeFirebaseServices() {
+      app = await getFirebaseApp();
+      auth = await getFirebaseAuth();
+      db = await getFirebaseDb();
+    }
+
+    let currentUser = null;
+    let questions = [];
+    let currentQuestionId = null;
+    let currentPage = 1;
+    const questionsPerPage = 10;
+
+    // 로그인 상태 변경 감지 (초기화 후)
+    (async () => {
+      await initializeFirebaseServices();
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          alert("로그인이 필요합니다.");
+          location.href = "index.html";
+          return;
+        }
+        currentUser = user;
+        await loadQuestions();
+      });
+    })();
+
+    // 질문 목록 로드
+    async function loadQuestions() {
+      try {
+        const questionsQuery = query(
+          collection(db, "questions"), 
+          orderBy("createdAt", "desc")
+        );
+        const questionsSnapshot = await getDocs(questionsQuery);
+        
+        questions = [];
+        questionsSnapshot.forEach(doc =>
+{
+          questions.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        
+        displayQuestions();
+        displayPagination();
+      } catch (error) {
+        console.error("질문 목록 로드 중 오류:", error);
+      }
+    }
+
+    // 질문 목록 표시
+    function displayQuestions() {
+      const container = document.getElementById('questionsGrid');
+      container.innerHTML = '';
+      
+      const filteredQuestions = filterQuestions();
+      const startIndex = (currentPage - 1) * questionsPerPage;
+      const endIndex = startIndex + questionsPerPage;
+      const pageQuestions = filteredQuestions.slice(startIndex, endIndex);
+      
+      if (pageQuestions.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">질문이 없습니다.</div>';
+        return;
+      }
+      
+      pageQuestions.forEach(question =>
+{
+        const card = createQuestionCard(question);
+        container.appendChild(card);
+      });
+    }
+
+    // 질문 필터링
+    function filterQuestions() {
+      let filtered = [...questions];
+      
+      // 검색어 필터
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      if (searchTerm) {
+        filtered = filtered.filter(q =>
+q.title.toLowerCase().includes(searchTerm) || 
+          q.content.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      // 상태 필터
+      const statusFilter = document.getElementById('statusFilter').value;
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter(q =>
+{
+          if (statusFilter === 'unanswered') return !q.answered;
+          if (statusFilter === 'answered') return q.answered && !q.teacherAnswered;
+          if (statusFilter === 'teacher') return q.teacherAnswered;
+          return true;
+        });
+      }
+      
+      // 카테고리 필터
+      const categoryFilter = document.getElementById('categoryFilter').value;
+      if (categoryFilter !== 'all') {
+        filtered = filtered.filter(q =>
+q.category === categoryFilter);
+      }
+      
+      // 정렬
+      const sortFilter = document.getElementById('sortFilter').value;
+      if (sortFilter === 'recent') {
+        filtered.sort((a, b) =>
+b.createdAt - a.createdAt);
+      } else if (sortFilter === 'popular') {
+        filtered.sort((a, b) =>
+(b.votes || 0) - (a.votes || 0));
+      } else if (sortFilter === 'unanswered') {
+        filtered.sort((a, b) =>
+(a.answered ? 1 : 0) - (b.answered ? 1 : 0));
+      }
+      
+      return filtered;
+    }
+
+    // 질문 카드 생성
+    function createQuestionCard(question) {
+      const card = document.createElement('div');
+      card.className = `question-card ${question.answered ? 'answered' : ''} ${question.teacherAnswered ? 'teacher-answered' : ''}`;
+      
+      const statusText = question.teacherAnswered ? '교사 답변' : 
+                        question.answered ? '답변 완료' : '답변 대기';
+      const statusClass = question.teacherAnswered ? 'status-teacher' : 
+                         question.answered ? 'status-answered' : 'status-unanswered';
+      
+      card.innerHTML = `
+<div class="question-header">
+<div class="question-title">${question.title}</div>
+<div class="question-meta">
+<div class="question-status ${statusClass}">${statusText}</div>
+</div>
+</div>
+<div class="question-info">
+<span>작성자: ${question.authorName}</span>
+<span>작성일: ${formatDate(question.createdAt)}</span>
+<span>답변: ${question.answerCount || 0}개</span>
+<span>조회: ${question.views || 0}회</span>
+</div>
+<div class="question-content">${question.content.substring(0, 150)}${question.content.length >
+150 ? '...' : ''}</div>
+<div class="question-tags">
+${question.tags ? question.tags.map(tag =>
+`<span class="tag">${tag}</span>`).join('') : ''}
+</div>
+<div class="question-actions">
+<button class="btn" onclick="viewQuestionDetail('${question.id}')">상세보기</button>
+<button class="btn btn-secondary" onclick="voteQuestion('${question.id}')">추천 ${question.votes || 0}</button>
+</div>
+`;
+      
+      return card;
+    }
+
+    // 날짜 포맷
+    function formatDate(timestamp) {
+      try {
+        const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toLocaleDateString('ko-KR');
+      } catch (_) {
+        return '';
+      }
+    }
+
+    // 페이지네이션 표시
+    function displayPagination() {
+      const container = document.getElementById('pagination');
+      container.innerHTML = '';
+      
+      const filteredQuestions = filterQuestions();
+      const totalPages = Math.ceil(filteredQuestions.length / questionsPerPage);
+      
+      if (totalPages
+<= 1) return;
+      
+      // 이전 버튼
+      if (currentPage >
+1) {
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'page-btn';
+        prevBtn.textContent = '이전';
+        prevBtn.onclick = () =>
+changePage(currentPage - 1);
+        container.appendChild(prevBtn);
+      }
+      
+      // 페이지 버튼
+      for (let i = 1; i
+<= totalPages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+        pageBtn.textContent = i;
+        pageBtn.onclick = () =>
+changePage(i);
+        container.appendChild(pageBtn);
+      }
+      
+      // 다음 버튼
+      if (currentPage
+< totalPages) {
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'page-btn';
+        nextBtn.textContent = '다음';
+        nextBtn.onclick = () =>
+changePage(currentPage + 1);
+        container.appendChild(nextBtn);
+      }
+    }
+
+    // 페이지 변경
+    window.changePage = function(page) {
+      currentPage = page;
+      displayQuestions();
+      displayPagination();
+    }
+
+    // 검색
+    window.searchQuestions = function() {
+      currentPage = 1;
+      displayQuestions();
+      displayPagination();
+    }
+
+    // 필터
+    window.filterQuestions = function() {
+      currentPage = 1;
+      displayQuestions();
+      displayPagination();
+    }
+
+    // 질문 상세 보기
+    window.viewQuestionDetail = async function(questionId) {
+      try {
+        const questionDoc = await getDoc(doc(db, "questions", questionId));
+        if (questionDoc.exists()) {
+          const question = { id: questionDoc.id, ...questionDoc.data() };
+          
+          // 답변 목록 로드
+      const answersQuery = query(
+            collection(db, "answers"), 
+            where("questionId", "==", questionId),
+            orderBy("createdAt", "asc")
+          );
+          const answersSnapshot = await getDocs(answersQuery);
+          
+          const answers = [];
+          answersSnapshot.forEach(doc =>
+{
+            answers.push({ id: doc.id, ...doc.data() });
+          });
+          
+          displayQuestionDetail(question, answers);
+        }
+      } catch (error) {
+        console.error("질문 상세 로드 중 오류:", error);
+      }
+    }
+
+    // 질문 상세 표시
+    function displayQuestionDetail(question, answers) {
+      document.getElementById('detailQuestionTitle').textContent = question.title;
+      
+      const content = document.getElementById('questionDetailContent');
+      content.innerHTML = `
+<div style="margin-bottom: 20px;">
+<div style="font-weight: bold; margin-bottom: 10px;">질문 내용</div>
+<div style="line-height: 1.6; color: #333;">${question.content}</div>
+<div style="margin-top: 10px; font-size: 14px; color: #666;">
+작성자: ${question.authorName} | 작성일: ${formatDate(question.createdAt)}
+            ${question.tags ? `| 태그: ${question.tags.join(', ')}` : ''}
+</div>
+</div>
+<div class="answers-section">
+<div style="font-weight: bold; margin-bottom: 15px;">답변 (${answers.length}개)</div>
+${answers.map(answer =>
+`
+<div class="answer ${answer.isTeacher ? 'teacher' : ''}">
+<div class="answer-header">
+<div class="answer-author">
+${answer.authorName}
+                  ${answer.isTeacher ? '<span class="teacher-badge">교사</span>' : ''}
+</div>
+<div class="answer-time">${formatDate(answer.createdAt)}</div>
+</div>
+<div class="answer-content">${answer.content}</div>
+<div class="answer-actions">
+<button class="vote-btn" onclick="voteAnswer('${answer.id}')">추천 ${answer.votes || 0}</button>
+${answer.isAccepted ? '<span class="accepted-badge">채택</span>' : ''}
+</div>
+</div>
+`).join('')}
+</div>
+`;
+      
+      currentQuestionId = question.id;
+      document.getElementById('questionDetailModal').style.display = 'block';
+    }
+
+    // 질문하기 모달 표시
+    window.showAskQuestionModal = function() {
+      document.getElementById('askQuestionModal').style.display = 'block';
+    }
+
+    // 답변하기 모달 표시
+    window.showAnswerModal = function() {
+      if (!currentQuestionId) {
+        alert('질문을 먼저 선택해주세요.');
+        return;
+      }
+      document.getElementById('answerModal').style.display = 'block';
+    }
+
+    // 모달 닫기
+    window.closeModal = function(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    // 질문 등록
+    document.getElementById('askQuestionForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const title = document.getElementById('questionTitle').value;
+      const content = document.getElementById('questionContent').value;
+      const category = document.getElementById('questionCategory').value;
+      const tags = document.getElementById('questionTags').value.split(',').map(tag =>
+tag.trim()).filter(tag =>
+tag);
+      
+      if (!title.trim() || !content.trim()) {
+        alert('제목과 내용을 모두 입력해주세요.');
+        return;
+      }
+      
+      try {
+        const questionData = {
+          title: title,
+          content: content,
+          category: category,
+          tags: tags,
+          authorId: currentUser.uid,
+          authorName: currentUser.displayName || '익명',
+          createdAt: serverTimestamp(),
+          answered: false,
+          teacherAnswered: false,
+          answerCount: 0,
+          votes: 0,
+          views: 0,
+          lastActivity: serverTimestamp()
+        };
+        
+        await addDoc(collection(db, "questions"), questionData);
+        
+        closeModal('askQuestionModal');
+        await loadQuestions();
+        alert('질문이 등록되었습니다.');
+        
+        // 폼 초기화
+        document.getElementById('askQuestionForm').reset();
+      } catch (error) {
+        console.error("질문 등록 중 오류:", error);
+        alert('질문 등록에 실패했습니다. 다시 시도해주세요.');
+      }
+    });
+
+    // 답변 등록
+    document.getElementById('answerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const content = document.getElementById('answerContent').value;
+      const isTeacher = document.getElementById('isTeacherAnswer').checked;
+      
+      if (!content.trim()) {
+        alert('답변 내용을 입력해주세요.');
+        return;
+      }
+      
+      try {
+        const answerData = {
+          questionId: currentQuestionId,
+          content: content,
+          authorId: currentUser.uid,
+          authorName: currentUser.displayName || '익명',
+          isTeacher: isTeacher,
+          createdAt: serverTimestamp(),
+          votes: 0,
+          isAccepted: false
+        };
+        
+        await addDoc(collection(db, "answers"), answerData);
+        
+        // 질문 상태 업데이트
+        const questionRef = doc(db, "questions", currentQuestionId);
+        await updateDoc(questionRef, {
+          answered: true,
+          teacherAnswered: isTeacher,
+          answerCount: increment(1),
+          lastActivity: serverTimestamp()
+        });
+        
+        closeModal('answerModal');
+        await loadQuestions();
+        alert('답변이 등록되었습니다.');
+        
+        // 폼 초기화
+        document.getElementById('answerForm').reset();
+      } catch (error) {
+        console.error("답변 등록 중 오류:", error);
+        alert('답변 등록에 실패했습니다. 다시 시도해주세요.');
+      }
+    });
+
+    // 질문 추천
+    window.voteQuestion = async function(questionId) {
+      try {
+        const questionRef = doc(db, "questions", questionId);
+        await updateDoc(questionRef, {
+          votes: increment(1)
+        });
+        
+        await loadQuestions();
+        alert('추천되었습니다.');
+      } catch (error) {
+        console.error("질문 추천 중 오류:", error);
+        alert('추천에 실패했습니다.');
+      }
+    }
+
+    // 답변 추천
+    window.voteAnswer = async function(answerId) {
+      try {
+        const answerRef = doc(db, "answers", answerId);
+        await updateDoc(answerRef, {
+          votes: increment(1)
+        });
+        
+        alert('추천되었습니다.');
+      } catch (error) {
+        console.error("답변 추천 중 오류:", error);
+        alert('추천에 실패했습니다.');
+      }
+    }
+
+    // 답변 채택
+    window.acceptAnswer = async function(answerId) {
+      try {
+        const answerRef = doc(db, "answers", answerId);
+        await updateDoc(answerRef, {
+          isAccepted: true
+        });
+        
+        alert('답변이 채택되었습니다.');
+        await loadQuestions();
+      } catch (error) {
+        console.error("답변 채택 중 오류:", error);
+        alert('채택에 실패했습니다.');
+      }
+    }
+
+    // 질문 삭제
+    window.deleteQuestion = async function(questionId, authorId) {
+      if (currentUser.uid !== authorId) {
+        alert('작성자만 질문을 삭제할 수 있습니다.');
+        return;
+      }
+      
+      if (!confirm('질문을 삭제하시겠습니까?')) {
+        return;
+      }
+      
+      try {
+        // 답변 먼저 삭제
+        const answersQuery = query(collection(db, "answers"), where("questionId", "==", questionId));
+        const answersSnapshot = await getDocs(answersQuery);
+        
+        const deletePromises = answersSnapshot.docs.map(doc =>
+deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+        
+        // 질문 삭제
+        await deleteDoc(doc(db, "questions", questionId));
+        
+        await loadQuestions();
+        alert('질문이 삭제되었습니다.');
+      } catch (error) {
+        console.error("질문 삭제 중 오류:", error);
+        alert('질문 삭제에 실패했습니다.');
+      }
+    }
+
+    // 답변 삭제
+    window.deleteAnswer = async function(answerId, authorId) {
+      if (currentUser.uid !== authorId) {
+        alert('작성자만 답변을 삭제할 수 있습니다.');
+        return;
+      }
+      
+      if (!confirm('답변을 삭제하시겠습니까?')) {
+        return;
+      }
+      
+      try {
+        await deleteDoc(doc(db, "answers", answerId));
+        alert('답변이 삭제되었습니다.');
+        await loadQuestions();
+      } catch (error) {
+        console.error("답변 삭제 중 오류:", error);
+        alert('답변 삭제에 실패했습니다.');
+      }
+    }
+
+    // 검색 함수 (추가 기능)
+    window.searchQuestions = function() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const categoryFilter = document.getElementById('categoryFilter').value;
+      const statusFilter = document.getElementById('statusFilter').value;
+      
+      const filteredQuestions = questions.filter(q =>
+{
+        const matchesSearch = q.title.toLowerCase().includes(searchTerm) || 
+                            q.content.toLowerCase().includes(searchTerm) ||
+                            (q.tags && q.tags.some(tag =>
+tag.toLowerCase().includes(searchTerm)));
+        const matchesCategory = categoryFilter === 'all' || q.category === categoryFilter;
+        const matchesStatus = statusFilter === 'all' || 
+                            (statusFilter === 'answered' && q.answered) ||
+                            (statusFilter === 'unanswered' && !q.answered);
+        
+        return matchesSearch && matchesCategory && matchesStatus;
+      });
+      
+      displayQuestions(filteredQuestions);
+    }
+
+    // 정렬 함수 (추가 기능)
+    window.sortQuestions = function(sortBy) {
+      const sortedQuestions = [...questions];
+      
+      switch(sortBy) {
+        case 'recent':
+          sortedQuestions.sort((a, b) => {
+            const ta = a.createdAt?.toDate?.() || new Date(a.createdAt);
+            const tb = b.createdAt?.toDate?.() || new Date(b.createdAt);
+            return tb - ta;
+          });
+          break;
+        case 'popular':
+          sortedQuestions.sort((a, b) =>
+b.votes - a.votes);
+          break;
+        case 'unanswered':
+          sortedQuestions.sort((a, b) => {
+            if (a.answered === b.answered) {
+              const ta = a.createdAt?.toDate?.() || new Date(a.createdAt);
+              const tb = b.createdAt?.toDate?.() || new Date(b.createdAt);
+              return tb - ta;
+            }
+            return a.answered ? 1 : -1;
+          });
+          break;
+        case 'views':
+          sortedQuestions.sort((a, b) =>
+b.views - a.views);
+          break;
+      }
+      
+      questions = sortedQuestions;
+      displayQuestions();
+    }
+</script>
+</body>
+</html>
+

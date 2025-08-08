@@ -1,0 +1,166 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>개인화 맞춤형 수학 문제 - 여학생 친화적 수학 학습 시스템</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+    <text y='.9em' font-size='90'>📚</text>
+    </svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- 상단 헤더: 반응형 내비게이션 -->
+    <div class="app-header">
+        <button class="menu-toggle-btn" type="button" onclick="toggleMenu()" aria-label="메뉴 열기">☰</button>
+        <div class="brand">송현여고 수학</div>
+        <div class="app-actions">
+            <button class="btn btn-secondary" type="button" onclick="goToDashboard()">대시보드</button>
+            <button class="btn btn-outline" type="button" onclick="toggleNote()">메모</button>
+        </div>
+    </div>
+    <!-- 세로 모드 안내 메시지 -->
+    <div id="rotateMessage">세로 모드로 전환해주세요</div>
+    
+    <!-- 모바일 메뉴 -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <span>메뉴</span>
+            <button class="mobile-menu-close" onclick="closeMobileMenu()">&times;</button>
+        </div>
+        <div class="mobile-menu-content" id="mobileMenuContent">
+            <!-- 모바일 메뉴 내용은 JavaScript로 동적으로 추가됩니다-->
+        </div>
+    </div>
+    
+    <!-- 로딩 인디케이터 -->
+    <div class="loading-indicator" id="loadingIndicator">
+        <div class="loading-spinner"></div>
+        <div>문제를 불러오는 중...</div>
+    </div>
+    
+    <!-- 메인 레이아웃 -->
+    <div class="main-layout">
+        <!-- 왼쪽 사이드바 -->
+        <div class="sidebar" id="left">
+            <h2>문제 선택</h2>
+            <ul id="questionList">
+                <!-- 문제 목록은 JavaScript로 동적으로 추가됩니다-->
+            </ul>
+        </div>
+        
+        <!-- 중앙 콘텐츠 영역 -->
+        <div class="main-content" id="center">
+            <!-- 헤더 -->
+            <div class="content-header" id="centerHeader">
+                <div class="header-content">
+                    <div class="header-title">
+                        <div class="title-icon">📚</div>
+                        <span>개인화 맞춤형 수학 문제</span>
+                    </div>
+                    <div class="header-actions">
+                        <button id="noteToggleButton" onclick="toggleNote()" class="note-btn">
+                            <span class="note-icon">📝</span>
+                            <span class="note-text">메모</span>
+                        </button>
+                        <button class="dashboard-btn" onclick="goToDashboard()">
+                            <span class="dashboard-icon">📊</span>
+                            <span class="dashboard-text">대시보드</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 메인 콘텐츠 -->
+            <div class="content-main" id="centerMain">
+                <!-- 문제 표시 영역 -->
+                <div class="iframe-container">
+                    <iframe id="questionFrame" src="" style="display: none;"></iframe>
+                </div>
+                
+                <!-- 하단 영역 -->
+                <div class="content-bottom">
+                    <!-- 네비게이션 버튼 -->
+                    <div class="navigation-buttons">
+                        <button class="nav-btn" type="button" onclick="navigateToPreviousQuestion()">
+                            <span>←</span>
+                            <span>이전 문제</span>
+                        </button>
+                        <button class="nav-btn" type="button" onclick="navigateToNextQuestion()">
+                            <span>다음 문제</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+                    
+                    <!-- 답안 입력 영역 -->
+                    <div class="answer-area">
+                        <input type="text" id="answer" class="answer-input" placeholder="답안 입력">
+                        <button class="check-btn" type="button" onclick="checkAnswer()">확인</button>
+                    </div>
+                    
+                    <!-- 결과 표시 영역 -->
+                    <div class="result-area">
+                        <div id="result"></div>
+                        <div id="solutionLink"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 오른쪽 패널 (메모) -->
+        <div class="right-panel" id="rightPanel">
+            <h3>📝 학습 메모</h3>
+            <div class="note-content">
+                <textarea id="noteText" placeholder="이 문제에 대한 메모를 작성해보세요..."></textarea>
+                <div class="note-actions">
+                    <button class="save-note-btn" type="button" onclick="saveNote()">저장</button>
+                    <button class="clear-note-btn" type="button" onclick="clearNote()">지우기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 떠다니는 즐겨찾기 버튼 -->
+    <button class="floating-button favorite-button" type="button" onclick="toggleFavorite()" title="즐겨찾기">
+        ❤️
+    </button>
+    
+    <!-- 문제 모달 -->
+    <div class="image-modal" id="imageModal">
+        <div class="image-modal-content">
+            <img id="modalImage" src="" alt="문제 이미지">
+            <button class="modal-close-btn" onclick="closeQuestionModal()">&times;</button>
+        </div>
+    </div>
+    
+    <!-- script.js를 모듈로 로드 -->
+    <script type="module" src="script.js"></script>
+    
+    <!-- 추가 스크립트: 중복 정의 제거 및 필수 보완만 적용 -->
+    <script>
+      // 모바일 메뉴 닫기: script.js와 클래스명 일치
+      window.closeMobileMenu = function() {
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenu) mobileMenu.classList.remove('open');
+      };
+
+      // 모달 닫기만 단순 DOM 조작으로 유지
+      window.closeQuestionModal = function() {
+        const modal = document.getElementById('imageModal');
+        if (modal) modal.style.display = 'none';
+      };
+
+      // 화면 회전: 전역 checkOrientation이 있으면 사용
+      window.addEventListener('orientationchange', function() {
+        if (typeof window.checkOrientation === 'function') {
+          window.checkOrientation();
+        }
+      });
+      if (typeof window.checkOrientation === 'function') {
+        window.checkOrientation();
+      }
+    </script>
+</body>
+</html>
+

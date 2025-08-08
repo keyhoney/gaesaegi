@@ -1,0 +1,477 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>코인 상점 - 송현여고 수학 학습 시스템</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>🛍️</text>
+</svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="shop-container">
+<div class="shop-header">
+<h1>코인 상점</h1>
+<p>학습으로 얻은 코인으로 다양한 아이템을 구매하세요!</p>
+<div class="user-coins">
+<span>현재 코인:
+</span>
+<span id="userCoins">로딩 중...</span>
+<span class="coin-icon">
+</span>
+</div>
+</div>
+<div class="shop-categories">
+<div class="category-tab active" data-category="learning">학습 도구</div>
+<div class="category-tab" data-category="customization">커스터마이징</div>
+<div class="category-tab" data-category="game">게임 아이템</div>
+</div>
+<div id="shopItems" class="shop-grid">
+<!-- 아이템들이 동적으로 로딩됩니다 -->
+</div>
+<div class="inventory-section">
+<div class="inventory-title">내 아이템</div>
+<div id="userInventory" class="inventory-grid">
+<!-- 내 아이템들이 동적으로 로딩됩니다 -->
+</div>
+</div>
+</div>
+<!-- 구매 확인 모달 -->
+<div id="purchaseModal" class="purchase-modal">
+<div class="modal-content">
+<div class="modal-title">구매 확인</div>
+<p id="modalMessage">
+</p>
+<div class="modal-buttons">
+<button class="modal-button confirm-button" id="confirmPurchase">구매하기</button>
+<button class="modal-button cancel-button" id="cancelPurchase">취소</button>
+</div>
+</div>
+</div>
+<script type="module">
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { doc, getDoc, updateDoc, collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirebaseApp, getFirebaseAuth, getFirebaseDb, getUserCoins, spendCoins } from './script.js';
+
+        let app, auth, db;
+        async function initializeFirebaseServices() {
+            app = await getFirebaseApp();
+            auth = await getFirebaseAuth();
+            db = await getFirebaseDb();
+        }
+
+        // 상점 아이템 데이터
+        const shopItems = {
+            learning: [
+                {
+                    id: 'hint_pass',
+                    name: '힌트 사용권',
+                    description: '문제 풀이 중 힌트를 사용할 수 있는 권한입니다. 어려운 문제를 풀 때 도움이 됩니다.',
+                    price: 2,
+                    category: 'learning',
+                    icon: '💡',
+                    effect: 'hint_available',
+                    duration: 'permanent',
+                    effectDescription: '문제 풀이 화면에서 💡 버튼을 클릭하면 힌트를 사용할 수 있습니다.',
+                    usageGuide: '구매 후 문제 풀이 화면에서 힌트 버튼이 생성됩니다.'
+                },
+                {
+                    id: 'solution_pass',
+                    name: '정답 확인권',
+                    description: '문제 풀이 중 정답을 확인할 수 있는 권한입니다. 학습에 도움이 됩니다.',
+                    price: 3,
+                    category: 'learning',
+                    icon: '🔍',
+                    effect: 'solution_available',
+                    duration: 'permanent',
+                    effectDescription: '문제 풀이 완료 후 "정답 확인" 버튼을 사용할 수 있습니다.',
+                    usageGuide: '정답 제출 후 "정답 확인" 버튼이 나타납니다.'
+                },
+                {
+                    id: 'skip_pass',
+                    name: '문제 건너뛰기권',
+                    description: '현재 풀고 있는 문제를 건너뛸 수 있는 권한입니다. 학습 진행에 도움이 됩니다.',
+                    price: 1,
+                    category: 'learning',
+                    icon: '⏭️',
+                    effect: 'skip_available',
+                    duration: 'permanent',
+                    effectDescription: '현재 문제를 건너뛰고 다음 문제로 넘어갈 수 있습니다.',
+                    usageGuide: '문제 풀이 화면에서 "건너뛰기" 버튼을 사용하세요.'
+                }
+            ],
+            customization: [
+                {
+                    id: 'profile_theme_1',
+                    name: '프로필 테마 - 핑크',
+                    description: '귀여운 핑크색으로 된 프로필 테마입니다. 여학생들에게 인기가 많습니다.',
+                    price: 5,
+                    category: 'customization',
+                    icon: '🌸',
+                    effect: 'profile_theme',
+                    duration: 'permanent'
+                },
+                {
+                    id: 'profile_theme_2',
+                    name: '프로필 테마 - 블루',
+                    description: '차분한 블루색으로 된 프로필 테마입니다. 깔끔한 느낌을 줍니다.',
+                    price: 5,
+                    category: 'customization',
+                    icon: '🌊',
+                    effect: 'profile_theme',
+                    duration: 'permanent'
+                },
+                {
+                    id: 'background_1',
+                    name: '배경 이미지 - 수학 공식',
+                    description: '수학 공식들이 배경으로 있는 이미지입니다.',
+                    price: 3,
+                    category: 'customization',
+                    icon: '📐',
+                    effect: 'background_image',
+                    duration: 'permanent'
+                },
+                {
+                    id: 'background_2',
+                    name: '배경 이미지 - 자연',
+                    description: '자연스러운 풍경이 배경으로 있는 이미지입니다.',
+                    price: 3,
+                    category: 'customization',
+                    icon: '🌿',
+                    effect: 'background_image',
+                    duration: 'permanent'
+                }
+            ],
+            game: [
+                {
+                    id: 'special_problem',
+                    name: '특별 문제',
+                    description: '일반적으로 접할 수 없는 특별한 수학 문제를 풀 수 있습니다.',
+                    price: 4,
+                    category: 'game',
+                    icon: '⭐',
+                    effect: 'special_problem',
+                    duration: 'permanent'
+                },
+                {
+                    id: 'bonus_round',
+                    name: '보너스 라운드',
+                    description: '추가적인 경험치와 코인을 얻을 수 있는 보너스 라운드에 참여할 수 있습니다.',
+                    price: 2,
+                    category: 'game',
+                    icon: '🎯',
+                    effect: 'bonus_round',
+                    duration: 'permanent'
+                },
+                {
+                    id: 'double_points',
+                    name: '경험치 2배',
+                    description: '1시간 동안 모든 학습 활동에서 경험치를 2배로 얻을 수 있습니다.',
+                    price: 3,
+                    category: 'game',
+                    icon: '⚡',
+                    effect: 'double_points',
+                    duration: '1hour'
+                }
+            ]
+        };
+
+        let currentUser = null;
+        let userCoins = 0;
+        let userInventory = [];
+
+        // 사용자 인증 상태 확인 (초기화 후)
+        (async () => {
+            await initializeFirebaseServices();
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUser = user;
+                    await loadUserData();
+                    await loadUserInventory();
+                    displayShopItems('learning');
+                } else {
+                    window.location.href = 'index.html';
+                }
+            });
+        })();
+
+        // 사용자 데이터 로딩
+        async function loadUserData() {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    userCoins = userData.coins || 0;
+                    document.getElementById('userCoins').textContent = userCoins;
+                }
+            } catch (error) {
+                console.error('사용자 데이터 로딩 실패:', error);
+            }
+        }
+
+        // 사용자 인벤토리 로딩
+        async function loadUserInventory() {
+            try {
+                const inventoryQuery = query(
+                    collection(db, 'user_inventory'),
+                    where('userId', '==', currentUser.uid)
+                );
+                const snapshot = await getDocs(inventoryQuery);
+                userInventory = [];
+                snapshot.forEach(doc => {
+                    userInventory.push({ id: doc.id, ...doc.data() });
+                });
+                displayUserInventory();
+            } catch (error) {
+                console.error('인벤토리 로딩 실패:', error);
+            }
+        }
+
+        // 상점 아이템 표시 (중복 구매 방지 포함)
+        function displayShopItems(category) {
+            const shopItemsContainer = document.getElementById('shopItems');
+            const items = shopItems[category] || [];
+            
+            shopItemsContainer.innerHTML = items.map(item => {
+                // 이미 사용자가 소유한 아이템인지 확인
+                const isOwned = userInventory.some(invItem => invItem.itemId === item.id);
+                
+                // 구매 가능 여부 확인
+                const canAfford = userCoins >= item.price;
+                const canBuy = canAfford && !isOwned;
+                
+                // 버튼 텍스트 결정
+                let buttonText = '구매하기';
+                let buttonClass = 'buy-button';
+                
+                if (isOwned) {
+                    buttonText = '이미 소유함';
+                    buttonClass = 'buy-button owned';
+                } else if (!canAfford) {
+                    buttonText = '코인 부족';
+                    buttonClass = 'buy-button disabled';
+                }
+                
+                return `
+<div class="shop-item ${isOwned ? 'owned-item' : ''}">
+<div class="item-image">${item.icon}</div>
+<div class="item-title">${item.name}</div>
+<div class="item-description">${item.description}</div>
+${item.effectDescription ? `
+<div class="item-effect-info">
+<div class="effect-title">💡 효과</div>
+<div class="effect-description">${item.effectDescription}</div>
+</div>
+` : ''}
+                        ${item.usageGuide ? `
+<div class="item-usage-guide">
+<div class="usage-title">🔍 사용법</div>
+<div class="usage-description">${item.usageGuide}</div>
+</div>
+` : ''}
+<div class="item-price">
+<span class="coin-icon">
+</span>
+<span>${item.price} 코인</span>
+</div>
+<button class="${buttonClass}" onclick="buyItem('${item.id}', ${item.price}, '${item.name}')" 
+                                ${!canBuy ? 'disabled' : ''}>
+${buttonText}
+</button>
+<div class="item-stats">
+<span>카테고리: ${getCategoryName(item.category)}</span>
+<span>효과: ${getEffectName(item.effect)}</span>
+${isOwned ? '<span style="color: #28a745;">이미 소유함</span>' : ''}
+</div>
+</div>
+`;
+            }).join('');
+        }
+
+        // 카테고리 이름 변환
+        function getCategoryName(category) {
+            const names = {
+                'learning': '학습 도구',
+                'customization': '커스터마이징',
+                'game': '게임 아이템'
+            };
+            return names[category] || category;
+        }
+
+        // 효과 이름 변환
+        function getEffectName(effect) {
+            const names = {
+                'hint_available': '힌트 사용',
+                'solution_available': '정답 확인',
+                'skip_available': '문제 건너뛰기',
+                'profile_theme': '프로필 테마',
+                'background_image': '배경 이미지',
+                'special_problem': '특별 문제',
+                'bonus_round': '보너스 라운드',
+                'double_points': '경험치 2배'
+            };
+            return names[effect] || effect;
+        }
+
+        // 사용자 인벤토리 표시
+        function displayUserInventory() {
+            const inventoryContainer = document.getElementById('userInventory');
+            
+            if (userInventory.length === 0) {
+                inventoryContainer.innerHTML = '<p>사용자가 소유한 아이템이 없습니다.</p>';
+                return;
+            }
+
+            inventoryContainer.innerHTML = userInventory.map(item => `
+<div class="inventory-item">
+<div style="font-size: 2em;">${getItemIcon(item.itemId)}</div>
+<div style="font-weight: 600;">${getItemName(item.itemId)}</div>
+<div style="font-size: 0.9em; color: #6c757d;">
+구매일: ${new Date(item.purchasedAt.toDate()).toLocaleDateString()}
+</div>
+</div>
+`).join('');
+        }
+
+        // 아이템 아이콘 가져오기
+        function getItemIcon(itemId) {
+            const allItems = [...shopItems.learning, ...shopItems.customization, ...shopItems.game];
+            const item = allItems.find(i => i.id === itemId);
+            return item ? item.icon : '❓';
+        }
+
+        // 아이템 이름 가져오기
+        function getItemName(itemId) {
+            const allItems = [...shopItems.learning, ...shopItems.customization, ...shopItems.game];
+            const item = allItems.find(i => i.id === itemId);
+            return item ? item.name : '알 수 없는 아이템';
+        }
+
+        // 아이템 구매 (모달 확인 포함)
+        window.buyItem = async function(itemId, price, itemName) {
+            try {
+                // Firebase 인증 확인
+                const user = (await getFirebaseAuth()).currentUser;
+                
+                if (!user) {
+                    showMessage('로그인이 필요합니다.', 'error');
+                    return;
+                }
+                
+                // 사용자 코인 확인
+                const userCoins = await getUserCoins(user.uid);
+                
+                if (userCoins < price) {
+                    showMessage('코인이 부족합니다.', 'error');
+                    return;
+                }
+                
+                // 이미 사용자가 소유한 아이템인지 확인
+                const isOwned = userInventory.some(invItem => invItem.itemId === itemId);
+                
+                if (isOwned) {
+                    showMessage('이미 소유한 아이템입니다.', 'error');
+                    return;
+                }
+
+                // 구매 확인 모달 표시
+                const modal = document.getElementById('purchaseModal');
+                const modalMessage = document.getElementById('modalMessage');
+                modalMessage.textContent = `${itemName}을(를) ${price} 코인으로 구매하시겠습니까?`;
+                modal.style.display = 'flex';
+
+                // 구매 확인 버튼 이벤트
+                document.getElementById('confirmPurchase').onclick = async () => {
+                    try {
+                        // 로딩 상태 표시
+                        const confirmBtn = document.getElementById('confirmPurchase');
+                        const originalText = confirmBtn.textContent;
+                        confirmBtn.textContent = '구매 중...';
+                        confirmBtn.disabled = true;
+                        
+                        // 코인 차감
+                        await spendCoins(user.uid, price, `상점 구매: ${itemName}`);
+
+                        // 인벤토리에 아이템 추가
+                        await addDoc(collection(db, 'user_inventory'), {
+                            userId: user.uid,
+                            itemId: itemId,
+                            purchasedAt: serverTimestamp(),
+                            used: false
+                        });
+
+                        // 모달 닫기
+                        modal.style.display = 'none';
+                        
+                        // 성공 메시지 표시
+                        showMessage('구매가 완료되었습니다!', 'success');
+                        
+                        // 사용자 코인 업데이트
+                        const updatedCoins = await getUserCoins(user.uid);
+                        document.getElementById('userCoins').textContent = updatedCoins;
+                        
+                        // 인벤토리 새로고침
+                        await loadUserInventory();
+                        
+                        // 상점 아이템 다시 표시 (구매 버튼 상태 업데이트)
+                        const activeCategory = document.querySelector('.category-tab.active').dataset.category;
+                        displayShopItems(activeCategory);
+
+                    } catch (error) {
+                        console.error('구매 실패:', error);
+                        showMessage('구매 중 오류가 발생했습니다: ' + error.message, 'error');
+                        modal.style.display = 'none';
+                    } finally {
+                        // 버튼 상태 복원
+                        const confirmBtn = document.getElementById('confirmPurchase');
+                        confirmBtn.textContent = originalText;
+                        confirmBtn.disabled = false;
+                    }
+                };
+
+                // 취소 버튼 이벤트
+                document.getElementById('cancelPurchase').onclick = () => {
+                    modal.style.display = 'none';
+                };
+                
+            } catch (error) {
+                console.error('구매 준비 실패:', error);
+                showMessage('구매 준비 중 오류가 발생했습니다: ' + error.message, 'error');
+            }
+        };
+
+        // 메시지 표시
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'success' ? 'success-message' : 'error-message';
+            messageDiv.textContent = message;
+            
+            const container = document.querySelector('.shop-container');
+            container.insertBefore(messageDiv, container.firstChild);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+
+        // 카테고리 탭 이벤트
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoryTabs = document.querySelectorAll('.category-tab');
+            
+            categoryTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 기존 활성 탭 제거
+                    categoryTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 해당 카테고리 아이템 표시
+                    const category = this.dataset.category;
+                    displayShopItems(category);
+                });
+            });
+        });
+</script>
+</body>
+</html>
+

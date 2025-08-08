@@ -1,0 +1,826 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>피드백 시스템 - 송현여고 수학 학습 시스템</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>💬</text>
+</svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="feedback-container">
+<div class="feedback-header">
+<h1>💬 피드백 시스템</h1>
+<p>오류 신고, 개선 제안, 격려 메시지를 보내주세요</p>
+</div>
+<div class="feedback-grid">
+<!-- 피드백 작성 폼 -->
+<div class="feedback-form-card">
+<h2>📝 피드백 작성</h2>
+<form id="feedbackForm">
+<div class="form-row">
+<div class="form-group">
+<label for="feedbackType">피드백 종류</label>
+<select id="feedbackType" class="input" required>
+<option value="">종류를 선택해주세요</option>
+<option value="bug">오류 신고</option>
+<option value="improvement">개선 제안</option>
+<option value="feature">기능 요청</option>
+<option value="content">콘텐츠 요청</option>
+<option value="encouragement">격려 메시지</option>
+<option value="other">기타</option>
+</select>
+</div>
+<div class="form-group">
+<label for="feedbackPriority">우선순위</label>
+<select id="feedbackPriority" class="input" required>
+<option value="">우선순위를 선택해주세요</option>
+<option value="low">낮음</option>
+<option value="medium">보통</option>
+<option value="high">높음</option>
+<option value="urgent">긴급</option>
+</select>
+</div>
+</div>
+<div class="form-group">
+<label for="feedbackTitle">제목</label>
+<input type="text" id="feedbackTitle" class="input" placeholder="피드백 제목을 입력해주세요" required maxlength="100">
+<div class="char-count" id="titleCharCount" style="text-align: right; font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">0/100</div>
+</div>
+<div class="form-group">
+<label for="feedbackText">내용</label>
+<textarea id="feedbackText" class="input" placeholder="상세한 내용을 입력해주세요. 오류인 경우 어떤 상황에서 발생했는지, 개선 제안인 경우 구체적인 방안을 제시해주세요." rows="6" required maxlength="2000">
+</textarea>
+<div class="char-count" id="contentCharCount" style="text-align: right; font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">0/2000</div>
+</div>
+<div class="form-group">
+<label for="feedbackContact">연락처(선택사항)</label>
+<input type="text" id="feedbackContact" class="input" placeholder="이메일이나 연락처를 남겨주시면 답변을 드릴 수 있습니다">
+</div>
+<button type="submit" class="submit-btn" id="submitBtn" aria-label="피드백 제출">
+<span class="btn-text">피드백 제출</span>
+<span class="btn-loading" style="display: none;">
+<div class="loading-spinner" style="width: 20px; height: 20px; border-width: 2px;">
+</div>
+</span>
+</button>
+<div class="form-hint" style="margin-top: 15px; padding: 10px; background: var(--bg-secondary); border-radius: 8px; font-size: 0.9rem; color: var(--text-secondary);">
+<strong>💡 팁</strong>
+Ctrl/Cmd + Enter를 눌러서 빠르게 제출할 수 있습니다.
+</div>
+</form>
+</div>
+<!-- 피드백 통계 -->
+<div class="stats-section">
+<h2>📊 피드백 통계</h2>
+<div class="stats-grid">
+<div class="stat-card">
+<div class="stat-value" id="totalFeedbacks">0</div>
+<div class="stat-label">전체 피드백</div>
+</div>
+<div class="stat-card">
+<div class="stat-value" id="myFeedbacks">0</div>
+<div class="stat-label">내 피드백</div>
+</div>
+<div class="stat-card">
+<div class="stat-value" id="resolvedFeedbacks">0</div>
+<div class="stat-label">해결된 피드백</div>
+</div>
+<div class="stat-card">
+<div class="stat-value" id="pendingFeedbacks">0</div>
+<div class="stat-label">대기 중</div>
+</div>
+</div>
+</div>
+<!-- 내 피드백 목록 -->
+<div class="feedback-lists-section">
+<div class="section-header">
+<h2>내 피드백 목록</h2>
+</div>
+<div class="table-container">
+<table id="myFeedbackTable">
+<thead>
+<tr>
+<th>종류</th>
+<th>제목</th>
+<th>상태</th>
+<th>작성일</th>
+<th>작업</th>
+</tr>
+</thead>
+<tbody id="myFeedbackTableBody">
+<tr>
+<td colspan="5" class="empty-state">
+<h3>내 피드백이 없습니다.</h3>
+<p>피드백을 작성해보세요!</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- 전체 피드백 목록 -->
+<div class="feedback-lists-section">
+<div class="section-header">
+<h2>전체 피드백 목록</h2>
+</div>
+<div class="filter-bar">
+<input type="text" id="searchInput" class="input" placeholder="피드백 검색..." style="flex: 1; min-width: 200px;">
+<select id="typeFilter" class="input" onchange="filterFeedbacks()">
+<option value="">전체 종류</option>
+<option value="bug">오류 신고</option>
+<option value="improvement">개선 제안</option>
+<option value="feature">기능 요청</option>
+<option value="content">콘텐츠 요청</option>
+<option value="encouragement">격려 메시지</option>
+<option value="other">기타</option>
+</select>
+<select id="statusFilter" class="input" onchange="filterFeedbacks()">
+<option value="">전체 상태</option>
+<option value="pending">대기 중</option>
+<option value="in_progress">진행 중</option>
+<option value="resolved">해결됨</option>
+<option value="rejected">거절됨</option>
+</select>
+<button class="action-btn view" onclick="resetFilters()">필터 초기화</button>
+</div>
+<div class="table-container">
+<table id="feedbackTable">
+<thead>
+<tr>
+<th>종류</th>
+<th>제목</th>
+<th>작성자</th>
+<th>상태</th>
+<th>우선순위</th>
+<th>작성일</th>
+<th>작업</th>
+</tr>
+</thead>
+<tbody id="feedbackTableBody">
+<tr>
+<td colspan="7" class="loading">
+<div class="loading-spinner">
+</div>
+<p>피드백 목록을 불러오는 중입니다...</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<!-- 피드백 상세 모달 -->
+<div id="feedbackModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3 id="modalTitle">피드백 상세</h3>
+<span class="modal-close" onclick="closeModal('feedbackModal')">&times;</span>
+</div>
+<div class="modal-body">
+<div id="modalContent">
+<!-- 피드백 상세 내용 -->
+</div>
+</div>
+<div class="modal-footer">
+<button class="action-btn view" onclick="closeModal('feedbackModal')">닫기</button>
+</div>
+</div>
+</div>
+<!-- 피드백 수정 모달 -->
+<div id="editFeedbackModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3 id="editModalTitle">피드백 수정</h3>
+<span class="modal-close" onclick="closeModal('editFeedbackModal')">&times;</span>
+</div>
+<div class="modal-body">
+<form id="editFeedbackForm">
+<input type="hidden" id="editFeedbackId">
+<div class="form-row">
+<div class="form-group">
+<label for="editFeedbackType">피드백 종류</label>
+<select id="editFeedbackType" class="input" required>
+<option value="bug">오류 신고</option>
+<option value="improvement">개선 제안</option>
+<option value="feature">기능 요청</option>
+<option value="content">콘텐츠 요청</option>
+<option value="encouragement">격려 메시지</option>
+<option value="other">기타</option>
+</select>
+</div>
+<div class="form-group">
+<label for="editFeedbackPriority">우선순위</label>
+<select id="editFeedbackPriority" class="input" required>
+<option value="low">낮음</option>
+<option value="medium">보통</option>
+<option value="high">높음</option>
+<option value="urgent">긴급</option>
+</select>
+</div>
+</div>
+<div class="form-group">
+<label for="editFeedbackTitle">제목</label>
+<input type="text" id="editFeedbackTitle" class="input" required>
+</div>
+<div class="form-group">
+<label for="editFeedbackContent">내용</label>
+<textarea id="editFeedbackContent" class="input" rows="5" required>
+</textarea>
+</div>
+</form>
+</div>
+<div class="modal-footer">
+<button class="action-btn delete" onclick="closeModal('editFeedbackModal')">삭제</button>
+<button class="action-btn edit" onclick="submitEditFeedback()">수정</button>
+</div>
+</div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, where, updateDoc, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { firebaseConfig } from './script.js';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let allFeedbacks = [];
+
+    // 인증 상태 변경 감지
+    onAuthStateChanged(auth, user =>
+{
+      if (!user) {
+        alert("로그인이 필요합니다.");
+        window.location.href = "index.html";
+        return;
+      }
+      currentUser = user;
+      loadFeedbacks();
+    });
+
+    // 피드백 작성 폼 제출
+    const feedbackForm = document.getElementById("feedbackForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoading = submitBtn.querySelector('.btn-loading');
+
+    feedbackForm.addEventListener("submit", async (e) =>
+{
+      e.preventDefault();
+      
+      const type = document.getElementById("feedbackType").value;
+      const priority = document.getElementById("feedbackPriority").value;
+      const title = document.getElementById("feedbackTitle").value.trim();
+      const content = document.getElementById("feedbackText").value.trim();
+      const contact = document.getElementById("feedbackContact").value.trim();
+
+      // 유효성 검사
+      if (!type) {
+        showMessage("피드백 종류를 선택해주세요.", "error");
+        document.getElementById("feedbackType").focus();
+        return;
+      }
+
+      if (!priority) {
+        showMessage("우선순위를 선택해주세요.", "error");
+        document.getElementById("feedbackPriority").focus();
+        return;
+      }
+
+      if (!title) {
+        showMessage("제목을 입력해주세요.", "error");
+        document.getElementById("feedbackTitle").focus();
+        return;
+      }
+
+      if (!content) {
+        showMessage("내용을 입력해주세요.", "error");
+        document.getElementById("feedbackText").focus();
+        return;
+      }
+
+      if (title.length < 5) {
+        showMessage("제목은 최소 5자 이상이어야 합니다.", "error");
+        document.getElementById("feedbackTitle").focus();
+        return;
+      }
+
+      if (content.length < 10) {
+        showMessage("내용은 최소 10자 이상이어야 합니다.", "error");
+        document.getElementById("feedbackText").focus();
+        return;
+      }
+
+      // 버튼 상태 변경
+      btnText.style.display = 'none';
+      btnLoading.style.display = 'flex';
+      submitBtn.disabled = true;
+
+      try {
+        await addDoc(collection(db, "feedbacks"), {
+          userId: currentUser.uid,
+          userName: currentUser.displayName || "익명 사용자",
+          userEmail: currentUser.email,
+          type: type,
+          priority: priority,
+          title: title,
+          content: content,
+          contact: contact,
+          status: "pending",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          isPublic: true
+        });
+
+        feedbackForm.reset();
+        showMessage("피드백이 접수되었습니다.", "success");
+      } catch (error) {
+        console.error("피드백 접수 중 오류:", error);
+        showMessage("피드백 접수에 실패했습니다.", "error");
+      } finally {
+        // 버튼 상태 복원
+        btnText.style.display = 'block';
+        btnLoading.style.display = 'none';
+        submitBtn.disabled = false;
+      }
+    });
+
+    // 메시지 표시 함수
+    function showMessage(message, type = "info") {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${type}`;
+      messageDiv.innerHTML = `
+<div style="display: flex; align-items: center; gap: 10px;">
+<span style="font-size: 1.2em;">
+${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+</span>
+<span>${message}</span>
+</div>
+`;
+      messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        ${type === 'success' ? 'background: var(--success-color);' : 
+          type === 'error' ? 'background: var(--error-color);' : 
+          'background: var(--info-color);'}
+      `;
+      
+      document.body.appendChild(messageDiv);
+      
+      // 자동 사라짐
+      setTimeout(() =>
+{
+        if (messageDiv.parentNode) {
+          messageDiv.style.animation = 'slideOut 0.3s ease';
+          setTimeout(() =>
+{
+            if (messageDiv.parentNode) {
+              messageDiv.remove();
+            }
+          }, 300);
+        }
+      }, 3000);
+    }
+
+    // 키보드 단축키 처리
+    document.addEventListener('keydown', function(event) {
+      // Ctrl/Cmd + Enter로 피드백 제출
+      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+        const activeElement = document.activeElement;
+        if (activeElement && (activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'INPUT')) {
+          event.preventDefault();
+          document.getElementById('feedbackForm').dispatchEvent(new Event('submit'));
+        }
+      }
+    });
+
+    // 문자 수 카운터 설정
+    function setupCharCounters() {
+      const titleInput = document.getElementById('feedbackTitle');
+      const contentInput = document.getElementById('feedbackText');
+      const titleCounter = document.getElementById('titleCharCount');
+      const contentCounter = document.getElementById('contentCharCount');
+
+      function updateCharCount(input, counter, maxLength) {
+        const currentLength = input.value.length;
+        counter.textContent = `${currentLength}/${maxLength}`;
+        
+        // 80% 입력 시 경고 색상
+        if (currentLength > maxLength * 0.8) {
+          counter.style.color = 'var(--warning-color)';
+        } else {
+          counter.style.color = 'var(--text-secondary)';
+        }
+        
+        // 최대 길이 도달 시 오류 색상
+        if (currentLength >= maxLength) {
+          counter.style.color = 'var(--error-color)';
+        }
+      }
+
+      titleInput.addEventListener('input', () =>
+updateCharCount(titleInput, titleCounter, 100));
+      contentInput.addEventListener('input', () =>
+updateCharCount(contentInput, contentCounter, 2000));
+    }
+
+    // DOM 로드 시 문자 수 카운터 초기화
+    document.addEventListener('DOMContentLoaded', setupCharCounters);
+
+    // 피드백 데이터 로드 및 표시
+    function loadFeedbacks() {
+      const q = query(collection(db, "feedbacks"), orderBy("createdAt", "desc"));
+      
+      // 테이블 내용 로딩 상태 표시
+      const tbody = document.querySelector("#feedbackTableBody");
+      tbody.innerHTML = `
+<tr>
+<td colspan="7" class="loading">
+<div class="loading-spinner">
+</div>
+<p>피드백 목록을 불러오는 중입니다...</p>
+</td>
+</tr>
+`;
+      
+      onSnapshot(q, snapshot =>
+{
+        allFeedbacks = [];
+        snapshot.forEach(doc =>
+{
+          allFeedbacks.push({ id: doc.id, ...doc.data() });
+        });
+        
+        displayAllFeedbacks(allFeedbacks);
+        displayMyFeedbacks();
+        updateFeedbackStats();
+      }, error =>
+{
+        console.error("피드백 데이터 로드 중 오류:", error);
+        showMessage("피드백 목록을 불러오는데 실패했습니다.", "error");
+        
+        // 빈 상태 표시
+        tbody.innerHTML = `
+<tr>
+<td colspan="7" class="empty-state">
+<h3>피드백 데이터를 불러올 수 없습니다.</h3>
+<p>네트워크 연결 또는 데이터베이스 문제로 인해 피드백 목록을 불러올 수 없습니다.</p>
+<button class="action-btn view" onclick="loadFeedbacks()" style="margin-top: 10px;">다시 시도</button>
+</td>
+</tr>
+`;
+      });
+    }
+
+    // 전체 피드백 표시
+    function displayAllFeedbacks(feedbacks) {
+      const tbody = document.querySelector("#feedbackTableBody");
+      tbody.innerHTML = "";
+      
+      if (feedbacks.length === 0) {
+        tbody.innerHTML = `
+<tr>
+<td colspan="7" class="empty-state">
+<h3>피드백이 없습니다.</h3>
+<p>새로운 피드백을 작성해보세요!</p>
+</td>
+</tr>
+`;
+        return;
+      }
+      
+      feedbacks.forEach(feedback =>
+{
+        tbody.appendChild(createFeedbackRow(feedback, false));
+      });
+    }
+    
+    // 내 피드백 표시
+    function displayMyFeedbacks() {
+        const myFeedbacks = allFeedbacks.filter(f =>
+f.userId === currentUser.uid);
+        const tbody = document.querySelector("#myFeedbackTableBody");
+        tbody.innerHTML = "";
+        
+        if (myFeedbacks.length === 0) {
+          tbody.innerHTML = `
+<tr>
+<td colspan="5" class="empty-state">
+<h3>내 피드백이 없습니다.</h3>
+<p>피드백을 작성해보세요!</p>
+</td>
+</tr>
+`;
+          return;
+        }
+        
+        myFeedbacks.forEach(feedback =>
+{
+            tbody.appendChild(createFeedbackRow(feedback, true));
+        });
+    }
+
+    // 피드백 행 생성
+    function createFeedbackRow(feedback, isMyFeedback) {
+      const tr = document.createElement("tr");
+      const createdDate = feedback.createdAt ? feedback.createdAt.toDate().toLocaleDateString("ko-KR") : "-";
+      
+      // XSS 방지를 위한 문자열 이스케이프
+      const escapeHtml = (text) =>
+{
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      };
+      
+      if (isMyFeedback) {
+        tr.innerHTML = `
+<td>
+<span class="type-badge type-${feedback.type}">${getTypeLabel(feedback.type)}</span>
+</td>
+<td title="${escapeHtml(feedback.title)}">${escapeHtml(feedback.title)}</td>
+<td>
+<span class="status-badge status-${feedback.status}">${getStatusLabel(feedback.status)}</span>
+</td>
+<td>${createdDate}</td>
+<td>
+<div class="action-buttons">
+<button class="action-btn view" onclick="viewFeedback('${feedback.id}')" aria-label="피드백 상세 보기">상세</button>
+<button class="action-btn edit" onclick="openEditModal('${feedback.id}')" aria-label="피드백 수정">수정</button>
+<button class="action-btn delete" onclick="deleteFeedback('${feedback.id}')" aria-label="피드백 삭제">삭제</button>
+</div>
+</td>
+`;
+      } else {
+        tr.innerHTML = `
+<td>
+<span class="type-badge type-${feedback.type}">${getTypeLabel(feedback.type)}</span>
+</td>
+<td title="${escapeHtml(feedback.title)}">${escapeHtml(feedback.title)}</td>
+<td>${escapeHtml(feedback.userName)}</td>
+<td>
+<span class="status-badge status-${feedback.status}">${getStatusLabel(feedback.status)}</span>
+</td>
+<td>
+<span class="priority-badge priority-${feedback.priority}">${getPriorityLabel(feedback.priority)}</span>
+</td>
+<td>${createdDate}</td>
+<td>
+<div class="action-buttons">
+<button class="action-btn view" onclick="viewFeedback('${feedback.id}')" aria-label="피드백 상세 보기">상세</button>
+</div>
+</td>
+`;
+      }
+      return tr;
+    }
+
+    // 피드백 종류 레이블 변환
+    function getTypeLabel(type) {
+      const labels = {'bug': '오류 신고', 'improvement': '개선 제안', 'feature': '기능 요청', 'content': '콘텐츠 요청', 'encouragement': '격려 메시지', 'other': '기타'};
+      return labels[type] || type;
+    }
+    
+    function getStatusLabel(status) {
+      const labels = {'pending': '대기 중', 'in_progress': '진행 중', 'resolved': '해결됨', 'rejected': '거절됨'};
+      return labels[status] || status;
+    }
+    
+    function getPriorityLabel(priority) {
+      const labels = {'low': '낮음', 'medium': '보통', 'high': '높음', 'urgent': '긴급'};
+      return labels[priority] || priority;
+    }
+
+    // 통계 업데이트
+    function updateFeedbackStats() {
+      document.getElementById('totalFeedbacks').textContent = allFeedbacks.length;
+      document.getElementById('myFeedbacks').textContent = allFeedbacks.filter(f =>
+f.userId === currentUser.uid).length;
+      document.getElementById('resolvedFeedbacks').textContent = allFeedbacks.filter(f =>
+f.status === 'resolved').length;
+      document.getElementById('pendingFeedbacks').textContent = allFeedbacks.filter(f =>
+f.status === 'pending').length;
+    }
+
+    // 필터링 및 검색
+    window.filterFeedbacks = function() {
+      const typeFilter = document.getElementById('typeFilter').value;
+      const statusFilter = document.getElementById('statusFilter').value;
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      
+      const filtered = allFeedbacks.filter(feedback =>
+(!typeFilter || feedback.type === typeFilter) &&
+        (!statusFilter || feedback.status === statusFilter) &&
+        (!searchTerm || 
+          feedback.title.toLowerCase().includes(searchTerm) ||
+          feedback.content.toLowerCase().includes(searchTerm) ||
+          feedback.userName.toLowerCase().includes(searchTerm))
+      );
+      displayAllFeedbacks(filtered);
+    }
+
+    window.resetFilters = function() {
+      document.getElementById('typeFilter').value = '';
+      document.getElementById('statusFilter').value = '';
+      document.getElementById('searchInput').value = '';
+      displayAllFeedbacks(allFeedbacks);
+    }
+
+    // 검색 입력 시 필터링
+    function setupSearch() {
+      const searchInput = document.getElementById('searchInput');
+      let searchTimeout;
+      
+      searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() =>
+{
+          filterFeedbacks();
+        }, 300); // 300ms 타이밍
+      });
+    }
+
+    // DOM 로드 시 검색 설정
+    document.addEventListener('DOMContentLoaded', setupSearch);
+
+    // 피드백 상세 보기
+    window.viewFeedback = function(feedbackId) {
+      const feedback = allFeedbacks.find(f =>
+f.id === feedbackId);
+      if (feedback) {
+        const modal = document.getElementById('feedbackModal');
+        
+        // XSS 방지를 위한 문자열 이스케이프
+        const escapeHtml = (text) =>
+{
+          const div = document.createElement('div');
+          div.textContent = text;
+          return div.innerHTML;
+        };
+        
+        document.getElementById('modalTitle').textContent = feedback.title;
+        document.getElementById('modalContent').innerHTML = `
+<div class="feedback-detail">
+<div class="detail-row">
+<strong>종류:</strong>
+<span class="type-badge type-${feedback.type}">${getTypeLabel(feedback.type)}</span>
+</div>
+<div class="detail-row">
+<strong>우선순위:</strong>
+<span class="priority-badge priority-${feedback.priority}">${getPriorityLabel(feedback.priority)}</span>
+</div>
+<div class="detail-row">
+<strong>상태:</strong>
+<span class="status-badge status-${feedback.status}">${getStatusLabel(feedback.status)}</span>
+</div>
+<div class="detail-row">
+<strong>작성자:</strong>
+${escapeHtml(feedback.userName)}
+</div>
+<div class="detail-row">
+<strong>작성일:</strong>
+${feedback.createdAt ? feedback.createdAt.toDate().toLocaleDateString("ko-KR") : "-"}
+</div>
+<div class="detail-content">
+<strong>내용:</strong>
+<div class="content-text">${escapeHtml(feedback.content)}</div>
+</div>
+${feedback.contact ? `<div class="detail-row">
+<strong>연락처:</strong>
+${escapeHtml(feedback.contact)}</div>` : ''}
+</div>
+<div id="adminControls" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+<h4>관리자 컨트롤</h4>
+<div class="form-group">
+<label for="statusUpdate">상태 변경:</label>
+<select id="statusUpdate" class="input">
+<option value="pending">대기 중</option>
+<option value="in_progress">진행 중</option>
+<option value="resolved">해결됨</option>
+<option value="rejected">거절됨</option>
+</select>
+</div>
+<button class="action-btn edit" onclick="updateFeedbackStatus('${feedback.id}')">상태 변경</button>
+</div>
+`;
+        
+        // 관리자 컨트롤 표시
+        const adminUid = "YOUR_ADMIN_UID"; // 관리자 UID를 실제 관리자 UID로 변경
+        if (currentUser && currentUser.uid === adminUid) {
+            document.getElementById('adminControls').style.display = 'block';
+            document.getElementById('statusUpdate').value = feedback.status;
+        }
+        
+        modal.style.display = 'block';
+      }
+    }
+
+    // 피드백 상태 변경 (관리자 전용)
+    window.updateFeedbackStatus = async function(feedbackId) {
+        const newStatus = document.getElementById('statusUpdate').value;
+        const feedbackRef = doc(db, "feedbacks", feedbackId);
+
+        try {
+            await updateDoc(feedbackRef, {
+                status: newStatus,
+                updatedAt: serverTimestamp()
+            });
+            showMessage('피드백 상태가 변경되었습니다.', 'success');
+            closeModal('feedbackModal'); // 모달 닫기
+        } catch (error) {
+            console.error("피드백 상태 변경 중 오류:", error);
+            showMessage("피드백 상태 변경에 실패했습니다.", "error");
+        }
+    }
+
+    window.openEditModal = async function(feedbackId) {
+        const feedback = allFeedbacks.find(f =>
+f.id === feedbackId);
+        if (feedback && feedback.userId === currentUser.uid) {
+            document.getElementById('editFeedbackId').value = feedback.id;
+            document.getElementById('editFeedbackType').value = feedback.type;
+            document.getElementById('editFeedbackPriority').value = feedback.priority;
+            document.getElementById('editFeedbackTitle').value = feedback.title;
+            document.getElementById('editFeedbackContent').value = feedback.content;
+            document.getElementById('editFeedbackModal').style.display = 'block';
+        }
+    }
+    
+    window.submitEditFeedback = async function() {
+        const id = document.getElementById('editFeedbackId').value;
+        const feedbackRef = doc(db, "feedbacks", id);
+        
+        try {
+            await updateDoc(feedbackRef, {
+                type: document.getElementById('editFeedbackType').value,
+                priority: document.getElementById('editFeedbackPriority').value,
+                title: document.getElementById('editFeedbackTitle').value,
+                content: document.getElementById('editFeedbackContent').value,
+                updatedAt: serverTimestamp()
+            });
+            showMessage('피드백이 수정되었습니다.', 'success');
+            closeModal('editFeedbackModal');
+        } catch (error) {
+            console.error("피드백 수정 중 오류:", error);
+            showMessage("피드백 수정에 실패했습니다.", "error");
+        }
+    }
+
+    window.deleteFeedback = async function(feedbackId) {
+        const feedback = allFeedbacks.find(f =>
+f.id === feedbackId);
+        if (feedback && feedback.userId === currentUser.uid) {
+            if (confirm('피드백을 삭제하시겠습니까? 삭제된 피드백은 복구할 수 없습니다.')) {
+                try {
+                    await deleteDoc(doc(db, "feedbacks", feedbackId));
+                    showMessage('피드백이 삭제되었습니다.', 'success');
+                } catch (error) {
+                    console.error("피드백 삭제 중 오류:", error);
+                    showMessage("피드백 삭제에 실패했습니다.", "error");
+                }
+            }
+        }
+    }
+
+    window.closeModal = function(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    // 모달 외부 클릭 시 닫기
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+      }
+    }
+
+    // ESC 키로 모달 닫기
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal =>
+{
+          if (modal.style.display === 'block') {
+            modal.style.display = 'none';
+          }
+        });
+      }
+    });
+</script>
+</body>
+</html>
+

@@ -1,0 +1,440 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>모바일 학습</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>📱</text>
+</svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="mobile-header">
+<div class="header-content">
+<div class="header-title">수학 학습</div>
+<div class="header-actions">
+<button class="header-btn" onclick="showProgress()">진행률</button>
+<button class="header-btn" onclick="showMenu()">메뉴</button>
+</div>
+</div>
+</div>
+<div class="main-content">
+<div class="progress-bar">
+<div class="progress-fill" id="progressFill" style="width: 0%">
+</div>
+</div>
+<div class="swipe-hint">
+좌우로 스와이프하여 문제 이동
+</div>
+<div class="navigation-buttons">
+<button class="nav-btn" onclick="previousQuestion()" id="prevBtn">이전</button>
+<button class="nav-btn" onclick="nextQuestion()" id="nextBtn">다음</button>
+</div>
+<div class="question-container" id="questionContainer">
+<div class="question-info">
+<div class="question-number" id="questionNumber">문제 번호</div>
+<div class="question-difficulty" id="questionDifficulty">난이도</div>
+</div>
+<img class="question-image" id="questionImage" src="" alt="문제 이미지">
+</div>
+<div class="answer-section">
+<input type="text" class="answer-input" id="answerInput" placeholder="답을 입력해주세요" maxlength="10">
+<button class="submit-btn touch-feedback" onclick="submitAnswer()">제출</button>
+</div>
+<div class="result-section" id="resultSection">
+<div class="result-message" id="resultMessage">
+</div>
+<div class="solution-link" id="solutionLink">
+</div>
+</div>
+</div>
+<div class="floating-menu">
+<button class="floating-btn touch-feedback" onclick="showMenu()">☰</button>
+</div>
+<div class="menu-overlay" id="menuOverlay" onclick="hideMenu()">
+</div>
+<div class="menu-panel" id="menuPanel">
+<div class="menu-header">학습 메뉴</div>
+<div class="menu-items">
+<div class="menu-item touch-feedback" onclick="navigateTo('dashboard')">
+<div class="menu-item-icon">📊</div>
+<div class="menu-item-text">오답노트</div>
+</div>
+<div class="menu-item touch-feedback" onclick="navigateTo('recommendations')">
+<div class="menu-item-icon">🎯</div>
+<div class="menu-item-text">추천</div>
+</div>
+<div class="menu-item touch-feedback" onclick="navigateTo('gamification')">
+<div class="menu-item-icon">🏆</div>
+<div class="menu-item-text">게임화</div>
+</div>
+<div class="menu-item touch-feedback" onclick="navigateTo('groups')">
+<div class="menu-item-icon">👥</div>
+<div class="menu-item-text">그룹</div>
+</div>
+<div class="menu-item touch-feedback" onclick="navigateTo('favorites')">
+<div class="menu-item-icon">⭐</div>
+<div class="menu-item-text">즐겨찾기</div>
+</div>
+<div class="menu-item touch-feedback" onclick="navigateTo('search')">
+<div class="menu-item-icon">🔍</div>
+<div class="menu-item-text">검색</div>
+</div>
+</div>
+</div>
+</div>
+<div class="loading-overlay" id="loadingOverlay">
+<div class="loading-spinner">
+</div>
+</div>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirebaseApp, getFirebaseAuth, getFirebaseDb } from './script.js';
+
+let app, auth, db;
+async function initializeFirebaseServices() {
+  app = await getFirebaseApp();
+  auth = await getFirebaseAuth();
+  db = await getFirebaseDb();
+}
+
+let currentQuestion = null;
+let currentIndex = 0;
+let questions = [];
+let startTime = null;
+let sessionStartTime = null;
+let totalStudyTime = 0;
+let answeredResults = [];
+
+// 로그인 상태 확인 (초기화 후)
+(async () => {
+  await initializeFirebaseServices();
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      location.href = "index.html";
+      return;
+    }
+    await loadQuestions();
+    initializeSession();
+  });
+})();
+
+// 문제 데이터 로드
+async function loadQuestions() {
+  try {
+    showLoading();
+    const response = await fetch('questions.json');
+    const data = await response.json();
+
+    // 다양한 구조를 안전하게 평탄화
+    function collectQuestions(node, context = {}) {
+      const results = [];
+      if (!node || typeof node !== 'object') return results;
+      const ctx = {
+        subject: node['과목'] ?? context.subject,
+        big: node['대분류'] ?? context.big,
+        mid: node['중분류'] ?? context.mid,
+        small: node['소분류'] ?? context.small
+      };
+      if (Array.isArray(node['문항들'])) {
+        for (const q of node['문항들']) {
+          results.push({
+            number: q['문항번호'],
+            image: q['문항주소'],
+            correctAnswer: q['정답'],
+            difficulty: q['난이도'],
+            solutionUrl: q['해설주소'],
+            subject: ctx.subject,
+            bigCategory: ctx.big,
+            middleCategory: ctx.mid,
+            smallCategory: ctx.small
+          });
+        }
+      }
+      // 하위 키 탐색
+      for (const value of Object.values(node)) {
+        if (value && typeof value === 'object') {
+          if (Array.isArray(value)) {
+            value.forEach(v => results.push(...collectQuestions(v, ctx)));
+          } else {
+            results.push(...collectQuestions(value, ctx));
+          }
+        }
+      }
+      return results;
+    }
+
+    questions = Array.isArray(data)
+      ? data.flatMap(item => collectQuestions(item))
+      : collectQuestions(data);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const questionParam = urlParams.get('question');
+    const categoryParam = urlParams.get('category');
+
+    if (questionParam) {
+      const idx = questions.findIndex(q => q.number === questionParam);
+      if (idx !== -1) currentIndex = idx;
+    } else if (categoryParam) {
+      const idx = questions.findIndex(q =>
+        q.bigCategory === categoryParam || q.middleCategory === categoryParam || q.smallCategory === categoryParam
+      );
+      if (idx !== -1) currentIndex = idx;
+    }
+
+    displayQuestion();
+  } catch (error) {
+    console.error("문제 로드 실패:", error);
+    alert("문제를 불러오는 중 오류가 발생했습니다.");
+  } finally {
+    hideLoading();
+  }
+}
+
+function initializeSession() {
+  sessionStartTime = new Date();
+  startTime = new Date();
+  totalStudyTime = 0;
+  answeredResults = [];
+  localStorage.setItem('mobileSessionStart', sessionStartTime.toISOString());
+}
+
+function displayQuestion() {
+  if (questions.length === 0) {
+    document.getElementById('questionContainer').innerHTML = '<p>문제를 불러오지 못했습니다.</p>';
+    return;
+  }
+
+  currentQuestion = questions[currentIndex];
+  startTime = new Date();
+
+  const questionContainer = document.getElementById('questionContainer');
+  questionContainer.innerHTML = `
+    <div class="question-header">
+      <div class="question-number">${currentQuestion.number}</div>
+      <div class="question-difficulty">${currentQuestion.difficulty}</div>
+    </div>
+    <div class="question-image">
+      <img src="${currentQuestion.image}" alt="문제 이미지" onload="hideLoading()">
+    </div>
+    <div class="question-info">
+      <div class="question-category">${currentQuestion.bigCategory} - ${currentQuestion.smallCategory}</div>
+      <div class="question-progress">${currentIndex + 1} / ${questions.length}</div>
+    </div>
+  `;
+
+  const answerInput = document.getElementById('answerInput');
+  if (answerInput) answerInput.value = '';
+  document.getElementById('resultSection').style.display = 'none';
+  updateProgress();
+}
+
+function updateProgress() {
+  const progress = questions.length ? ((currentIndex + 1) / questions.length) * 100 : 0;
+  const progressBar = document.getElementById('progressFill');
+  if (progressBar) progressBar.style.width = progress + '%';
+}
+
+window.submitAnswer = async function() {
+  const answer = document.getElementById('answerInput').value.trim();
+  if (!answer) {
+    alert('답을 입력해주세요.');
+    return;
+  }
+
+  const solvingTime = Math.round((new Date() - startTime) / 1000);
+  const isCorrect = answer === String(currentQuestion.correctAnswer);
+
+  const resultSection = document.getElementById('resultSection');
+  const resultMessage = document.getElementById('resultMessage');
+  const solutionLink = document.getElementById('solutionLink');
+
+  resultSection.className = `result-section ${isCorrect ? 'result-correct' : 'result-incorrect'}`;
+  resultMessage.textContent = isCorrect ? '정답입니다!' : `오답입니다. 정답은 ${currentQuestion.correctAnswer} 입니다.`;
+  
+  if (currentQuestion.solutionUrl) {
+    solutionLink.innerHTML = `<a href="${currentQuestion.solutionUrl}" target="_blank">해설 영상 보기</a>`;
+  } else {
+    solutionLink.innerHTML = '';
+  }
+
+  resultSection.style.display = 'block';
+
+  answeredResults[currentIndex] = isCorrect;
+  await saveAnswer(answer, isCorrect, solvingTime);
+
+  if (window.recordProblemCompletion) {
+    await window.recordProblemCompletion(isCorrect, solvingTime, {
+      number: currentQuestion.number,
+      userAnswer: answer,
+      middleCategory: currentQuestion.middleCategory,
+      smallCategory: currentQuestion.smallCategory,
+      difficulty: currentQuestion.difficulty
+    });
+  }
+}
+
+async function saveAnswer(answer, isCorrect, solvingTime) {
+  try {
+    await addDoc(collection(db, 'answers'), {
+      questionId: currentQuestion.number,
+      userAnswer: answer,
+      isCorrect: isCorrect,
+      submittedAt: serverTimestamp(),
+      userId: auth.currentUser.uid,
+      bigCategory: currentQuestion.bigCategory,
+      middleCategory: currentQuestion.middleCategory,
+      smallCategory: currentQuestion.smallCategory,
+      solvingTime: solvingTime,
+      attempts: 1,
+      difficulty: currentQuestion.difficulty,
+      device: 'mobile',
+      sessionId: sessionStartTime.toISOString()
+    });
+
+    totalStudyTime += solvingTime;
+    updateSessionInfo();
+  } catch (error) {
+    console.error('정답 저장 실패:', error);
+  }
+}
+
+function updateSessionInfo() {
+  const sessionTime = Math.round((new Date() - sessionStartTime) / 1000);
+  const sessionInfo = document.getElementById('sessionInfo');
+  if (sessionInfo) {
+    sessionInfo.innerHTML = `
+      <div class=\"session-time\">학습 시간: ${Math.floor(sessionTime / 60)}분 ${sessionTime % 60}초</div>
+      <div class=\"session-progress\">진행률: ${currentIndex + 1} / ${questions.length}</div>
+    `;
+  }
+}
+
+window.previousQuestion = function() {
+  if (currentIndex > 0) {
+    currentIndex--;
+    displayQuestion();
+  }
+}
+
+window.nextQuestion = function() {
+  if (currentIndex < questions.length - 1) {
+    currentIndex++;
+    displayQuestion();
+  } else {
+    endSession();
+  }
+}
+
+async function endSession() {
+  const sessionTime = Math.round((new Date() - sessionStartTime) / 1000);
+  const totalQuestions = currentIndex + 1;
+  const correctAnswers = answeredResults.slice(0, totalQuestions).filter(Boolean).length;
+  try {
+    await addDoc(collection(db, 'studySessions'), {
+      userId: auth.currentUser.uid,
+      sessionStart: sessionStartTime,
+      sessionEnd: new Date(),
+      totalTime: sessionTime,
+      totalQuestions: totalQuestions,
+      correctAnswers: correctAnswers,
+      accuracy: totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0,
+      device: 'mobile',
+      questions: questions.slice(0, totalQuestions).map(q => q.number)
+    });
+
+    showSessionResults(sessionTime, correctAnswers, totalQuestions);
+  } catch (error) {
+    console.error('세션 저장 실패:', error);
+  }
+}
+
+function showSessionResults(sessionTime, correctAnswers, totalQuestions) {
+  const accuracy = totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+  const resultModal = document.createElement('div');
+  resultModal.className = 'result-modal';
+  resultModal.innerHTML = `
+    <div class="result-modal-content">
+      <h2>학습 종료!</h2>
+      <div class="result-stats">
+        <div class="result-stat">
+          <div class="stat-number">${totalQuestions}</div>
+          <div class="stat-label">총 문제 수</div>
+        </div>
+        <div class="result-stat">
+          <div class="stat-number">${correctAnswers}</div>
+          <div class="stat-label">정답 수</div>
+        </div>
+        <div class="result-stat">
+          <div class="stat-number">${accuracy}%</div>
+          <div class="stat-label">정답률</div>
+        </div>
+        <div class="result-stat">
+          <div class="stat-number">${Math.floor(sessionTime / 60)}:${String(sessionTime % 60).padStart(2, '0')}</div>
+          <div class="stat-label">학습 시간</div>
+        </div>
+      </div>
+      <div class="result-actions">
+        <button class="btn btn-primary" onclick="continueLearning()">계속 학습</button>
+        <button class="btn btn-secondary" onclick="goToDashboard()">대시보드로</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(resultModal);
+}
+
+window.continueLearning = function() {
+  const modal = document.querySelector('.result-modal');
+  if (modal) modal.remove();
+  currentIndex = 0;
+  initializeSession();
+  displayQuestion();
+}
+
+window.goToDashboard = function() {
+  window.location.href = 'dashboard.html';
+}
+
+window.showMenu = function() {
+  document.getElementById('menuOverlay').style.display = 'block';
+  document.getElementById('menuPanel').classList.add('show');
+}
+
+window.hideMenu = function() {
+  document.getElementById('menuOverlay').style.display = 'none';
+  document.getElementById('menuPanel').classList.remove('show');
+}
+
+window.showProgress = function() {
+  alert(`현재 진행률 ${currentIndex + 1} / ${questions.length} (${Math.round(((currentIndex + 1) / questions.length) * 100)}%)`);
+}
+
+window.navigateTo = function(page) {
+  hideMenu();
+  window.location.href = `${page}.html`;
+}
+
+function showLoading() {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+const answerEl = document.getElementById('answerInput');
+if (answerEl) {
+  answerEl.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      submitAnswer();
+    }
+  });
+}
+</script>
+</body>
+</html>
+

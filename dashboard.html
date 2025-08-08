@@ -1,0 +1,647 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학습 대시보드 - 여학생 친화적 수학 학습 시스템</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+    <text y='.9em' font-size='90'>📊</text>
+    </svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>학습 대시보드</h1>
+            <p>전체 학습 현황을 한눈에 확인해보세요</p>
+            <button class="refresh-button" id="refreshBtn" title="새로고침" aria-label="대시보드 데이터 새로고침">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 4v6h-6M1 20v-6h6"/>
+                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- 로딩 상태 -->
+        <div id="loadingState" class="dashboard-loading">
+            <div class="loading-spinner"></div>
+            <p>학습 데이터를 불러오는 중...</p>
+            <div class="loading-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="loadingProgress"></div>
+                </div>
+                <span class="progress-text">0%</span>
+            </div>
+        </div>
+        
+        <!-- 에러 상태 -->
+        <div id="errorState" class="error-state" style="display: none;">
+            <h3>데이터 로딩 실패</h3>
+            <p>학습 데이터를 불러오는 중 문제가 발생했습니다.</p>
+            <button class="retry-btn" onclick="retryLoad()">다시 시도</button>
+        </div>
+        
+        <!-- 메인 콘텐츠 -->
+        <div id="mainContent" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalProblems">0</div>
+                    <div class="stat-label">전체 문제 수</div>
+                    <div class="stat-change positive">
+                        <span>지속적 증가!</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="accuracyRate">0%</div>
+                    <div class="stat-label">정답률</div>
+                    <div class="stat-change positive">
+                        <span>점진적 향상!</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="studyTime">0시간</div>
+                    <div class="stat-label">총 학습 시간</div>
+                    <div class="stat-change positive">
+                        <span>꾸준한 학습!</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="streak">0일</div>
+                    <div class="stat-label">연속 학습</div>
+                    <div class="stat-change positive">
+                        <span>매일 기록 중!</span>
+                    </div>
+                </div>
+                <div class="stat-card coin-stat">
+                    <div class="stat-value" id="userCoins">0</div>
+                    <div class="stat-label">보유 코인</div>
+                    <div class="stat-change positive">
+                        <span>열심히 모으는 중!</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 차트 섹션 -->
+            <div class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <div class="chart-icon">📊</div>
+                        일별 학습 진행률
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-action-btn" onclick="exportChart('dailyChart')" aria-label="일별 학습 진행률 차트 내보내기">내보내기</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <div class="chart-icon">📈</div>
+                        과목별 정답률
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-action-btn" onclick="exportChart('middleCategoryChart')">내보내기</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="middleCategoryChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <div class="chart-icon">🎯</div>
+                        전체 정답률
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-action-btn" onclick="exportChart('overallChart')">내보내기</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="overallChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <div class="chart-icon">⏰</div>
+                        학습 시간 분석
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-action-btn" onclick="exportChart('timeChart')">내보내기</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="timeChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- 코인 사용 차트 섹션 -->
+            <div class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <div class="chart-icon">💰</div>
+                        코인 획득/사용 추이
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-action-btn" onclick="exportChart('coinChart')">내보내기</button>
+                        <button class="chart-action-btn" onclick="window.open('shop.html', '_blank')">상점 가기</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="coinChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- 코인 빠른 액션 섹션 -->
+            <div class="quick-actions-section">
+                <div class="section-title">
+                    <div class="section-icon">⚡</div>
+                    코인 빠른 액션
+                </div>
+                <div class="quick-actions-grid">
+                    <button class="quick-action-btn" onclick="window.open('lottery.html', '_blank')">
+                        <div class="action-icon">🎰</div>
+                        <div class="action-title">로또 구매</div>
+                        <div class="action-desc">1코인으로 로또</div>
+                    </button>
+                    <button class="quick-action-btn" onclick="window.open('trading.html', '_blank')">
+                        <div class="action-icon">📈</div>
+                        <div class="action-title">거래소</div>
+                        <div class="action-desc">코인 거래</div>
+                    </button>
+                    <button class="quick-action-btn" onclick="window.open('shop.html', '_blank')">
+                        <div class="action-icon">🛍️</div>
+                        <div class="action-title">상점</div>
+                        <div class="action-desc">아이템 구매</div>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <div class="chart-icon">📊</div>
+                        학습 추세 분석
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-action-btn" onclick="exportChart('trendChart')">내보내기</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <div class="chart-icon">📅</div>
+                        주간 학습 패턴
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-action-btn" onclick="exportChart('weeklyChart')">내보내기</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- 고급 시각화 섹션 -->
+            <div class="advanced-viz-section">
+                <div class="viz-header">
+                    <div class="viz-title">고급 데이터 시각화</div>
+                    <div class="viz-controls">
+                        <button class="viz-control-btn" onclick="toggleAdvancedViz()">시각화 전환</button>
+                        <button class="viz-control-btn" onclick="exportAdvancedViz()">전체 내보내기</button>
+                    </div>
+                </div>
+                
+                <!-- 인터랙티브 차트 -->
+                <div class="chart-section">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <div class="chart-icon">📊</div>
+                            인터랙티브 학습 분석 (정답/오답, 시간대)
+                        </div>
+                        <div class="chart-actions">
+                            <button class="chart-action-btn" onclick="resetZoom('interactiveChart')">확대/축소 초기화</button>
+                        </div>
+                    </div>
+                    <div class="chart-filters">
+                        <button class="filter-btn active" data-filter="all">전체</button>
+                        <button class="filter-btn" data-filter="correct">정답률</button>
+                        <button class="filter-btn" data-filter="incorrect">오답률</button>
+                        <button class="filter-btn" data-filter="time">시간대</button>
+                    </div>
+                    <div class="interactive-chart-container">
+                        <canvas id="interactiveChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- 히트맵 -->
+                <div class="chart-section">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <div class="chart-icon">🔥</div>
+                            학습 시간대 히트맵
+                        </div>
+                        <div class="chart-actions">
+                            <button class="chart-action-btn" onclick="exportHeatmap()">히트맵 내보내기</button>
+                        </div>
+                    </div>
+                    <div class="heatmap-container" id="heatmapContainer">
+                        <!-- 히트맵이 동적으로 생성됩니다-->
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #e3f2fd;"></div>
+                            <span>적음 (0-2시간)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #90caf9;"></div>
+                            <span>보통 (2-4시간)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #42a5f5;"></div>
+                            <span>많음 (4-6시간)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #1976d2;"></div>
+                            <span>매우 많음 (6시간+)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 3D 차트 -->
+                <div class="chart-section">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <div class="chart-icon">🎲</div>
+                            3D 학습 분석
+                        </div>
+                        <div class="chart-actions">
+                            <button class="chart-action-btn" onclick="rotate3DChart()">회전</button>
+                            <button class="chart-action-btn" onclick="export3DChart()">3D 내보내기</button>
+                        </div>
+                    </div>
+                    <div class="three-d-container" id="threeDContainer">
+                        <!-- Three.js 3D 차트가 여기에 렌더링됩니다-->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { getFirebaseApp, getFirebaseAuth, getFirebaseDb, getUserCoins, onCoinsChange } from './script.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        // 전역 변수
+        let charts = {};
+        let currentUser = null;
+        let db = null;
+        let auth = null;
+        let unsubscribers = [];
+        
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+        });
+        
+        // 대시보드 초기화
+        async function initializeDashboard() {
+            try {
+                showLoading();
+                
+                // 사용자 인증 확인
+                await checkAuth();
+                
+                // 사용자 데이터 로드
+                await loadUserData();
+                
+                // 차트 초기화
+                initializeCharts();
+                
+                // 이벤트 리스너 설정
+                setupEventListeners();
+                
+                hideLoading();
+                showMainContent();
+                
+            } catch (error) {
+                console.error('대시보드 초기화 실패:', error);
+                showError();
+            }
+        }
+        
+        // 로딩 상태 표시
+        function showLoading() {
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('errorState').style.display = 'none';
+        }
+        
+        // 로딩 상태 숨김
+        function hideLoading() {
+            document.getElementById('loadingState').style.display = 'none';
+        }
+        
+        // 메인 콘텐츠 표시
+        function showMainContent() {
+            document.getElementById('mainContent').style.display = 'block';
+        }
+        
+        // 에러 상태 표시
+        function showError() {
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('loadingState').style.display = 'none';
+        }
+        
+        // 인증 확인
+        async function checkAuth() {
+            const app = await getFirebaseApp();
+            auth = await getFirebaseAuth();
+            db = await getFirebaseDb();
+            await new Promise((resolve, reject) => {
+                const off = onAuthStateChanged(auth, (user) => {
+                    if (!user) {
+                        window.location.href = 'index.html';
+                        reject(new Error('not-authenticated'));
+                        return;
+                    }
+                    currentUser = user;
+                    resolve();
+                }, reject);
+                unsubscribers.push(off);
+            });
+            console.log('인증 확인 OK:', currentUser.uid);
+        }
+        
+        // 사용자 데이터 로드
+        async function loadUserData() {
+            // answers
+            const ansQ = query(
+                collection(db, 'answers'),
+                where('userId','==',currentUser.uid),
+                orderBy('submittedAt','desc'),
+                limit(3000)
+            );
+            const ansSnap = await getDocs(ansQ);
+            const answers = ansSnap.docs.map(d => d.data());
+
+            // studySessions
+            const ssQ = query(
+                collection(db, 'studySessions'),
+                where('userId','==',currentUser.uid),
+                orderBy('sessionEnd','desc'),
+                limit(300)
+            );
+            const ssSnap = await getDocs(ssQ);
+            const sessions = ssSnap.docs.map(d => d.data());
+
+            // coin_transactions (optional)
+            let coinTx = [];
+            try {
+                const txQ = query(
+                    collection(db, 'coin_transactions'),
+                    where('userId','==', currentUser.uid),
+                    orderBy('timestamp','desc'),
+                    limit(500)
+                );
+                const txSnap = await getDocs(txQ);
+                coinTx = txSnap.docs.map(d=>d.data());
+            } catch(e){ /* 컬렉션 없으면 무시 */ }
+
+            // 상단 카드 계산
+            const totalProblems = answers.length;
+            const correct = answers.filter(a=>a.isCorrect).length;
+            const accuracyRate = totalProblems ? Math.round((correct/totalProblems)*100) : 0;
+
+            const totalStudySec = sessions.reduce((s,ss)=> s + (ss.totalTime||0), 0);
+            const studyHours = Math.round(totalStudySec/3600);
+
+            // streak
+            const dayKey = d => { const x = new Date(d); x.setHours(0,0,0,0); return x.toISOString().slice(0,10); };
+            const byDay = new Set(answers.map(a => a.submittedAt?.toDate ? dayKey(a.submittedAt.toDate()) : dayKey(a.submittedAt || new Date())));
+            let streak = 0;
+            for (let i=0;i<100;i++){
+                const d = new Date(); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
+                if (byDay.has(d.toISOString().slice(0,10))) streak++; else break;
+            }
+
+            // 코인 잔액/실시간
+            const coins = await getUserCoins(currentUser.uid);
+            document.getElementById('userCoins').textContent = coins;
+            onCoinsChange(currentUser.uid, bal => {
+                document.getElementById('userCoins').textContent = bal;
+            });
+
+            // 상단 카드 반영
+            document.getElementById('totalProblems').textContent = totalProblems;
+            document.getElementById('accuracyRate').textContent = `${accuracyRate}%`;
+            document.getElementById('studyTime').textContent = `${studyHours}시간`;
+            document.getElementById('streak').textContent = `${streak}일`;
+
+            // 차트용 데이터 준비
+            const lastNDays = (n=30)=>{ const out=[]; const base=new Date(); for(let i=n-1;i>=0;i--){ const d=new Date(base); d.setDate(d.getDate()-i); d.setHours(0,0,0,0); out.push(d);} return out; };
+            const days = lastNDays(30);
+            const dailyMap = Object.fromEntries(days.map(d => [dayKey(d), {total:0, correct:0}]));
+            answers.forEach(a=>{
+                const t = a.submittedAt?.toDate ? a.submittedAt.toDate() : (a.submittedAt || new Date());
+                const k = dayKey(t);
+                if (!dailyMap[k]) dailyMap[k] = {total:0, correct:0};
+                dailyMap[k].total++;
+                if (a.isCorrect) dailyMap[k].correct++;
+            });
+            const dailySeries = days.map(d=>{ const k = dayKey(d); const m = dailyMap[k] || {total:0, correct:0}; return {date:d, total:m.total, correct:m.correct, acc: m.total? Math.round(m.correct*100/m.total):0}; });
+
+            const midStats = {};
+            answers.forEach(a=>{ const mid = a.middleCategory || a.category || '기타'; midStats[mid] ??= {t:0, c:0}; midStats[mid].t++; if (a.isCorrect) midStats[mid].c++; });
+            const midData = Object.entries(midStats).map(([k,v])=>({label:k, acc: v.t? Math.round(v.c*100/v.t):0, total:v.t}));
+
+            const timeBuckets = new Array(24).fill(0);
+            answers.forEach(a=>{ const t = a.submittedAt?.toDate ? a.submittedAt.toDate() : (a.submittedAt || new Date()); timeBuckets[t.getHours()]++; });
+
+            const coinByDay = {};
+            coinTx.forEach(tx=>{ const t = tx.timestamp?.toDate ? tx.timestamp.toDate() : (tx.timestamp || new Date()); const k = dayKey(t); coinByDay[k] ??= 0; coinByDay[k] += (tx.amount || 0) * (tx.type==='spend' ? -1 : +1); });
+            const coinSeries = days.map(d=>{ const k = dayKey(d); return {date:d, delta: coinByDay[k]||0}; });
+
+            const heat = Array.from({length:7},()=>new Array(24).fill(0));
+            answers.forEach(a=>{ const t = a.submittedAt?.toDate ? a.submittedAt.toDate() : (a.submittedAt || new Date()); const dow = t.getDay(); const hr = t.getHours(); heat[dow][hr] += 1; });
+
+            userData = { dailySeries, midData, accuracyRate, timeBuckets, coinSeries, heat };
+        }
+        
+        // 차트 초기화
+        function initializeCharts() {
+            const { dailySeries, midData, accuracyRate, timeBuckets, coinSeries } = userData;
+            const common = { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{enabled:true}, zoom:{ zoom:{ wheel:{enabled:true}, pinch:{enabled:true}, mode:'x' }, pan:{ enabled:true, mode:'x' }}}};
+
+            const ctx1 = document.getElementById('dailyChart').getContext('2d');
+            charts.dailyChart = new Chart(ctx1, { type:'bar', data:{ labels: dailySeries.map(d=>d.date.toLocaleDateString('ko-KR').replace(/\s/g,'')), datasets:[ { type:'bar', label:'풀이 수', data: dailySeries.map(d=>d.total), yAxisID:'y' }, { type:'line', label:'정답률(%)', data: dailySeries.map(d=>d.acc), yAxisID:'y1' } ] }, options:{ ...common, scales:{ y:{ beginAtZero:true, title:{display:true, text:'문항 수'} }, y1:{ beginAtZero:true, suggestedMax:100, position:'right', title:{display:true, text:'정답률(%)'} } } } });
+
+            const ctx2 = document.getElementById('middleCategoryChart').getContext('2d');
+            const topMid = [...midData].sort((a,b)=>b.total-a.total).slice(0,12);
+            charts.middleCategoryChart = new Chart(ctx2, { type:'bar', data:{ labels: topMid.map(x=>x.label), datasets:[{ label:'정답률(%)', data: topMid.map(x=>x.acc) }] }, options:{ ...common, scales:{ y:{ beginAtZero:true, suggestedMax:100 } } } });
+
+            const ctx3 = document.getElementById('overallChart').getContext('2d');
+            charts.overallChart = new Chart(ctx3, { type:'doughnut', data:{ labels:['정답','오답'], datasets:[{ data:[accuracyRate, 100-accuracyRate] }] }, options:{ ...common } });
+
+            const ctx4 = document.getElementById('timeChart').getContext('2d');
+            charts.timeChart = new Chart(ctx4, { type:'line', data:{ labels: Array.from({length:24},(_,i)=>`${i}시`), datasets:[{ label:'제출 수', data: timeBuckets }] }, options:{ ...common, scales:{ y:{beginAtZero:true} } } });
+
+            const ctx5 = document.getElementById('coinChart').getContext('2d');
+            charts.coinChart = new Chart(ctx5, { type:'bar', data:{ labels: coinSeries.map(x=>x.date.toLocaleDateString('ko-KR')), datasets:[{ label:'순증가', data: coinSeries.map(x=>x.delta) }] }, options:{ ...common, scales:{ y:{ beginAtZero:true } } } });
+
+            const ctx6 = document.getElementById('interactiveChart').getContext('2d');
+            charts.interactiveChart = new Chart(ctx6, { type:'line', data:{ labels: dailySeries.map(d=>d.date.toLocaleDateString('ko-KR')), datasets:[ { label:'정답 수', data: dailySeries.map(d=>d.correct) }, { label:'오답 수', data: dailySeries.map(d=>d.total - d.correct) } ] }, options:{ ...common, scales:{ y:{ beginAtZero:true } } } });
+
+            renderHeatmap(userData.heat);
+            render3DBar([...midData]);
+        }
+        function renderHeatmap(matrix7x24){
+            const cont = document.getElementById('heatmapContainer');
+            cont.innerHTML = '';
+            cont.style.display = 'grid';
+            cont.style.gridTemplateColumns = 'repeat(24, minmax(14px, 1fr))';
+            cont.style.gap = '2px';
+            const max = Math.max(1, ...matrix7x24.flat());
+            for (let dow=0; dow<7; dow++){
+              for (let h=0; h<24; h++){
+                const v = matrix7x24[dow][h];
+                const cell = document.createElement('div');
+                const ratio = v/max;
+                const bg = `rgba(25,118,210, ${0.15 + ratio*0.85})`;
+                cell.style.cssText = `height:16px; border-radius:3px; background:${bg};`;
+                cell.title = `요일 ${dow}, ${h}시: ${v}회`;
+                cont.appendChild(cell);
+              }
+            }
+        }
+
+        function render3DBar(midData){
+            const el = document.getElementById('threeDContainer');
+            el.innerHTML = '';
+            const width = el.clientWidth || 600, height = 320;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(50, width/height, 0.1, 1000);
+            camera.position.set(0, 40, 90);
+
+            const renderer = new THREE.WebGLRenderer({ antialias:true });
+            renderer.setSize(width, height);
+            el.appendChild(renderer.domElement);
+
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(0,50,50);
+            scene.add(light);
+            scene.add(new THREE.AmbientLight(0x888888));
+
+            const labels = [...midData].sort((a,b)=>b.total-a.total).slice(0,10);
+            const gap = 6;
+            const barW = 3;
+            const geo = new THREE.BoxGeometry(barW, 1, barW);
+            labels.forEach((x, i)=>{
+              const h = Math.max(1, x.acc/3);
+              const mat = new THREE.MeshPhongMaterial({ color: 0x1976d2 });
+              const bar = new THREE.Mesh(geo, mat);
+              bar.scale.y = h;
+              bar.position.set((i - labels.length/2)*gap, h/2, 0);
+              scene.add(bar);
+            });
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+            animate();
+
+            window.__rotate3D = function(){ camera.position.x += 10; };
+            window.__export3D = async function(){ const dataUrl = renderer.domElement.toDataURL('image/png'); downloadDataUrl(dataUrl, '3d-chart.png'); };
+        }
+        
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            // 새로고침 버튼
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                initializeDashboard();
+            });
+            
+            // 필터 버튼들
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const filter = this.dataset.filter;
+                    applyFilter(filter);
+                });
+            });
+        }
+        
+        // 필터 적용
+        function applyFilter(filter){
+            const c = charts.interactiveChart; if (!c) return;
+            c.data.datasets.forEach(ds => ds.hidden = false);
+            if (filter==='correct') c.data.datasets[1].hidden = true;
+            if (filter==='incorrect') c.data.datasets[0].hidden = true;
+            if (filter==='time') { /* 여긴 별도 구현 여지 */ }
+            c.update();
+        }
+        
+        // 차트 내보내기
+        async function exportChart(chartId) {
+            const node = document.getElementById(chartId).closest('.chart-container');
+            const canvas = await html2canvas(node);
+            const dataUrl = canvas.toDataURL('image/png');
+            downloadDataUrl(dataUrl, `${chartId}.png`);
+        }
+        
+        // 히트맵 내보내기
+        async function exportHeatmap() {
+            const node = document.getElementById('heatmapContainer').parentElement;
+            const canvas = await html2canvas(node);
+            downloadDataUrl(canvas.toDataURL('image/png'), 'heatmap.png');
+        }
+        
+        // 3D 차트 회전
+        function rotate3DChart() { if (window.__rotate3D) window.__rotate3D(); }
+        
+        // 3D 차트 내보내기
+        function export3DChart() { if (window.__export3D) window.__export3D(); }
+        
+        // 고급 시각화 전환
+        function toggleAdvancedViz() { document.querySelector('.advanced-viz-section').classList.toggle('hidden'); }
+        
+        // 고급 시각화 내보내기
+        function exportAdvancedViz() {
+            (async ()=>{
+              const node = document.querySelector('.advanced-viz-section');
+              const canvas = await html2canvas(node);
+              downloadDataUrl(canvas.toDataURL('image/png'), 'advanced-viz.png');
+            })();
+        }
+        
+        // 줌 초기화
+        function resetZoom(chartId) { const c = charts[chartId]; if (c && c.resetZoom) c.resetZoom(); }
+        
+        // 다시 시도
+        function retryLoad() { cleanup(); initializeDashboard(); }
+
+        function downloadDataUrl(dataUrl, filename){ const a = document.createElement('a'); a.href = dataUrl; a.download = filename; a.click(); }
+        function cleanup(){ Object.values(charts).forEach(ch=>{ try{ ch.destroy(); }catch{} }); charts = {}; unsubscribers.forEach(off=>{ try{ off(); }catch{} }); unsubscribers = []; }
+    </script>
+</body>
+</html>
+

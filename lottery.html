@@ -1,0 +1,430 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로또 코인 복권 - 송현여고 수학 학습 시스템</title>
+<link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>🎰</text>
+</svg>">
+<link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>🎰</text>
+</svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="lottery-container">
+<div class="lottery-header">
+<h1>🎰 로또 코인 복권 🎰</h1>
+<p>학생들이 즐기는 재미있는 코인 복권 게임</p>
+</div>
+<!-- 코인 잔액 표시 -->
+<div class="coin-display" id="coinDisplay">
+현재 사용자 코인:
+<span id="coinBalance">0</span>개
+</div>
+<!-- 복권 추첨 섹션 -->
+<div class="card">
+<h2>🎰 복권 추첨</h2>
+<div id="lotterySection">
+<p>1코인으로 1회 추첨할 수 있습니다.</p>
+<button class="lottery-button" id="lotteryButton" onclick="startLottery()" type="button">
+🎰 복권 추첨하기
+</button>
+</div>
+<!-- 로딩 상태 -->
+<div id="loadingState" style="display: none; text-align: center;">
+<div class="loading-spinner">
+</div>
+<p>🎲 번호를 추첨하고 있습니다...</p>
+</div>
+<!-- 결과 표시 섹션 -->
+<div id="resultSection" style="display: none;">
+<!-- 결과가 여기에 표시됩니다 -->
+</div>
+</div>
+<!-- 추첨 기록 섹션 -->
+<div class="card">
+<h2>📋 이전 추첨 기록</h2>
+<div id="historySection">
+<p>추첨 기록을 불러오는 중...</p>
+</div>
+</div>
+</div>
+<script type="module">
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { doc, getDoc, updateDoc, collection, addDoc, query, where, orderBy, getDocs, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirebaseApp, getFirebaseAuth, getFirebaseDb, getUserCoins, spendCoins, addCoins, onCoinsChange } from './script.js';
+
+        let app, auth, db;
+        async function initializeFirebaseServices() {
+            app = await getFirebaseApp();
+            auth = await getFirebaseAuth();
+            db = await getFirebaseDb();
+        }
+
+        let currentUser = null;
+        let userCoins = 0;
+
+        // 사용자 인증 상태 확인 (초기화 후 실행)
+        (async () => {
+            await initializeFirebaseServices();
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUser = user;
+                    await loadUserCoins();
+                    await loadLotteryHistory();
+                } else {
+                    window.location.href = 'index.html';
+                }
+            });
+        })();
+
+        // 사용자 코인 잔액 로딩
+        async function loadUserCoins() {
+            try {
+                userCoins = await getUserCoins(currentUser.uid);
+                document.getElementById('coinBalance').textContent = userCoins;
+                
+                // 코인이 없으면 버튼 비활성화
+                const lotteryButton = document.getElementById('lotteryButton');
+                if (userCoins <= 0) {
+                    lotteryButton.disabled = true;
+                    lotteryButton.textContent = '코인이 부족합니다';
+                } else {
+                    lotteryButton.disabled = false;
+                    lotteryButton.textContent = '🎰 복권 추첨하기';
+                }
+                
+                // 실시간 코인 업데이트 설정
+                onCoinsChange(currentUser.uid, (newBalance) => {
+                    userCoins = newBalance;
+                    document.getElementById('coinBalance').textContent = newBalance;
+                    
+                    if (newBalance <= 0) {
+                        lotteryButton.disabled = true;
+                        lotteryButton.textContent = '코인이 부족합니다';
+                    } else {
+                        lotteryButton.disabled = false;
+                        lotteryButton.textContent = '🎰 복권 추첨하기';
+                    }
+                });
+            } catch (error) {
+                console.error('코인 잔액 로딩 실패:', error);
+            }
+        }
+
+        // 복권 추첨 시작
+        window.startLottery = async function() {
+            if (userCoins <= 0) {
+                alert('코인이 부족합니다.');
+                return;
+            }
+
+            const lotteryButton = document.getElementById('lotteryButton');
+            const loadingState = document.getElementById('loadingState');
+            const resultSection = document.getElementById('resultSection');
+
+            // 이미 실행 중이면 중단
+            if (lotteryButton.disabled) {
+                return;
+            }
+
+            // 버튼 비활성화 및 로딩 표시
+            lotteryButton.disabled = true;
+            lotteryButton.style.display = 'none';
+            loadingState.style.display = 'block';
+
+            try {
+                // 코인 차감
+                await spendCoins(currentUser.uid, 1, '복권 추첨');
+                // spendCoins 함수가 이미 코인을 차감했으므로 잔액 업데이트
+                userCoins = await getUserCoins(currentUser.uid);
+                document.getElementById('coinBalance').textContent = userCoins;
+
+                // 2초 대기(애니메이션 효과)
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // 랜덤 번호 생성
+                const pickedNumbers = generateRandomNumbers(6, 1, 20);
+                const winningNumbers = generateRandomNumbers(6, 1, 20);
+                const bonusNumber = generateRandomNumbers(1, 1, 20)[0];
+
+                // 매치 확인
+                const matchCount = countMatches(pickedNumbers, winningNumbers);
+                const bonusMatch = pickedNumbers.includes(bonusNumber);
+                const rank = determineRank(matchCount, bonusMatch);
+
+                // 결과 저장
+                await saveLotteryResult(pickedNumbers, winningNumbers, bonusNumber, matchCount, bonusMatch, rank);
+
+                // 보상 지급
+                const reward = await giveLotteryReward(rank);
+                // 보상 후 최신 잔액 반영
+                userCoins = await getUserCoins(currentUser.uid);
+                document.getElementById('coinBalance').textContent = userCoins;
+                
+                // 결과 표시 (보상 정보 포함)
+                displayLotteryResult(pickedNumbers, winningNumbers, bonusNumber, matchCount, rank, reward);
+
+                // UI 복원
+                loadingState.style.display = 'none';
+                lotteryButton.style.display = 'block';
+                lotteryButton.disabled = false;
+                lotteryButton.textContent = '🎰 복권 추첨하기';
+
+                // 기록 새로고침 (오류 무시)
+                try {
+                    await loadLotteryHistory();
+                } catch (historyError) {
+                    console.warn('기록 로딩 실패 (무시됨):', historyError);
+                }
+            } catch (error) {
+                console.error('복권 추첨 실패:', error);
+                alert('복권 추첨에 실패했습니다.');
+                
+                // UI 복원
+                loadingState.style.display = 'none';
+                lotteryButton.style.display = 'block';
+                lotteryButton.disabled = false;
+                lotteryButton.textContent = '🎰 복권 추첨하기';
+            }
+        }
+
+        // 랜덤 번호 생성
+        function generateRandomNumbers(count, min, max) {
+            const numbers = [];
+            while (numbers.length < count) {
+                const num = Math.floor(Math.random() * (max - min + 1)) + min;
+                if (!numbers.includes(num)) {
+                    numbers.push(num);
+                }
+            }
+            return numbers.sort((a, b) => a - b);
+        }
+
+        // 일치 개수 확인
+        function countMatches(picked, winning) {
+            return picked.filter(num => winning.includes(num)).length;
+        }
+
+        // 등수 결정
+        function determineRank(matchCount, bonusMatch) {
+            if (matchCount === 6) return 1;
+            if (matchCount === 5 && bonusMatch) return 2;
+            if (matchCount === 5) return 3;
+            if (matchCount === 4) return 4;
+            if (matchCount === 3) return 5;
+            return 0;
+        }
+
+        // 복권 보상 지급
+        async function giveLotteryReward(rank) {
+            try {
+                if (rank === 0) return 0; // 꽝이면 보상 없음
+                
+                const rewards = {
+                    1: 1000, // 1등 1000코인
+                    2: 500,  // 2등 500코인
+                    3: 100,  // 3등 100코인
+                    4: 50,   // 4등 50코인
+                    5: 10    // 5등 10코인
+                };
+                
+                const reward = rewards[rank];
+                if (reward) {
+                    await addCoins(currentUser.uid, reward, `복권 ${rank}등 보상`);
+                    console.log(`복권 ${rank}등 보상 지급 ${reward}코인`);
+                    return reward;
+                }
+                
+                return 0;
+            } catch (error) {
+                console.error('복권 보상 지급 실패:', error);
+                return 0;
+            }
+        }
+
+        // 복권 결과 저장
+        async function saveLotteryResult(picked, winning, bonus, matchCount, bonusMatch, rank) {
+            try {
+                await addDoc(collection(db, 'lottery_results'), {
+                    userId: currentUser.uid,
+                    pickedNumbers: picked,
+                    winningNumbers: winning,
+                    bonusNumber: bonus,
+                    matchCount: matchCount,
+                    bonusMatch: bonusMatch,
+                    rank: rank,
+                    timestamp: serverTimestamp(),
+                    date: new Date().toISOString().split('T')[0]
+                });
+            } catch (error) {
+                console.error('결과 저장 실패:', error);
+            }
+        }
+
+        // 복권 결과 표시
+        function displayLotteryResult(picked, winning, bonus, matchCount, rank, reward = 0) {
+            const resultSection = document.getElementById('resultSection');
+            
+            const rankTexts = {
+                1: "🎉 1등 당첨! 🎉",
+                2: "🎊 2등 당첨! 🎊",
+                3: "🎈 3등 당첨! 🎈",
+                4: "🎁 4등 당첨! 🎁",
+                5: "🎰 5등 당첨! 🎰",
+                0: "😢 아쉽게 꽝이었습니다."
+            };
+
+            const rankClass = rank > 0 ? `rank-${rank}` : 'no-win';
+
+            resultSection.innerHTML = `
+<div class="lottery-result">
+<h2 style="color: #8b008b; margin-bottom: 1rem;">${rankTexts[rank]}</h2>
+</div>
+<h3>🎰 내가 선택한 번호 🎰</h3>
+<div class="number-grid">
+${picked.map(num => `<div class="number-item my-number">${num}</div>`).join('')}
+</div>
+<h3>🎰 당첨 번호 🎰</h3>
+<div class="number-grid">
+${winning.map(num => `<div class="number-item winning-number">${num}</div>`).join('')}
+</div>
+<h3>🎯 보너스 번호 🎯</h3>
+<div class="number-grid">
+<div class="number-item bonus-number">${bonus}</div>
+</div>
+<div class="stats-grid">
+<div class="stat-card">
+<h4>일치 개수</h4>
+<p>${matchCount}개</p>
+</div>
+<div class="stat-card">
+<h4>현재 코인</h4>
+<p>${userCoins}개</p>
+</div>
+${reward > 0 ? `
+<div class="stat-card reward-card">
+<h4>🎊 획득 보상</h4>
+<p>+${reward} 코인</p>
+</div>
+` : ''}
+</div>
+`;
+            
+            resultSection.style.display = 'block';
+        }
+
+        // 복권 기록 로딩
+        async function loadLotteryHistory() {
+            try {
+                const results = [];
+                try {
+                    const q = query(
+                        collection(db, 'lottery_results'),
+                        where('userId', '==', currentUser.uid),
+                        orderBy('timestamp', 'desc'),
+                        limit(50)
+                    );
+                    const snap = await getDocs(q);
+                    snap.forEach((d) => {
+                        const data = d.data();
+                        results.push({
+                            date: data.date,
+                            time: data.timestamp?.toDate ? data.timestamp.toDate().toLocaleString() : new Date().toLocaleString(),
+                            pickedNumbers: (data.pickedNumbers || []).join(', '),
+                            winningNumbers: (data.winningNumbers || []).join(', '),
+                            bonusNumber: data.bonusNumber,
+                            matchCount: data.matchCount,
+                            rank: data.rank
+                        });
+                    });
+                } catch (indexedQueryError) {
+                    // 인덱스 미구성 등으로 실패 시, where만 사용 후 로컬 정렬
+                    const q2 = query(collection(db, 'lottery_results'), where('userId', '==', currentUser.uid));
+                    const snap2 = await getDocs(q2);
+                    snap2.forEach((d) => {
+                        const data = d.data();
+                        results.push({
+                            date: data.date,
+                            time: data.timestamp?.toDate ? data.timestamp.toDate().toLocaleString() : new Date().toLocaleString(),
+                            pickedNumbers: (data.pickedNumbers || []).join(', '),
+                            winningNumbers: (data.winningNumbers || []).join(', '),
+                            bonusNumber: data.bonusNumber,
+                            matchCount: data.matchCount,
+                            rank: data.rank
+                        });
+                    });
+                    results.sort((a, b) => new Date(b.time) - new Date(a.time));
+                }
+
+                displayLotteryHistory(results);
+            } catch (error) {
+                console.error('기록 로딩 실패:', error);
+                document.getElementById('historySection').innerHTML = '<p>기록을 불러올 수 없습니다.</p>';
+            }
+        }
+
+        // 복권 기록 표시
+        function displayLotteryHistory(results) {
+            const historySection = document.getElementById('historySection');
+            
+            if (results.length === 0) {
+                historySection.innerHTML = '<p>아직 추첨 기록이 없습니다. 복권을 추첨해보세요!</p>';
+                return;
+            }
+
+            const totalPlays = results.length;
+            const wins = results.filter(r => r.rank > 0).length;
+            const winRate = totalPlays > 0 ? (wins / totalPlays * 100).toFixed(1) : 0;
+
+            let html = `
+<div class="stats-grid">
+<div class="stat-card">
+<h4>총 추첨 횟수</h4>
+<p>${totalPlays}</p>
+</div>
+<div class="stat-card">
+<h4>당첨 횟수</h4>
+<p>${wins}</p>
+</div>
+<div class="stat-card">
+<h4>당첨율</h4>
+<p>${winRate}%</p>
+</div>
+</div>
+<table style="width: 100%; margin-top: 1rem;">
+<thead>
+<tr>
+<th>날짜</th>
+<th>내 번호</th>
+<th>당첨 번호</th>
+<th>보너스</th>
+<th>일치</th>
+<th>등수</th>
+</tr>
+</thead>
+<tbody>
+`;
+
+            results.forEach(result => {
+                html += `
+<tr>
+<td>${result.date}</td>
+<td>${result.pickedNumbers}</td>
+<td>${result.winningNumbers}</td>
+<td>${result.bonusNumber}</td>
+<td>${result.matchCount}개</td>
+<td>${result.rank > 0 ? result.rank + '등' : '꽝'}</td>
+</tr>
+`;
+            });
+
+            html += '</tbody></table>';
+            historySection.innerHTML = html;
+        }
+</script>
+</body>
+</html>
+

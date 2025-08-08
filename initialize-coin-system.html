@@ -1,0 +1,194 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>코인 시스템 초기화</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>💰</text>
+</svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>코인 시스템 초기화</h1>
+<p>Firebase 데이터베이스에 코인 시스템을 설정합니다</p>
+</div>
+<div class="steps">
+<div class="step" id="step1">
+<strong>1단계:</strong>
+Firebase 연결 확인
+</div>
+<div class="step" id="step2">
+<strong>2단계:</strong>
+코인 컬렉션 생성
+</div>
+<div class="step" id="step3">
+<strong>3단계:</strong>
+기존 사용자 코인 초기화
+</div>
+<div class="step" id="step4">
+<strong>4단계:</strong>
+초기화 완료
+</div>
+</div>
+  <div class="actions" style="display:flex; gap:10px; margin: 12px 0;">
+    <button class="btn btn-primary" id="loginBtn" type="button">Google 로그인</button>
+    <button class="btn" id="initBtn" type="button" onclick="startInitialization()" disabled>초기화 시작</button>
+  </div>
+<div class="progress">
+<div class="progress-bar" id="progressBar">
+</div>
+</div>
+  <div id="status" aria-live="polite">
+</div>
+</div>
+<!-- Firebase SDK -->
+<script type="module">
+import { getFirebaseApp, getFirebaseAuth } from './script.js';
+import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, getIdTokenResult } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+// coin 초기화 관련 함수는 window에 노출되어 있음: createCoinCollections, initializeExistingUsersCoins
+
+        // 상태 표시 함수
+        function showStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // 단계 업데이트 함수
+        function updateStep(stepNumber, status = 'pending') {
+            const stepElement = document.getElementById(`step${stepNumber}`);
+            stepElement.className = `step ${status}`;
+            
+            if (status === 'completed') {
+                stepElement.innerHTML += ' ✅';
+            } else if (status === 'error') {
+                stepElement.innerHTML += ' ❌';
+            }
+        }
+
+        // 진행률 업데이트 함수
+        function updateProgress(percentage) {
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = `${percentage}%`;
+        }
+
+        let app, auth, currentUser = null, isAdmin = false;
+
+        const loginBtn = document.getElementById('loginBtn');
+        const initBtn = document.getElementById('initBtn');
+
+        async function ensureInitialized() {
+            if (app && auth) return;
+            app = await getFirebaseApp();
+            auth = await getFirebaseAuth();
+        }
+
+        async function refreshAdminClaims(user) {
+            try {
+                const token = await getIdTokenResult(user, true);
+                isAdmin = !!token.claims?.admin;
+                if (!isAdmin) {
+                    showStatus('관리자 권한이 필요합니다. 관리자에게 권한 부여를 요청하세요.', 'error');
+                    initBtn.disabled = true;
+                } else {
+                    initBtn.disabled = false;
+                }
+            } catch (e) {
+                console.warn('관리자 권한 확인 실패:', e);
+                initBtn.disabled = true;
+            }
+        }
+
+        // 로그인 버튼 동작: Redirect 방식
+        loginBtn.addEventListener('click', async () => {
+            try {
+                await ensureInitialized();
+                const provider = new GoogleAuthProvider();
+                await signInWithRedirect(auth, provider);
+            } catch (e) {
+                showStatus('로그인에 실패했습니다. 잠시 후 다시 시도하세요.', 'error');
+            }
+        });
+
+        // 초기 부팅: Firebase, Redirect 결과 처리, 인증 상태 감시
+        (async () => {
+            try {
+                await ensureInitialized();
+                try {
+                    const redirectResult = await getRedirectResult(auth);
+                    if (redirectResult?.user) {
+                        showStatus('로그인 완료. 관리자 권한을 확인합니다...', 'info');
+                    }
+                } catch (_) { /* 무시 */ }
+
+                onAuthStateChanged(auth, async (user) => {
+                    currentUser = user;
+                    if (!user) {
+                        initBtn.disabled = true;
+                        showStatus('Google 로그인이 필요합니다.', 'warning');
+                        return;
+                    }
+                    showStatus('로그인됨. 관리자 권한 확인 중...', 'info');
+                    await refreshAdminClaims(user);
+                });
+            } catch (e) {
+                console.error(e);
+                showStatus('초기화에 실패했습니다. 새로고침 후 다시 시도하세요.', 'error');
+            }
+        })();
+
+        // 초기화 함수 (관리자 전용)
+        window.startInitialization = async function() {
+            initBtn.disabled = true;
+            initBtn.textContent = '초기화 중...';
+            try {
+                await ensureInitialized();
+                if (!currentUser) { showStatus('로그인이 필요합니다.', 'warning'); return; }
+                await refreshAdminClaims(currentUser);
+                if (!isAdmin) { showStatus('관리자 권한이 필요합니다.', 'error'); return; }
+
+                // 1단계: 연결 확인
+                updateStep(1, 'pending');
+                updateProgress(20);
+                showStatus('Firebase 연결 확인 완료', 'success');
+
+                // 2단계: 코인 컬렉션 생성
+                updateStep(2, 'pending');
+                updateProgress(45);
+                showStatus('코인 컬렉션 생성 중...', 'info');
+                if (typeof window.createCoinCollections !== 'function') throw new Error('createCoinCollections 함수가 없습니다.');
+                await window.createCoinCollections();
+                updateStep(2, 'completed');
+
+                // 3단계: 기존 사용자 코인 초기화
+                updateStep(3, 'pending');
+                updateProgress(75);
+                showStatus('기존 사용자 코인 초기화 중...', 'info');
+                if (typeof window.initializeExistingUsersCoins !== 'function') throw new Error('initializeExistingUsersCoins 함수가 없습니다.');
+                const updatedUsers = await window.initializeExistingUsersCoins();
+                updateStep(3, 'completed');
+
+                // 4단계: 완료
+                updateStep(4, 'pending');
+                updateProgress(95);
+                showStatus('마무리 작업 중...', 'info');
+
+                updateStep(4, 'completed');
+                updateProgress(100);
+                showStatus(`초기화 완료! ${updatedUsers}명의 사용자에게 코인이 부여되었습니다.`, 'success');
+                initBtn.textContent = '초기화 완료';
+            } catch (error) {
+                console.error('초기화 실패:', error);
+                showStatus(`초기화 실패: ${error.message}`, 'error');
+                updateStep(4, 'error');
+                initBtn.disabled = false;
+                initBtn.textContent = '초기화 다시 시도';
+            }
+        };
+</script>
+</body>
+</html>
+

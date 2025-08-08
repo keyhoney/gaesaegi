@@ -1,0 +1,312 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학습 노트 - 송현여고 수학 학습 시스템</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>📝</text>
+</svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js">
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+</script>
+</head>
+<body>
+<div class="note-layout">
+<div class="note-sidebar">
+<div class="note-header">
+<h2>📝 학습 노트</h2>
+<p>문제 풀이와 편집을 기록해보세요</p>
+</div>
+<div class="setting-block">
+<div class="setting-label">펜 색상</div>
+<input type="color" id="penColor" value="#000000" class="setting-input">
+</div>
+<div class="setting-block">
+<div class="setting-label">펜 크기</div>
+<input type="range" id="penSize" min="1" max="20" value="5" class="setting-input">
+<span id="penSizeValue">5px</span>
+</div>
+<div class="tool-buttons">
+<button class="tool-btn active" id="penTool" onclick="selectTool('pen')">📝 펜</button>
+<button class="tool-btn" id="eraserTool" onclick="selectTool('eraser')">🧽 지우개</button>
+<button class="tool-btn" id="textTool" onclick="selectTool('text')">📝 텍스트</button>
+<button class="tool-btn" id="shapeTool" onclick="selectTool('shape')">🔷 도형</button>
+</div>
+<div id="shapeOptions" class="shape-options" style="display: none;">
+<button class="shape-btn" data-shape="rect">사각형</button>
+<button class="shape-btn" data-shape="circle">원</button>
+<button class="shape-btn" data-shape="line">선</button>
+</div>
+<div class="action-buttons">
+<button class="action-btn" id="clearCanvas" onclick="clearCanvas()">🗑️ 전체 지우기</button>
+<button class="action-btn" id="exportPdf" onclick="exportAsPDF()">📄 PDF로 내보내기</button>
+</div>
+<div class="save-section">
+<input type="text" id="noteTitle" placeholder="노트 제목" class="note-title-input">
+<button class="save-btn" id="saveCanvas" onclick="saveNote()">💾 저장</button>
+<button class="load-btn" id="loadCanvas" onclick="loadNoteList()">📂 불러오기</button>
+</div>
+<div class="note-list" id="noteListContainer">
+<!-- 저장된 노트 목록이 표시됩니다-->
+</div>
+</div>
+<div class="note-canvas-container">
+<div class="canvas-header">
+<div class="canvas-info">
+<span id="currentQuestion">현재 문제: 없음</span>
+</div>
+</div>
+<canvas id="canvas">
+</canvas>
+</div>
+</div>
+<script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { collection, addDoc, getDocs, query, where, orderBy, doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirebaseApp, getFirebaseAuth, getFirebaseDb } from './script.js';
+
+    let app, auth, db;
+    async function initializeFirebaseServices() {
+      app = await getFirebaseApp();
+      auth = await getFirebaseAuth();
+      db = await getFirebaseDb();
+    }
+
+    let currentUser = null;
+    let canvas;
+    let currentTool = 'pen';
+    let currentShape = 'rect';
+    let isDrawingShape = false;
+    let startPoint;
+    let shapeObject;
+
+    // 로그인 상태 확인 (초기화 후)
+    (async () => {
+      await initializeFirebaseServices();
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          alert("로그인이 필요합니다. 다시 시도해주세요.");
+          window.location.href = "index.html";
+          return;
+        }
+        currentUser = user;
+        initializeCanvas();
+        setupEventListeners();
+        loadNoteList();
+      });
+    })();
+
+    function initializeCanvas() {
+        const container = document.querySelector('.note-canvas-container');
+        canvas = new fabric.Canvas('canvas', {
+            width: container.clientWidth,
+            height: container.clientHeight,
+            isDrawingMode: true,
+            backgroundColor: '#ffffff'
+        });
+        
+        canvas.freeDrawingBrush.width = 5;
+        canvas.freeDrawingBrush.color = '#000000';
+    }
+
+    function setupEventListeners() {
+        document.getElementById('penColor').addEventListener('change', e =>
+{
+            canvas.freeDrawingBrush.color = e.target.value;
+        });
+        document.getElementById('penSize').addEventListener('input', e =>
+{
+            const size = parseInt(e.target.value, 10);
+            document.getElementById('penSizeValue').textContent = `${size}px`;
+            canvas.freeDrawingBrush.width = size;
+        });
+
+        document.querySelectorAll('.shape-btn').forEach(btn =>
+{
+            btn.addEventListener('click', () =>
+{
+                currentShape = btn.dataset.shape;
+                document.querySelectorAll('.shape-btn').forEach(b =>
+b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        canvas.on('mouse:down', onMouseDown);
+        canvas.on('mouse:move', onMouseMove);
+        canvas.on('mouse:up', onMouseUp);
+    }
+    
+    window.selectTool = function(tool) {
+        currentTool = tool;
+        document.querySelectorAll('.tool-btn').forEach(btn =>
+btn.classList.remove('active'));
+        document.getElementById(`${tool}Tool`).classList.add('active');
+        
+        const shapeOptions = document.getElementById('shapeOptions');
+        canvas.isDrawingMode = (tool === 'pen' || tool === 'eraser');
+
+        if (tool === 'eraser') {
+            canvas.freeDrawingBrush = new fabric.EraserBrush(canvas);
+            canvas.freeDrawingBrush.width = parseInt(document.getElementById('penSize').value, 10);
+        } else {
+            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+            canvas.freeDrawingBrush.width = parseInt(document.getElementById('penSize').value, 10);
+            canvas.freeDrawingBrush.color = document.getElementById('penColor').value;
+        }
+
+        shapeOptions.style.display = (tool === 'shape') ? 'flex' : 'none';
+        if (tool === 'shape' && !document.querySelector('.shape-btn.active')) {
+             document.querySelector('.shape-btn[data-shape="rect"]').classList.add('active');
+        }
+    }
+
+    function onMouseDown(o) {
+        if (currentTool !== 'shape') return;
+        isDrawingShape = true;
+        startPoint = canvas.getPointer(o.e);
+
+        const color = document.getElementById('penColor').value;
+        const strokeWidth = parseInt(document.getElementById('penSize').value, 10);
+
+        switch (currentShape) {
+            case 'rect':
+                shapeObject = new fabric.Rect({
+                    left: startPoint.x, top: startPoint.y,
+                    width: 0, height: 0,
+                    stroke: color, strokeWidth: strokeWidth, fill: 'transparent'
+                });
+                break;
+            case 'circle':
+                shapeObject = new fabric.Circle({
+                    left: startPoint.x, top: startPoint.y,
+                    radius: 0,
+                    stroke: color, strokeWidth: strokeWidth, fill: 'transparent'
+                });
+                break;
+            case 'line':
+                shapeObject = new fabric.Line([startPoint.x, startPoint.y, startPoint.x, startPoint.y], {
+                    stroke: color, strokeWidth: strokeWidth
+                });
+                break;
+        }
+        canvas.add(shapeObject);
+    }
+
+    function onMouseMove(o) {
+        if (!isDrawingShape || !shapeObject) return;
+        const pointer = canvas.getPointer(o.e);
+
+        switch (currentShape) {
+            case 'rect':
+                shapeObject.set({
+                    width: Math.abs(pointer.x - startPoint.x),
+                    height: Math.abs(pointer.y - startPoint.y),
+                    left: Math.min(pointer.x, startPoint.x),
+                    top: Math.min(pointer.y, startPoint.y)
+                });
+                break;
+            case 'circle':
+                const radius = Math.sqrt(Math.pow(startPoint.x - pointer.x, 2) + Math.pow(startPoint.y - pointer.y, 2)) / 2;
+                shapeObject.set({
+                    radius: radius,
+                    left: startPoint.x - radius,
+                    top: startPoint.y - radius
+                });
+                break;
+            case 'line':
+                shapeObject.set({ x2: pointer.x, y2: pointer.y });
+                break;
+        }
+        canvas.renderAll();
+    }
+
+    function onMouseUp(o) {
+        if (!isDrawingShape) return;
+        isDrawingShape = false;
+        shapeObject.setCoords();
+        canvas.renderAll();
+        shapeObject = null;
+    }
+    
+    window.clearCanvas = function() {
+      if (confirm('정말로 모든 그림을 지우시겠습니까?')) {
+        canvas.clear();
+        canvas.backgroundColor = '#ffffff';
+      }
+    }
+    
+    window.exportAsPDF = function() {
+        const { jsPDF } = window.jspdf;
+        const imgData = canvas.toDataURL({ format: 'png', quality: 1 });
+        const pdf = new jsPDF({
+            orientation: 'landscape',
+        });
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`${document.getElementById('noteTitle').value || 'note'}.pdf`);
+    }
+
+    window.saveNote = async function() {
+        const title = document.getElementById('noteTitle').value.trim();
+        if (!title) {
+            alert('노트 제목을 입력해주세요.');
+            return;
+        }
+        const canvasData = JSON.stringify(canvas.toJSON());
+        const noteData = {
+            userId: currentUser.uid,
+            title: title,
+            content: canvasData,
+            questionId: new URLSearchParams(window.location.search).get('question') || 'general',
+            updatedAt: serverTimestamp()
+        };
+
+        try {
+            // user_notes 컬렉션에 사용자/문항 기준 고정 ID로 저장
+            const docId = `${currentUser.uid}_${noteData.questionId}`;
+            await setDoc(doc(db, 'user_notes', docId), noteData, { merge: true });
+            alert('노트가 저장되었습니다.');
+            loadNoteList();
+        } catch (error) {
+            console.error("노트 저장 중 오류: ", error);
+            alert('노트 저장에 실패했습니다.');
+        }
+    }
+
+    window.loadNoteList = async function() {
+        const q = query(collection(db, "user_notes"), where("userId", "==", currentUser.uid), orderBy("updatedAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const container = document.getElementById('noteListContainer');
+        container.innerHTML = '<h4>저장된 노트</h4>';
+        querySnapshot.forEach((doc) =>
+{
+            const note = doc.data();
+            const item = document.createElement('div');
+            item.className = 'note-item';
+            item.innerText = note.title;
+            item.onclick = () =>
+loadNote(doc.id);
+            container.appendChild(item);
+        });
+    }
+    
+    async function loadNote(noteId) {
+        const docRef = doc(db, "user_notes", noteId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const note = docSnap.data();
+            canvas.loadFromJSON(note.content, canvas.renderAll.bind(canvas));
+            document.getElementById('noteTitle').value = note.title;
+        }
+    }
+</script>
+</body>
+</html>
+

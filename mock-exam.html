@@ -1,0 +1,352 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>모의고사 생성</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<text y='.9em' font-size='90'>📝</text>
+</svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>모의고사 생성</h1>
+<p>원하는 조건으로 시험 문제를 선택하여 모의고사를 만들어보세요.</p>
+</div>
+<div class="mock-exam-settings">
+<!-- 과목 선택 -->
+<div class="setting-group">
+<label for="subjectSelect" class="setting-label">과목 선택</label>
+<select id="subjectSelect" class="input">
+<option value="">과목을 선택해주세요</option>
+</select>
+</div>
+<!-- 단원 선택 -->
+<div class="setting-group">
+<label class="setting-label">단원 선택 (복수 선택 가능)</label>
+<div id="categorySelect" class="category-checkbox-group">
+<div class="loading">단원 목록을 불러오는 중...</div>
+</div>
+</div>
+<!-- 문제 통계 -->
+<div class="stats-preview" id="statsPreview" style="display: none;">
+<div class="stat-card">
+<div class="stat-number" id="totalQuestions">0</div>
+<div class="stat-label">총 문제 수</div>
+</div>
+<div class="stat-card">
+<div class="stat-number" id="selectedCategories">0</div>
+<div class="stat-label">선택된 단원</div>
+</div>
+<div class="stat-card">
+<div class="stat-number" id="avgDifficulty">-</div>
+<div class="stat-label">평균 난이도</div>
+</div>
+</div>
+<!-- 시험 설정 -->
+<div class="exam-config">
+<div class="setting-group">
+<label for="numQuestions" class="setting-label">문제 수</label>
+<input type="number" id="numQuestions" class="input" value="20" min="5" max="50">
+<small class="input-hint">5-50개 사이로 설정해주세요</small>
+</div>
+<div class="setting-group">
+<label for="timeLimit" class="setting-label">시험 시간 (분)</label>
+<input type="number" id="timeLimit" class="input" value="50" min="10" max="120">
+<small class="input-hint">10-120분 사이로 설정해주세요</small>
+</div>
+<div class="setting-group">
+<label for="difficultyFilter" class="setting-label">난이도 필터</label>
+<select id="difficultyFilter" class="input">
+<option value="">전체 난이도</option>
+<option value="쉬움">기초 (쉬움)</option>
+<option value="보통">보통 (보통)</option>
+<option value="어려움">어려움 (어려움)</option>
+<option value="매우어려움">매우 어려움 (매우어려움)</option>
+</select>
+</div>
+</div>
+<!-- 시작 버튼 -->
+<div class="action-buttons">
+<button id="startExamButton" class="btn btn-primary" disabled>
+<span class="btn-text">모의고사 시작</span>
+<span class="btn-loading" style="display: none;">로딩 중...</span>
+</button>
+<button id="previewButton" class="btn btn-outline">미리보기</button>
+</div>
+</div>
+<!-- 미리보기 모달 -->
+<div id="previewModal" class="modal" style="display: none;">
+<div class="modal-content">
+<div class="modal-header">
+<h3>모의고사 미리보기</h3>
+<button class="modal-close" onclick="closePreviewModal()">&times;</button>
+</div>
+<div class="modal-body">
+<div id="previewContent">
+</div>
+</div>
+</div>
+</div>
+</div>
+<script type="module">
+import { getFirebaseApp, getFirebaseAuth } from './script.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+let app, auth;
+async function initializeFirebaseServices() {
+  try {
+    app = await getFirebaseApp();
+    auth = await getFirebaseAuth();
+  } catch (_) { /* 무시 */ }
+}
+
+// 로그인 가드 (가능 시)
+(async () => {
+  await initializeFirebaseServices();
+  if (auth) {
+    onAuthStateChanged(auth, (user) => {
+      if (!user) { window.location.href = 'index.html'; }
+    });
+  }
+})();
+
+// 공통 유틸
+const DIFF_MAP = { '매우어려움': 4, '어려움': 3, '보통': 2, '쉬움': 1 };
+function diffScore(text) { return DIFF_MAP[text] || 0; }
+
+// 문제 데이터 로드/평탄화
+let flatQuestions = [];
+let currentSubject = '';
+
+async function loadQuestions() {
+  try {
+    const res = await fetch('questions.json');
+    if (!res.ok) throw new Error('문제 데이터를 불러올 수 없습니다.');
+    const data = await res.json();
+    flatQuestions = flattenQuestions(data);
+    populateSubjectSelect();
+  } catch (e) {
+    console.error('문제 데이터 로드 실패:', e);
+    showMessage('문제 데이터를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.', 'error');
+  }
+}
+
+function flattenQuestions(data) {
+  const results = [];
+  function walk(node, ctx = {}) {
+    if (!node || typeof node !== 'object') return;
+    const nextCtx = {
+      subject: node['과목'] ?? ctx.subject,
+      big: node['대분류'] ?? ctx.big,
+      mid: node['중분류'] ?? ctx.mid,
+      small: node['소분류'] ?? ctx.small,
+    };
+    if (Array.isArray(node['문항들'])) {
+      for (const q of node['문항들']) {
+        results.push({
+          id: q['문항번호'],
+          imageUrl: q['문항주소'],
+          answer: q['정답'],
+          difficulty: q['난이도'],
+          subject: nextCtx.subject,
+          bigCategory: nextCtx.big,
+          middleCategory: nextCtx.mid,
+          smallCategory: nextCtx.small,
+          solutionUrl: q['해설주소'] || ''
+        });
+      }
+    }
+    for (const value of Object.values(node)) {
+      if (value && typeof value === 'object') {
+        if (Array.isArray(value)) value.forEach(v => walk(v, nextCtx));
+        else walk(value, nextCtx);
+      }
+    }
+  }
+  if (Array.isArray(data)) data.forEach(item => walk(item)); else walk(data);
+  return results.filter(q => q && q.id);
+}
+
+// 과목/카테고리 UI
+function populateSubjectSelect() {
+  const subjectSelect = document.getElementById('subjectSelect');
+  subjectSelect.innerHTML = '<option value="">과목을 선택해주세요</option>';
+  const subjects = [...new Set(flatQuestions.map(q => q.subject).filter(Boolean))];
+  subjects.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s; subjectSelect.appendChild(opt);
+  });
+  subjectSelect.addEventListener('change', handleSubjectChange);
+}
+
+function handleSubjectChange() {
+  currentSubject = document.getElementById('subjectSelect').value;
+  if (!currentSubject) {
+    document.getElementById('categorySelect').innerHTML = '<div class="empty-state">과목을 선택해주세요.</div>';
+    hideStats();
+    return;
+  }
+  populateCategoryCheckboxes();
+  updateStats();
+}
+
+function populateCategoryCheckboxes() {
+  const container = document.getElementById('categorySelect');
+  container.innerHTML = '';
+  const categories = [...new Set(flatQuestions
+    .filter(q => q.subject === currentSubject)
+    .map(q => q.middleCategory || q.smallCategory)
+    .filter(Boolean))].sort();
+  if (!categories.length) {
+    container.innerHTML = '<div class="empty-state">해당 과목의 단원이 없습니다.</div>';
+    return;
+  }
+  for (const cat of categories) {
+    const div = document.createElement('div');
+    div.className = 'checkbox-item';
+    div.innerHTML = `<input type="checkbox" id="cat_${cat}" value="${cat}" checked>
+    <label for="cat_${cat}">${cat}</label>`;
+    container.appendChild(div);
+  }
+  container.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener('change', updateStats));
+}
+
+// 통계/미리보기
+function getSelectedCategories() {
+  return Array.from(document.querySelectorAll('#categorySelect input:checked')).map(cb => cb.value);
+}
+
+function filterAvailableQuestions() {
+  const selected = getSelectedCategories();
+  const diff = document.getElementById('difficultyFilter').value;
+  let pool = flatQuestions.filter(q => q.subject === currentSubject && selected.includes(q.middleCategory || q.smallCategory));
+  if (diff) pool = pool.filter(q => q.difficulty === diff);
+  return pool;
+}
+
+function updateStats() {
+  const pool = filterAvailableQuestions();
+  const statsPreview = document.getElementById('statsPreview');
+  const totalQuestions = document.getElementById('totalQuestions');
+  const selectedCategoriesCount = document.getElementById('selectedCategories');
+  const avgDifficulty = document.getElementById('avgDifficulty');
+
+  if (pool.length) {
+    totalQuestions.textContent = pool.length;
+    selectedCategoriesCount.textContent = getSelectedCategories().length;
+    const avg = pool.reduce((s, q) => s + diffScore(q.difficulty), 0) / pool.length;
+    avgDifficulty.textContent = avg.toFixed(1);
+    statsPreview.style.display = 'grid';
+    document.getElementById('startExamButton').disabled = false;
+  } else {
+    hideStats();
+  }
+}
+
+function hideStats() {
+  document.getElementById('statsPreview').style.display = 'none';
+  document.getElementById('startExamButton').disabled = true;
+}
+
+function showMessage(message, type = 'info') {
+  const div = document.createElement('div');
+  div.className = `message ${type}`;
+  div.textContent = message;
+  document.body.appendChild(div);
+  setTimeout(() => { if (div.parentElement) div.remove(); }, 3000);
+}
+
+// 시작 버튼
+document.getElementById('startExamButton').addEventListener('click', () => {
+  const numQuestions = parseInt(document.getElementById('numQuestions').value);
+  const timeLimit = parseInt(document.getElementById('timeLimit').value);
+  const button = document.getElementById('startExamButton');
+  const buttonText = button.querySelector('.btn-text');
+  const buttonLoading = button.querySelector('.btn-loading');
+
+  button.disabled = true; buttonText.style.display = 'none'; buttonLoading.style.display = 'inline';
+
+  try {
+    const pool = filterAvailableQuestions();
+    if (!pool.length) { showMessage('선택된 조건에 맞는 문제가 없습니다.', 'error'); return; }
+    if (pool.length < numQuestions) { showMessage(`선택된 문제 수가 모자랍니다. 현재 ${pool.length}문제만 있습니다.`, 'error'); return; }
+
+    const examQuestions = pool.sort(() => Math.random() - 0.5).slice(0, numQuestions).map(q => ({
+      id: q.id,
+      imageUrl: q.imageUrl,
+      answer: q.answer,
+      difficulty: q.difficulty,
+      subject: q.subject,
+      middleCategory: q.middleCategory,
+      smallCategory: q.smallCategory
+    }));
+
+    sessionStorage.setItem('mockExamQuestions', JSON.stringify(examQuestions));
+    sessionStorage.setItem('mockExamTimeLimit', timeLimit);
+    sessionStorage.setItem('mockExamSettings', JSON.stringify({
+      subject: currentSubject,
+      categories: getSelectedCategories(),
+      numQuestions,
+      timeLimit,
+      difficultyFilter: document.getElementById('difficultyFilter').value,
+      createdAt: new Date().toISOString()
+    }));
+
+    showMessage('모의고사 설정이 완료되었습니다!', 'success');
+    setTimeout(() => { window.location.href = 'exam-session.html'; }, 800);
+  } catch (e) {
+    console.error(e); showMessage('모의고사 시작에 실패했습니다.', 'error');
+  } finally {
+    button.disabled = false; buttonText.style.display = 'inline'; buttonLoading.style.display = 'none';
+  }
+});
+
+// 미리보기
+document.getElementById('previewButton').addEventListener('click', () => {
+  const pool = filterAvailableQuestions().slice(0, 5);
+  if (!pool.length) { showMessage('미리보기를 위해 단원을 하나 이상 선택해주세요.', 'error'); return; }
+  showPreviewModal(pool);
+});
+
+function getDifficultyDistribution(list) {
+  const counts = list.reduce((acc, q) => { acc[q.difficulty] = (acc[q.difficulty] || 0) + 1; return acc; }, {});
+  return Object.entries(counts).map(([k, v]) => `${k}: ${v}개`).join(', ');
+}
+
+function showPreviewModal(list) {
+  const modal = document.getElementById('previewModal');
+  const content = document.getElementById('previewContent');
+  content.innerHTML = `
+  <div class="preview-info">
+    <p><strong>문제 목록</strong> ${list.length}개</p>
+    <p><strong>난이도 분포:</strong> ${getDifficultyDistribution(list)}</p>
+  </div>
+  <div class="preview-questions">
+    ${list.map((q, i) => `
+      <div class="preview-question">
+        <div class="question-header">
+          <span class="question-number">${i + 1}</span>
+          <span class="question-difficulty">${q.difficulty}</span>
+        </div>
+        <img data-src="${q.imageUrl}" alt="문제 ${i + 1}" class="preview-image lazy" loading="lazy" onerror="this.style.display='none'">
+      </div>
+    `).join('')}
+  </div>`;
+  modal.style.display = 'block';
+}
+
+window.closePreviewModal = function() {
+  document.getElementById('previewModal').style.display = 'none';
+}
+
+document.getElementById('difficultyFilter').addEventListener('change', updateStats);
+
+// 시작
+loadQuestions();
+</script>
+</body>
+</html>
+
