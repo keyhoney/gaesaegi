@@ -9,6 +9,63 @@
     </svg>">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <style>
+      /* gsg.html 전용 고급 레이아웃 개선 */
+      .page-container { max-width: 1280px; margin: 0 auto; padding: 16px; }
+      .main-layout { display: grid; grid-template-columns: 320px 1fr 360px; gap: 24px; align-items: start; }
+      /* 좌측 사이드바 */
+      .sidebar { position: sticky; top: 88px; height: calc(100vh - 120px); overflow: auto; border-radius: 14px; backdrop-filter: saturate(120%) blur(4px); }
+      .sidebar h2 { margin: 12px 16px; font-size: 18px; opacity: .9; }
+      #questionList { padding: 8px 8px 16px; }
+      /* 중앙 영역 */
+      .content-header { position: sticky; top: 72px; z-index: 2; }
+      .iframe-container { border-radius: 16px; overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,.12); min-height: 58vh; background: rgba(0,0,0,.06); }
+      #questionFrame { width: 100%; height: 68vh; border: 0; opacity: 0; transition: opacity .35s ease; display: block; }
+      #questionFrame.loaded { opacity: 1; }
+      .frame-skeleton { position: relative; height: 0; }
+      .frame-skeleton::before { content: ""; position: absolute; inset: -68vh 0 0 0; background: linear-gradient(120deg, rgba(255,255,255,.18), rgba(255,255,255,.32), rgba(255,255,255,.18)); border-radius: 16px; animation: shimmer 1.3s infinite; filter: blur(.2px); }
+      @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+      .iframe-container iframe.loaded ~ .frame-skeleton { opacity: 0; pointer-events: none; transition: opacity .3s ease, transform .3s ease; transform: translateY(8px); }
+      .content-bottom { display: grid; grid-template-columns: 1fr; gap: 16px; padding-top: 16px; }
+      .navigation-buttons { display: grid; grid-auto-flow: column; gap: 12px; justify-content: start; }
+      .nav-btn { padding: 14px 18px; font-weight: 600; border-radius: 12px; }
+      .answer-area { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+      .answer-input { padding: 14px 16px; border-radius: 12px; font-size: 16px; }
+      .check-btn { padding: 14px 18px; border-radius: 12px; font-weight: 700; }
+      .result-area { min-height: 48px; display: grid; gap: 6px; }
+      .kbd-hints { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; opacity: .9; }
+      .kbd { padding: 6px 10px; border-radius: 10px; background: rgba(255,255,255,.18); box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+      /* 우측 패널 */
+      .right-panel { position: sticky; top: 88px; height: fit-content; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+      .note-content textarea { min-height: 180px; border-radius: 12px; }
+      .note-actions { display: grid; grid-auto-flow: column; gap: 10px; justify-content: end; }
+      /* 회전 안내 */
+      #rotateMessage { position: fixed; inset-inline: 0; top: 56px; margin: 0 auto; width: fit-content; padding: 10px 14px; border-radius: 10px; }
+      /* 사이드바 아이템 고급 스타일 */
+      #questionList .dashboard-menu-item, #questionList .category-header, #questionList .subcategory-header, #questionList .question-item {
+        border-radius: 12px; margin: 6px 8px; padding: 10px 12px; transition: transform .16s ease, background .2s ease, box-shadow .2s ease; cursor: pointer;
+      }
+      #questionList .dashboard-menu-item:hover, #questionList .category-header:hover, #questionList .subcategory-header:hover, #questionList .question-item:hover {
+        transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.08);
+      }
+      #questionList .collapse-icon { opacity: .65; }
+      #questionList .menu-separator hr { opacity: .35; }
+      /* 플로팅 즐겨찾기 버튼 강화 */
+      .floating-button.favorite-button { width: 56px; height: 56px; border-radius: 50%; font-size: 22px; display: grid; place-items: center; box-shadow: 0 12px 28px rgba(0,0,0,.18); transition: transform .18s ease, box-shadow .18s ease; }
+      .floating-button.favorite-button:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 16px 36px rgba(0,0,0,.22); }
+      /* 반응형 */
+      @media (max-width: 1200px) {
+        .main-layout { grid-template-columns: 280px 1fr; }
+        .right-panel { display: none; }
+      }
+      @media (max-width: 860px) {
+        .page-container { padding: 8px; }
+        .main-layout { grid-template-columns: 1fr; gap: 16px; }
+        .sidebar { top: 72px; height: auto; max-height: 42vh; }
+        .content-header { top: 64px; }
+        #questionFrame { height: 56vh; }
+      }
+    </style>
 </head>
 <body>
     <!-- 상단 헤더: 반응형 내비게이션 -->
@@ -40,6 +97,7 @@
         <div>문제를 불러오는 중...</div>
     </div>
     
+    <div class="page-container">
     <!-- 메인 레이아웃 -->
     <div class="main-layout">
         <!-- 왼쪽 사이드바 -->
@@ -77,6 +135,7 @@
                 <!-- 문제 표시 영역 -->
                 <div class="iframe-container">
                     <iframe id="questionFrame" src="" style="display: none;"></iframe>
+                    <div class="frame-skeleton" aria-hidden="true"></div>
                 </div>
                 
                 <!-- 하단 영역 -->
@@ -100,9 +159,17 @@
                     </div>
                     
                     <!-- 결과 표시 영역 -->
-                    <div class="result-area">
+                    <div class="result-area" aria-live="polite">
                         <div id="result"></div>
                         <div id="solutionLink"></div>
+                    </div>
+
+                    <!-- 키보드 힌트 -->
+                    <div class="kbd-hints" aria-hidden="true">
+                        <div class="kbd">← 이전 문제</div>
+                        <div class="kbd">→ 다음 문제</div>
+                        <div class="kbd">Enter 정답 확인</div>
+                        <div class="kbd">Esc 이미지 닫기</div>
                     </div>
                 </div>
             </div>
@@ -119,6 +186,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
     
     <!-- 떠다니는 즐겨찾기 버튼 -->
