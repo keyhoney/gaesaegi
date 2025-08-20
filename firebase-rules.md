@@ -121,9 +121,8 @@ service cloud.firestore {
          && request.resource.data.diff(resource.data).changedKeys().size() == 1
          && request.resource.data.sellerClaimed == true
                  ) || (
-           // 트랜잭션에서 set이 update로 전송되는 경우 허용(생성과 동일 제약)
-           request.resource.data.keys().hasAll(['buyerUid','sellerUid','price','qty','buyerClaimed','sellerClaimed','at'])
-           && request.resource.data.keys().size() == 7
+           // 트랜잭션에서 set이 update로 전송되는 경우 허용 - at은 서버 변환으로 설정될 수 있음
+           request.resource.data.keys().subsetOf(['buyerUid','sellerUid','price','qty','buyerClaimed','sellerClaimed','at'])
            && request.resource.data.buyerUid is string
            && request.resource.data.sellerUid is string
            && request.resource.data.price is number
@@ -131,7 +130,7 @@ service cloud.firestore {
            && request.resource.data.qty > 0
            && request.resource.data.buyerClaimed == false
            && request.resource.data.sellerClaimed == false
-           && (request.resource.data.at is timestamp || request.resource.data.at == request.time || request.resource.data.at == null)
+           && (!request.resource.data.keys().hasAll(['at']) || (request.resource.data.at is timestamp || request.resource.data.at == request.time || request.resource.data.at == null))
          )
       );
 
@@ -155,14 +154,14 @@ service cloud.firestore {
     // 공개 체결 로그(사용 중이면 생성 허용, 아니면 전체 금지로 변경 가능)
     match /market/public/trades/{tid} {
       allow read: if true;
-             // 트랜잭션에서 set이 update로 전송되는 경우가 있어 write로 허용하되 필드 제한
+             // 트랜잭션에서 set이 update로 전송되는 경우가 있어 write로 허용하되 필드 제한 - at은 서버 변환으로 설정될 수 있음
        allow write: if request.auth != null
-         && request.resource.data.keys().hasAll(['side','price','qty','at'])
+         && request.resource.data.keys().subsetOf(['side','price','qty','at'])
          && request.resource.data.side in ['buy','sell','trade']
          && request.resource.data.price is number
          && request.resource.data.qty is number
          && request.resource.data.qty > 0
-         && (request.resource.data.at is timestamp || request.resource.data.at == request.time || request.resource.data.at == null);
+         && (!request.resource.data.keys().hasAll(['at']) || (request.resource.data.at is timestamp || request.resource.data.at == request.time || request.resource.data.at == null));
       allow delete: if false;
     }
 
