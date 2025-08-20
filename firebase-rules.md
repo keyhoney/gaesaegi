@@ -141,14 +141,15 @@ service cloud.firestore {
     // 티커: 공개 읽기, 인증자 쓰기(필드 제한) — 부분 업데이트 허용
     match /market/public/ticker/{docId} {
       allow read: if true;
-             allow write: if request.auth != null
-         && request.resource.data.keys().hasAll(['lastPrice','prevPrice','changePct','updatedAt'])
-         && (
-           (!request.resource.data.keys().hasAll(['lastPrice']) || request.resource.data.lastPrice is number) &&
-           (!request.resource.data.keys().hasAll(['prevPrice'])  || request.resource.data.prevPrice  is number) &&
-           (!request.resource.data.keys().hasAll(['changePct'])  || request.resource.data.changePct  is number) &&
-           (!request.resource.data.keys().hasAll(['updatedAt'])  || request.resource.data.updatedAt  is timestamp)
-         );
+      // 부분 업데이트 허용: 변경하려는 키들만 타입 검사
+      allow write: if request.auth != null
+        && request.resource.data.keys().subsetOf(['lastPrice','prevPrice','changePct','updatedAt'])
+        && (
+          (!request.resource.data.keys().hasAll(['lastPrice']) || request.resource.data.lastPrice is number) &&
+          (!request.resource.data.keys().hasAll(['prevPrice'])  || request.resource.data.prevPrice  is number) &&
+          (!request.resource.data.keys().hasAll(['changePct'])  || request.resource.data.changePct  is number) &&
+          (!request.resource.data.keys().hasAll(['updatedAt'])  || request.resource.data.updatedAt  is timestamp)
+        );
     }
 
     // 공개 체결 로그(사용 중이면 생성 허용, 아니면 전체 금지로 변경 가능)
