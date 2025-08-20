@@ -1,0 +1,48 @@
+/* Premium trading UI enhancements */
+.trading-page .section { padding-top: 24px; }
+
+.card { border-radius: 14px; }
+
+.trading-page .card h3 { display:flex; align-items:center; gap:8px; }
+.trading-page .badge { background: rgba(35,31,32,0.06); padding: 4px 8px; border-radius: 999px; }
+
+/* Header block */
+.trading-page .market-header {
+  display: grid; grid-template-columns: 2fr 1fr; gap: 12px; align-items: center;
+}
+.market-ticker {
+  display:flex; align-items:center; gap:12px; padding: 10px; border:1px solid var(--border); border-radius:12px; background: var(--card); box-shadow: var(--shadow);
+}
+.market-ticker .price { font-size: 26px; font-weight: 800; }
+.market-ticker .change { font-weight:700; }
+.market-actions { display:flex; gap:8px; justify-content:flex-end; }
+
+/* Form blocks */
+.trading-form { background: var(--card); border:1px solid var(--border); border-radius: 12px; padding: 12px; box-shadow: var(--shadow); }
+.trading-form .field input { background:#fff; border:1px solid var(--border-strong); border-radius: 10px; padding:10px 12px; outline:none; }
+.trading-form .field input:focus-visible { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(138,75,83,0.12); }
+
+/* Orderbook */
+.orderbook { border:1px solid var(--border); box-shadow: var(--shadow); }
+.orderbook .ob-title { font-size: 14px; }
+.orderbook .ob-row { border: 1px solid transparent; }
+
+/* Lists */
+.list-grid .row { border-radius: 12px; }
+
+/* Footer spacing */
+.trading-page .site-footer, .trading-page .site-subfooter { margin-top: 12px; }
+
+/* Mini orderbook */
+#miniOrderbook .row { display:grid; grid-template-columns: 1fr auto; align-items:center; padding:6px 8px; border:1px solid var(--border); border-radius:8px; }
+#miniOrderbook .bid { color:#1565c0; }
+#miniOrderbook .ask { color:#c62828; }
+
+/* Recent trades table */
+.trades-table { width:100%; border-collapse: separate; border-spacing: 0; }
+.trades-table thead th { text-align:left; font-size: 13px; color: var(--muted); border-bottom:1px solid var(--border); padding:8px; position: sticky; top:0; background: var(--card); }
+.trades-table tbody td { padding:8px; border-bottom:1px solid var(--border); }
+.trades-table tbody tr:nth-child(odd) { background: rgba(35,31,32,0.02); }
+.trades-table tbody tr:nth-child(even) { background: rgba(35,31,32,0.06); }
+
+

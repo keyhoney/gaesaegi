@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GSG - 질문과 답변</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="favorites.css" />
+    <link rel="icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문 바로가기</a>
+    <header class="site-header" role="banner">
+      <div class="container nav-container">
+        <div class="brand" aria-label="GSG 홈">
+          <a href="index.html" class="brand" style="text-decoration:none; color:inherit">
+            <span class="logo" aria-hidden="true"><img src="img/gsg-icon.png" alt="GSG 로고" width="60" height="60"/></span>
+            <span class="brand-name">GSG</span>
+          </a>
+        </div>
+        <nav class="site-nav" aria-label="상단 메뉴">
+          <ul>
+            <li><a href="index.html" class="btn ghost small">메인</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="page" tabindex="-1">
+      <section class="section">
+        <div class="container">
+          <h1>질문과 답변</h1>
+
+          <div class="grid" style="grid-template-columns: 360px 1fr; gap: 12px; align-items: start;">
+            <aside class="card">
+              <h3>질문 작성</h3>
+              <div class="login-form">
+                <div class="field"><label for="qTitle">제목</label><input id="qTitle" type="text" placeholder="제목을 입력하세요"/></div>
+                <div class="field"><label for="qBody">내용</label><input id="qBody" type="text" placeholder="상세 내용을 입력하세요"/></div>
+                <div class="field"><label>태그(쉼표로 구분)</label><input id="qTags" type="text" placeholder="예: 함수,기출,개념"/></div>
+                <div class="field">
+                  <label>과목/분류/문항 선택</label>
+                  <div class="grid" style="grid-template-columns: 1fr 1fr; gap:8px;">
+                    <select id="selSubject"><option value="">과목</option></select>
+                    <select id="selCat" disabled><option value="">대분류</option></select>
+                    <select id="selSub" disabled><option value="">중분류</option></select>
+                    <select id="selTopic" disabled><option value="">소분류</option></select>
+                    <select id="selQuestion" disabled style="grid-column: span 2;"><option value="">개별 문항</option></select>
+                  </div>
+                </div>
+                <div class="actions"><button id="postQuestion" class="btn primary">질문 올리기</button></div>
+                <p id="askMsg" class="form-feedback" aria-live="polite"></p>
+              </div>
+              <h3 style="margin-top:12px;">사용자 활동 랭킹</h3>
+              <div id="rankUsers" class="list-grid"></div>
+            </aside>
+
+            <section class="card">
+              <div class="login-form">
+                <div class="field"><label>검색</label><input id="searchBox" type="text" placeholder="제목/내용/태그 검색"/></div>
+                <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap:8px;">
+                  <select id="filterSubject"><option value="">과목(전체)</option></select>
+                  <select id="filterAccepted"><option value="">채택여부(전체)</option><option value="accepted">채택됨</option><option value="not">미채택</option></select>
+                  <select id="sortBy"><option value="new">최신순</option><option value="popular">인기순(답변수)</option></select>
+                </div>
+              </div>
+              <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 12px;">
+                <article>
+                  <h3>질문 목록</h3>
+                  <div id="questionList" class="list-grid"></div>
+                </article>
+                <aside>
+                  <h3>인기 질문</h3>
+                  <div id="popularList" class="list-grid"></div>
+                </aside>
+              </div>
+
+              <article class="card" style="margin-top:12px;" id="detailCard" hidden>
+                <h3 id="dTitle">질문</h3>
+                <div id="dMeta" class="muted"></div>
+                <div id="dBody" style="margin:6px 0 10px;"></div>
+                <div id="dProblem" class="muted"></div>
+                <div class="actions" id="dActions" style="margin-top:8px;"></div>
+                <hr style="border:none; border-top:1px solid var(--border); margin:12px 0;"/>
+                <h3>답변</h3>
+                <div id="answers" class="list-grid"></div>
+                <form id="answerForm" class="answer-form" style="margin-top:8px;">
+                  <div class="row">
+                    <div class="field flex-1"><label for="answerInput">답변 작성</label><input id="answerInput" type="text" autocomplete="off" placeholder="답변을 입력하세요"/></div>
+                    <div class="actions"><button type="submit" class="btn primary">등록</button></div>
+                  </div>
+                </form>
+                <p id="answerMsg" class="form-feedback" aria-live="polite"></p>
+              </article>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <script src="firebase-config.js" defer></script>
+    <script src="firebase-data.js" defer></script>
+    <script src="app.js" defer></script>
+    <script src="qa-system.js" defer></script>
+  </body>
+  </html>
+
+

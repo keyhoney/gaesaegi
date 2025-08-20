@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GSG - 지갑</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="favorites.css" />
+    <link rel="icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문 바로가기</a>
+    <header class="site-header" role="banner">
+      <div class="container nav-container">
+        <div class="brand" aria-label="GSG 홈">
+          <a href="index.html" class="brand" style="text-decoration:none; color:inherit">
+            <span class="logo" aria-hidden="true"><img src="img/gsg-icon.png" alt="GSG 로고" width="60" height="60"/></span>
+            <span class="brand-name">GSG</span>
+          </a>
+        </div>
+        <nav class="site-nav" aria-label="상단 메뉴">
+          <ul>
+            <li><a href="index.html" class="btn ghost small">메인</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="page" tabindex="-1">
+      <section class="section">
+        <div class="container">
+          <h1>지갑</h1>
+          <p class="intro">현재 사용 가능 포인트/코인과 누적 획득량, 보유 아이템을 관리하세요.</p>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+            <article class="card">
+              <h3>보유 포인트</h3>
+              <div class="grid stats">
+                <div class="stat"><div id="ptAvail" class="stat-value">0</div><div class="stat-label">사용 가능</div></div>
+              </div>
+            </article>
+            <article class="card">
+              <h3>보유 코인</h3>
+              <div class="grid stats">
+                <div class="stat"><div id="coinAvail" class="stat-value">0</div><div class="stat-label">사용 가능</div></div>
+              </div>
+            </article>
+          </div>
+
+          <article class="card" style="margin-top:12px;">
+            <h3>보유 아이템</h3>
+            <div id="itemList" class="list-grid"></div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <script src="firebase-config.js" defer></script>
+    <script src="firebase-data.js" defer></script>
+    <script src="app.js" defer></script>
+    <script src="wallet.js" defer></script>
+  </body>
+  </html>
+
+

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GSG - 스터디 그룹</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="favorites.css" />
+    <link rel="icon" href="favicon.ico" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문 바로가기</a>
+    <header class="site-header" role="banner">
+      <div class="container nav-container">
+        <div class="brand" aria-label="GSG 홈">
+          <a href="index.html" class="brand" style="text-decoration:none; color:inherit">
+            <span class="logo" aria-hidden="true"><img src="img/gsg-icon.png" alt="GSG 로고" width="60" height="60"/></span>
+            <span class="brand-name">GSG</span>
+          </a>
+        </div>
+        <nav class="site-nav" aria-label="상단 메뉴">
+          <ul>
+            <li><a href="index.html" class="btn ghost small">메인</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="page" tabindex="-1">
+      <section class="section">
+        <div class="container">
+          <h1>스터디 그룹</h1>
+
+          <div class="grid" style="grid-template-columns: 320px 1fr; gap: 12px; align-items: start;">
+            <aside class="card" aria-label="내 그룹 및 그룹 생성/참여">
+              <h3>내 그룹</h3>
+              <div id="myGroups" class="list-grid"></div>
+              <hr style="border:none; border-top:1px solid var(--border); margin:12px 0;"/>
+              <h3>그룹 만들기</h3>
+              <div class="login-form">
+                <div class="field"><label>그룹 이름</label><input id="grpName" type="text" placeholder="예: 주말수학반"/></div>
+                <div class="field"><label>설명</label><input id="grpDesc" type="text" placeholder="그룹 설명 (선택)"/></div>
+                <div class="actions"><button id="createBtn" class="btn primary">생성</button><button id="testAuthBtn" class="btn ghost small">로그인 상태 확인</button></div>
+                <p id="createMsg" class="form-feedback" aria-live="polite"></p>
+              </div>
+              <h3>초대 코드로 참여</h3>
+              <div class="login-form">
+                <div class="field"><label>초대 코드</label><input id="joinCode" type="text" placeholder="6자리 코드"/></div>
+                <div class="actions"><button id="joinBtn" class="btn">참여</button></div>
+                <p id="joinMsg" class="form-feedback" aria-live="polite"></p>
+              </div>
+
+              <hr style="border:none; border-top:1px solid var(--border); margin:12px 0;"/>
+              <h3>다른 그룹 보기</h3>
+              <div class="muted" style="margin-bottom:6px;">주간 챌린지 달성도 높은 순</div>
+              <div id="publicGroups" class="list-grid"></div>
+            </aside>
+
+            <section id="groupDetail" class="card" hidden aria-live="polite">
+              <div style="display:flex; align-items:center; gap:8px; justify-content: space-between;">
+                <h3 id="gTitle" style="margin:0;">그룹</h3>
+                <div id="gMeta" class="muted"></div>
+              </div>
+              <div style="margin-top:8px; display:grid; gap:8px;">
+                <div id="ownerTools" class="login-form" hidden>
+                  <div class="field"><label>그룹 이름</label><input id="editName" type="text"/></div>
+                  <div class="field"><label>설명</label><input id="editDesc" type="text"/></div>
+                  <div class="actions"><button id="saveInfo" class="btn primary">정보 저장</button></div>
+                </div>
+                <div class="login-form">
+                  <div class="field"><label>초대 코드</label><input id="inviteCode" type="text" readonly /></div>
+                  <div class="actions"><button id="copyCode" class="btn">코드 복사</button><button id="leaveBtn" class="btn ghost">그룹 나가기</button><button id="dissolveBtn" class="btn" style="display:none;">그룹 해체</button></div>
+                </div>
+              </div>
+
+              <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-top:12px;">
+                <article class="card">
+                  <h3>그룹원</h3>
+                  <div id="memberList" class="list-grid"></div>
+                </article>
+                <article class="card">
+                  <h3>코인 선물</h3>
+                  <div class="login-form">
+                    <div class="field"><label>받을 사람</label><select id="giftTo"></select></div>
+                    <div class="field"><label>수량(coin)</label><input id="giftAmt" type="number" min="1" step="1" value="1"/></div>
+                    <div class="actions"><button id="giftBtn" class="btn primary">보내기</button></div>
+                    <p id="giftMsg" class="form-feedback" aria-live="polite"></p>
+                  </div>
+                </article>
+              </div>
+
+              <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-top:12px;">
+                <article class="card">
+                  <h3>그룹 내 순위(이번 주)</h3>
+                  <div id="rankList" class="list-grid"></div>
+                </article>
+                <article class="card">
+                  <h3>주간 챌린지</h3>
+                  <div id="challengeBox">
+                    <div class="muted" id="challengeMeta">-</div>
+                    <div style="background:#f0e9e3; border-radius:10px; overflow:hidden; height:14px; margin-top:8px;">
+                      <div id="challengeBar" style="height:100%; width:0; background:linear-gradient(90deg, var(--accent), var(--primary));"></div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+
+              <article class="card" style="margin-top:12px;">
+                <h3>그룹 채팅</h3>
+                <div id="chatList" class="list-grid" style="max-height:300px; overflow:auto;"></div>
+                <form id="chatForm" class="answer-form" style="margin-top:8px;">
+                  <div class="row">
+                    <div class="field flex-1"><label for="chatInput">메시지</label><input id="chatInput" type="text" autocomplete="off" placeholder="메시지를 입력하세요"/></div>
+                    <div class="actions"><button type="submit" class="btn primary">전송</button></div>
+                  </div>
+                </form>
+              </article>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <script src="firebase-config.js" defer></script>
+    <script src="firebase-data.js" defer></script>
+    <script src="app.js" defer></script>
+    <script src="study-groups.js" defer></script>
+  </body>
+  </html>
+
+

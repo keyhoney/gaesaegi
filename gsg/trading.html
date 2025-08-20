@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GSG - 코인 거래소</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="favorites.css" />
+    <link rel="stylesheet" href="trading.css" />
+    <link rel="icon" href="/favicon.ico" />
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문 바로가기</a>
+    <header class="site-header" role="banner">
+      <div class="container nav-container">
+        <div class="brand" aria-label="GSG 홈">
+          <a href="index.html" class="brand" style="text-decoration:none; color:inherit">
+            <span class="logo" aria-hidden="true"><img src="img/gsg-icon.png" alt="GSG 로고" width="60" height="60"/></span>
+            <span class="brand-name">GSG</span>
+          </a>
+        </div>
+        <nav class="site-nav" aria-label="상단 메뉴">
+          <ul>
+            <li><a href="index.html" class="btn ghost small">메인</a></li>
+            <li><a href="wallet.html" class="btn ghost small">지갑</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="page trading-page" tabindex="-1">
+      <section class="section">
+        <div class="container">
+          <h1>코인 거래소</h1>
+          <div class="market-header">
+            <div class="market-ticker">
+              <div class="badge">GSG/COIN</div>
+              <div class="price"><span id="lastPrice">-</span> pt</div>
+              <div id="changePct" class="change badge">0%</div>
+              <div id="balances" class="muted" style="margin-left:auto;">보유(누적): 0 pt / 0 coin</div>
+            </div>
+            <div class="market-actions">
+              <button class="btn small">마켓</button>
+              <button class="btn small">지정가</button>
+              <button class="btn small">도움말</button>
+            </div>
+          </div>
+          <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 12px; margin-top:12px;">
+            <article class="card">
+              <h3>시세/차트</h3>
+              <div id="priceChart" style="height:260px;"></div>
+              <div id="volumeChart" style="height:120px; margin-top:8px;"></div>
+              <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-top:8px;">
+                <div class="stat card small"><div class="muted">일일 거래량</div><div id="statVol" class="stat-value">-</div></div>
+                <div class="stat card small"><div class="muted">일일 평균가</div><div id="statAvg" class="stat-value">-</div></div>
+              </div>
+            </article>
+            <article class="card trading-form">
+              <h3>주문</h3>
+              <div class="login-form">
+                <div class="field"><label>가격(pt)</label><input id="price" type="number" min="1" step="1" value="1000" /></div>
+                <div class="field"><label>수량(coin)</label><input id="qty" type="number" min="1" step="1" value="1" /></div>
+                <div class="actions" style="display:flex; gap:8px;">
+                  <button id="placeBuyBtn" class="btn buy">매수 주문 실행</button>
+                  <button id="placeSellBtn" class="btn sell">매도 주문 실행</button>
+                </div>
+                <p class="form-feedback" id="orderMsg" aria-live="polite"></p>
+              </div>
+              <p class="muted">매도는 1,500pt 초과 가격 불가</p>
+            </article>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-top:12px;">
+            <article class="card">
+              <h3>미니 호가(5개)</h3>
+              <div id="miniOrderbook" class="list-grid"></div>
+            </article>
+            <article class="card">
+              <h3>최근 체결</h3>
+              <table class="trades-table" id="tradesTable">
+                <thead>
+                  <tr><th>시간</th><th>가격(pt)</th><th>수량(coin)</th></tr>
+                </thead>
+                <tbody id="tradesTbody"></tbody>
+              </table>
+            </article>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 520px 1fr; gap: 12px; margin-top:12px;">
+            <article class="card">
+              <h3>오더북</h3>
+              <div id="orderbook"></div>
+            </article>
+            <article class="card">
+              <h3>내 오더 / 취소</h3>
+              <div id="myOrders" class="list-grid"></div>
+            </article>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-top:12px;">
+            <article class="card">
+              <h3>전체 거래</h3>
+              <div id="publicTrades" class="list-grid"></div>
+            </article>
+            <article class="card">
+              <h3>내 거래</h3>
+              <div id="myTrades" class="list-grid"></div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <script src="firebase-config.js" defer></script>
+    <script src="firebase-data.js" defer></script>
+    <script src="app.js" defer></script>
+    <script src="trading.js?v=2" defer></script>
+  </body>
+  </html>
+
+

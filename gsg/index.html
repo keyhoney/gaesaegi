@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GSG 학습 플랫폼 - 메인</title>
+    <meta name="description" content="GSG 학습 플랫폼 메인 페이지" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문 바로가기</a>
+
+    <header class="site-header" role="banner">
+      <div class="container nav-container">
+        <div class="brand" aria-label="GSG 홈">
+          <span class="logo" aria-hidden="true"><img src="img/gsg-icon.png" alt="GSG 로고" width="60" height="60"/></span>
+          <span class="brand-name">GSG</span>
+        </div>
+
+        <button
+          id="navToggle"
+          class="nav-toggle"
+          aria-label="메뉴 열기"
+          aria-expanded="false"
+          aria-controls="siteNav"
+        >
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+
+        <nav id="siteNav" class="site-nav" role="navigation">
+          <ul>
+            <li><a href="#learn">학습</a></li>
+            <li><a href="#achievement">성과</a></li>
+            <li><a href="#reward">보상</a></li>
+            <li><a href="#community">커뮤니티</a></li>
+          </ul>
+        </nav>
+        <button id="loginBtn" class="btn ghost small" type="button" aria-haspopup="dialog" aria-controls="loginModal">로그인</button>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <section class="hero theme-1">
+        <div class="container">
+          <div class="carousel" aria-roledescription="carousel" aria-label="메뉴 안내 슬라이드">
+            <button class="carousel-arrow prev" id="carouselPrev" aria-label="이전 슬라이드" aria-controls="carousel">‹</button>
+            <button class="carousel-arrow next" id="carouselNext" aria-label="다음 슬라이드" aria-controls="carousel">›</button>
+
+            <div class="slides" id="carousel">
+              <article class="slide active" data-target="#learn" data-theme="1">
+                <span class="badge">인기 메뉴</span>
+                <h1>학습</h1>
+                <p>맞춤형 경로와 실습 과제로 실력을 키우세요.</p>
+                <div class="hero-actions">
+                  <a class="btn hero-cta" href="#learn">지금 시작하기 <span class="arrow">→</span></a>
+                </div>
+              </article>
+
+              <article class="slide" data-target="#achievement" data-theme="2">
+                <span class="badge">진행 현황</span>
+                <h1>성과</h1>
+                <p>완료율, 시간, 과제 등 지표로 성장 과정을 확인하세요.</p>
+                <div class="hero-actions">
+                  <a class="btn hero-cta" href="#achievement">성과 보기 <span class="arrow">→</span></a>
+                </div>
+              </article>
+
+              <article class="slide" data-target="#reward" data-theme="3">
+                <span class="badge">동기부여</span>
+                <h1>보상</h1>
+                <p>목표를 달성하고 배지와 포인트로 보상받으세요.</p>
+                <div class="hero-actions">
+                  <a class="btn hero-cta" href="#reward">보상 확인 <span class="arrow">→</span></a>
+                </div>
+              </article>
+
+              <article class="slide" data-target="#community" data-theme="4">
+                <span class="badge">함께 성장</span>
+                <h1>커뮤니티</h1>
+                <p>질문/답변, 스터디, 이벤트에 참여해 보세요.</p>
+                <div class="hero-actions">
+                  <a class="btn hero-cta" href="#community">참여하기 <span class="arrow">→</span></a>
+                </div>
+              </article>
+            </div>
+
+            <div class="carousel-dots" role="tablist" aria-label="슬라이드 위치 표시">
+              <button class="dot active" data-index="0" role="tab" aria-selected="true" aria-label="1번 슬라이드"></button>
+              <button class="dot" data-index="1" role="tab" aria-selected="false" aria-label="2번 슬라이드"></button>
+              <button class="dot" data-index="2" role="tab" aria-selected="false" aria-label="3번 슬라이드"></button>
+              <button class="dot" data-index="3" role="tab" aria-selected="false" aria-label="4번 슬라이드"></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="learn" class="section">
+        <div class="container">
+          <h2>학습</h2>
+          <p>맞춤형 학습 경로와 실습 과제로 실력을 키우세요.</p>
+
+          <div class="grid cards">
+            <article class="card">
+              <h3>개별 문제 학습</h3>
+              <p>과목→대분류→중분류→소분류로 문제를 선택하고, 즉시 채점·보상을 받아 보세요.</p>
+              <a class="link" href="individual-study.html">바로 시작하기</a>
+            </article>
+            <article class="card">
+              <h3>모의고사</h3>
+              <p>실제 시험과 같은 환경에서 연습하고 성적을 확인하세요.</p>
+              <a class="link" href="mock-exam.html">바로 시작하기</a>
+            </article>
+            <article class="card">
+              <h3>즐겨찾기</h3>
+              <p>즐겨찾은 문항과 오답 문항을 모아 복습하세요.</p>
+              <a class="link" href="favorites.html">바로 가기</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="achievement" class="section alt">
+        <div class="container">
+          <h2>성과</h2>
+          <p>나의 학습 데이터를 바탕으로 통계, 추천, 성취도를 확인하고 성장하세요.</p>
+
+          <div class="grid cards">
+            <article class="card">
+              <h3>학습 통계 대시보드</h3>
+              <p>개인 학습 로그를 기반으로 진행률, 정답률, 일자별 풀이 수를 시각화합니다.</p>
+              <a class="link" href="analytics.html">바로 가기</a>
+            </article>
+            <article class="card">
+              <h3>개인화 추천</h3>
+              <p>최근 성과와 취약 영역을 반영해 맞춤 문제를 추천합니다.</p>
+              <a class="link" href="recommendations.html">바로 가기</a>
+            </article>
+            <article class="card">
+              <h3>성취도 분석</h3>
+              <p>레벨업 진행률, 배지/업적 현황, 리더보드로 성장도를 확인합니다.</p>
+              <a class="link" href="achievements.html">바로 가기</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="reward" class="section">
+        <div class="container">
+          <h2>보상</h2>
+          <p>내 자산을 관리하고 보상을 활용하세요: 지갑, 포인트 상점, 로또, 코인 거래소</p>
+          <div class="grid cards" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
+            <article class="card">
+              <h3>지갑</h3>
+              <p>보유 포인트/코인 및 아이템을 관리하고 거래 내역을 확인하세요.</p>
+              <a class="link" href="wallet.html">바로 가기</a>
+            </article>
+            <article class="card">
+              <h3>포인트 상점</h3>
+              <p>포인트로 상품을 구매하거나 부스터/코인 아이템을 교환하세요.</p>
+              <a class="link" href="shop.html">바로 가기</a>
+            </article>
+            <article class="card">
+              <h3>로또 뽑기</h3>
+              <p>코인으로 번호 6개를 선택해 즉시 추첨 결과를 확인하세요.</p>
+              <a class="link" href="lottery.html">바로 가기</a>
+            </article>
+            <article class="card">
+              <h3>코인 거래소</h3>
+              <p>포인트↔코인 주문을 제출하고 체결/정산 현황을 확인하세요.</p>
+              <a class="link" href="trading.html">바로 가기</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="community" class="section alt">
+        <div class="container">
+          <h2>커뮤니티</h2>
+          <p>스터디, Q&A, 피드백, 사용 방법을 통해 함께 배우고 성장하세요.</p>
+          <div class="grid cards" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
+            <article class="card">
+              <h3>스터디 그룹</h3>
+              <p>그룹 생성/참여, 주간 챌린지, 순위, 실시간 채팅, 코인 선물.</p>
+              <a class="link" href="study-groups.html">바로 가기</a>
+            </article>
+            <article class="card">
+              <h3>질문과 답변</h3>
+              <p>과목/분류/문항 기반 질문, 답변/수정/채택, 인기 질문/랭킹.</p>
+              <a class="link" href="qa-system.html">바로 가기</a>
+            </article>
+            <article class="card">
+              <h3>피드백</h3>
+              <p>오류/개선/기능 요청 접수, 관리자 답변/상태 추적.</p>
+              <a class="link" href="feedback.html">바로 가기</a>
+            </article>
+            <article class="card">
+              <h3>웹 사용 방법</h3>
+              <p>학습·성과·보상·커뮤니티 전체 사용 가이드.</p>
+              <a class="link" href="service.html">바로 가기</a>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+      <div class="container">
+        <div class="grid" style="grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;">
+          <nav aria-label="학습 바로가기">
+            <h3 style="margin-top:0;">학습</h3>
+            <ul class="list" style="grid-template-columns: 1fr;">
+              <li><a class="link" href="individual-study.html">개별 문제 학습</a></li>
+              <li><a class="link" href="mock-exam.html">모의고사</a></li>
+              <li><a class="link" href="favorites.html">즐겨찾기/오답</a></li>
+            </ul>
+          </nav>
+          <nav aria-label="성과 바로가기">
+            <h3 style="margin-top:0;">성과</h3>
+            <ul class="list" style="grid-template-columns: 1fr;">
+              <li><a class="link" href="analytics.html">학습 통계</a></li>
+              <li><a class="link" href="recommendations.html">개인화 추천</a></li>
+              <li><a class="link" href="achievements.html">성취도 분석</a></li>
+            </ul>
+          </nav>
+          <nav aria-label="보상 바로가기">
+            <h3 style="margin-top:0;">보상</h3>
+            <ul class="list" style="grid-template-columns: 1fr;">
+              <li><a class="link" href="wallet.html">지갑</a></li>
+              <li><a class="link" href="shop.html">포인트 상점</a></li>
+              <li><a class="link" href="lottery.html">로또</a></li>
+              <li><a class="link" href="trading.html">코인 거래소</a></li>
+            </ul>
+          </nav>
+          <nav aria-label="커뮤니티 바로가기">
+            <h3 style="margin-top:0;">커뮤니티</h3>
+            <ul class="list" style="grid-template-columns: 1fr;">
+              <li><a class="link" href="study-groups.html">스터디 그룹</a></li>
+              <li><a class="link" href="qa-system.html">질문과 답변</a></li>
+              <li><a class="link" href="feedback.html">피드백</a></li>
+              <li><a class="link" href="service.html">웹 사용 방법</a></li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </footer>
+    <footer class="site-subfooter" role="contentinfo" aria-label="저작권">
+      <div class="container">
+        <div style="margin-top: 4px;">
+          <small>Copyright © <span id="year"></span> 주기헌. All rights reserved.</small>
+        </div>
+      </div>
+    </footer>
+
+    
+
+    <!-- 로그인 모달 -->
+    <div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle" aria-hidden="true">
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-content" role="document">
+        <h2 id="loginTitle">로그인</h2>
+        <p class="modal-desc">메뉴 사용을 위해 로그인이 필요합니다.</p>
+        <form id="loginForm" class="login-form" novalidate>
+          <p class="modal-desc">구글 계정으로 로그인해 주세요.</p>
+          <div class="actions">
+            <button type="submit" class="btn primary">Google로 로그인</button>
+            <button type="button" class="btn ghost" data-close>취소</button>
+          </div>
+          <p class="form-feedback" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <script>
+      // 선택: 비공개로 키를 주입하려면 이 스크립트를 빌드 시 채우거나,
+      // 별도 config.js 파일에서 window.__FIREBASE_CONFIG__를 정의하세요.
+      // window.__FIREBASE_CONFIG__ = { /* firebase config */ };
+    </script>
+    <script src="firebase-config.js" defer></script>
+    <script src="firebase-data.js" defer></script>
+    <script src="app.js" defer></script>
+  </body>
+  </html>
+

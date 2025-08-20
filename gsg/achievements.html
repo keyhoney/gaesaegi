@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GSG - 성취도 분석</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="favorites.css" />
+    <link rel="stylesheet" href="achievements.css" />
+    <link rel="icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문 바로가기</a>
+    <header class="site-header" role="banner">
+      <div class="container nav-container">
+        <div class="brand" aria-label="GSG 홈">
+          <a href="index.html" class="brand" style="text-decoration:none; color:inherit">
+            <span class="logo" aria-hidden="true"><img src="img/gsg-icon.png" alt="GSG 로고" width="60" height="60"/></span>
+            <span class="brand-name">GSG</span>
+          </a>
+        </div>
+        <nav class="site-nav" aria-label="상단 메뉴">
+          <ul>
+            <li><a href="index.html" class="btn ghost small">메인</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="page" tabindex="-1">
+      <section class="section">
+        <div class="container">
+          <h1>성취도 분석</h1>
+          <p class="intro">배지/업적, 레벨업 진행률, 리더보드(레벨·누적 경험치) 현황을 확인하세요.</p>
+
+          <div class="grid" style="grid-template-columns: 1fr; gap: 16px;">
+            <article class="card">
+              <h3>배지 및 업적 현황</h3>
+              <div class="badge-filters" style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                <select id="badgeFilter"><option value="all">모두</option><option value="owned">획득</option><option value="not">미획득</option></select>
+              </div>
+              <div id="badgeList" class="list-grid"></div>
+            </article>
+
+            <article class="card">
+              <h3>레벨업 진행률</h3>
+              <div id="levelProgress" style="display:flex; align-items:center; gap:12px;">
+                <div id="levelLabel" style="min-width:80px; font-weight:700;">Lv. 1</div>
+                <div style="flex:1; background:#f0e9e3; border-radius:10px; overflow:hidden; height:14px;">
+                  <div id="levelBar" style="height:100%; width:0; background:linear-gradient(90deg, var(--accent), var(--primary));"></div>
+                </div>
+                <div id="levelPercent" style="min-width:60px; text-align:right;">0%</div>
+              </div>
+              <div id="levelMeta" class="muted" style="margin-top:8px;"></div>
+            </article>
+
+            <article class="card">
+              <h3>나의 챌린지 현황</h3>
+              <div class="challenge-progress" style="margin-bottom:8px;">
+                <div style="min-width:180px; font-weight:700;">일일 문제 풀이</div>
+                <div class="challenge-bar"><div id="challengeDailyBar"></div></div>
+                <div id="challengeDailyPct" style="min-width:60px; text-align:right;">0%</div>
+              </div>
+              <div id="challengeDaily" class="muted">챌린지 달성까지 남은 문제 수: 0</div>
+
+              <div class="challenge-progress" style="margin:10px 0;">
+                <div style="min-width:180px; font-weight:700;">주간 문제 풀이</div>
+                <div class="challenge-bar"><div id="challengeWeeklyBar"></div></div>
+                <div id="challengeWeeklyPct" style="min-width:60px; text-align:right;">0%</div>
+              </div>
+              <div id="challengeWeekly" class="muted">챌린지 달성까지 남은 문제 수: 0</div>
+
+              <div class="challenge-progress" style="margin:10px 0;">
+                <div style="min-width:180px; font-weight:700;">월간 문제 풀이</div>
+                <div class="challenge-bar"><div id="challengeMonthlyBar"></div></div>
+                <div id="challengeMonthlyPct" style="min-width:60px; text-align:right;">0%</div>
+              </div>
+              <div id="challengeMonthly" class="muted">챌린지 달성까지 남은 문제 수: 0</div>
+            </article>
+
+            <article class="card">
+              <h3>리더보드(레벨 · 누적 경험치)</h3>
+              <div id="leaderboard" class="list-grid"></div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <script src="firebase-config.js" defer></script>
+    <script src="firebase-data.js" defer></script>
+    <script src="achievements.js" defer></script>
+  </body>
+  </html>
+
+

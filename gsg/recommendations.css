@@ -1,0 +1,10 @@
+/* Recommendations page specific overrides */
+
+/* Each item takes full row width */
+.list-grid { grid-template-columns: 1fr !important; }
+
+/* Tweak row layout for readability on wide screens */
+.row .line.bottom .id { min-width: 120px; }
+.row .line.bottom .diff { min-width: 80px; }
+
+
