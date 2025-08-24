@@ -226,8 +226,25 @@ service cloud.firestore {
            (!request.resource.data.keys().hasAll(['progress']) || request.resource.data.progress is number) &&
            (!request.resource.data.keys().hasAll(['target']) || request.resource.data.target is number) &&
            (!request.resource.data.keys().hasAll(['startKey']) || request.resource.data.startKey is string) &&
-           (!request.resource.data.keys().hasAll(['updatedAt']) || request.resource.data.updatedAt is timestamp)
+           (!request.resource.data.keys().hasAll(['updatedAt']) || request.resource.data.updatedAt is timestamp) &&
+           (!request.resource.data.keys().hasAll(['rewardGiven']) || request.resource.data.rewardGiven is bool)
          );
+    }
+
+    // 보상 기록 컬렉션
+    match /studyGroups/{gid}/rewards/{rewardId} {
+      allow read: if isGroupMember(gid);
+      allow create: if isGroupMember(gid)
+                 && request.resource.data.keys().hasAll(['type','progress','memberCount','rewardedAt'])
+                 && request.resource.data.type == 'weekly_challenge'
+                 && request.resource.data.progress is number
+                 && request.resource.data.memberCount is number
+                 && (request.resource.data.rewardedAt is timestamp || request.resource.data.rewardedAt == request.time || request.resource.data.rewardedAt == null)
+                 && (
+           (!request.resource.data.keys().hasAll(['topContributor']) || request.resource.data.topContributor is string) &&
+           (!request.resource.data.keys().hasAll(['topContribution']) || request.resource.data.topContribution is number)
+         );
+      allow update, delete: if false;
     }
 
     // 공개 목록/현황용 축약 정보
