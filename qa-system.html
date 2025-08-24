@@ -34,24 +34,28 @@
 
           <div class="grid" style="grid-template-columns: 360px 1fr; gap: 12px; align-items: start;">
             <aside class="card">
-              <h3>질문 작성</h3>
-              <div class="login-form">
-                <div class="field"><label for="qTitle">제목</label><input id="qTitle" type="text" placeholder="제목을 입력하세요"/></div>
-                <div class="field"><label for="qBody">내용</label><input id="qBody" type="text" placeholder="상세 내용을 입력하세요"/></div>
-                <div class="field"><label>태그(쉼표로 구분)</label><input id="qTags" type="text" placeholder="예: 함수,기출,개념"/></div>
-                <div class="field">
-                  <label>과목/분류/문항 선택</label>
-                  <div class="grid" style="grid-template-columns: 1fr 1fr; gap:8px;">
-                    <select id="selSubject"><option value="">과목</option></select>
-                    <select id="selCat" disabled><option value="">대분류</option></select>
-                    <select id="selSub" disabled><option value="">중분류</option></select>
-                    <select id="selTopic" disabled><option value="">소분류</option></select>
-                    <select id="selQuestion" disabled style="grid-column: span 2;"><option value="">개별 문항</option></select>
-                  </div>
-                </div>
-                <div class="actions"><button id="postQuestion" class="btn primary">질문 올리기</button></div>
-                <p id="askMsg" class="form-feedback" aria-live="polite"></p>
-              </div>
+                             <h3>질문 작성</h3>
+               <div class="login-form">
+                 <div class="field"><label for="qTitle">제목</label><input id="qTitle" type="text" placeholder="제목을 입력하세요"/></div>
+                 <div class="field"><label for="qBody">내용</label><input id="qBody" type="text" placeholder="상세 내용을 입력하세요"/></div>
+                 <div class="field"><label>태그(쉼표로 구분)</label><input id="qTags" type="text" placeholder="예: 함수,기출,개념"/></div>
+                 <div class="field">
+                   <label>과목/분류/문항 선택</label>
+                   <div class="grid" style="grid-template-columns: 1fr 1fr; gap:8px;">
+                     <select id="selSubject"><option value="">과목</option></select>
+                     <select id="selCat" disabled><option value="">대분류</option></select>
+                     <select id="selSub" disabled><option value="">중분류</option></select>
+                     <select id="selTopic" disabled><option value="">소분류</option></select>
+                     <select id="selQuestion" disabled style="grid-column: span 2;"><option value="">개별 문항</option></select>
+                   </div>
+                 </div>
+                 <div class="actions"><button id="postQuestion" class="btn primary">질문 올리기</button></div>
+                 <p id="askMsg" class="form-feedback" aria-live="polite"></p>
+                 <div id="loginNotice" class="muted" style="margin-top: 8px; padding: 8px; background: var(--card); border-radius: 8px; border: 1px solid var(--border);">
+                   <strong>💡 로그인이 필요합니다</strong><br>
+                   질문을 작성하려면 먼저 로그인해 주세요. 로그인 후 질문과 답변을 자유롭게 작성할 수 있습니다.
+                 </div>
+               </div>
               <h3 style="margin-top:12px;">사용자 활동 랭킹</h3>
               <div id="rankUsers" class="list-grid"></div>
             </aside>
