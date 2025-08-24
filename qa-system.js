@@ -6,12 +6,9 @@
 
   // Firebase helpers
   async function ensureFirebase(){
-    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
     const { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
     const { getAuth } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
-    const cfg = await window.loadFirebaseConfig?.();
-    const app = initializeApp(cfg);
-    const db = getFirestore(app);
+    const { app, db } = await window.getFirebaseAppAndDb();
     const auth = getAuth(app);
     return { db, auth, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, serverTimestamp };
   }
@@ -233,10 +230,66 @@
     $('postQuestion').addEventListener('click', postQuestion);
   }
 
+  // 로그인 상태 확인 및 UI 업데이트
+  async function updateLoginStatus() {
+    try {
+      myUid = await window.firebaseData?.getCurrentUserUid?.();
+      const isLoggedIn = !!myUid;
+      
+      // 질문 작성 폼 상태 업데이트
+      const postBtn = $('postQuestion');
+      if (postBtn) {
+        if (isLoggedIn) {
+          postBtn.textContent = '질문 올리기';
+          postBtn.disabled = false;
+          postBtn.className = 'btn primary';
+        } else {
+          postBtn.textContent = '로그인 후 질문 작성';
+          postBtn.disabled = true;
+          postBtn.className = 'btn ghost';
+        }
+      }
+      
+      // 답변 폼 상태 업데이트
+      const answerInput = $('answerInput');
+      const answerSubmitBtn = $('answerForm')?.querySelector('button[type="submit"]');
+      if (answerInput && answerSubmitBtn) {
+        if (isLoggedIn) {
+          answerInput.placeholder = '답변을 입력하세요';
+          answerSubmitBtn.textContent = '등록';
+          answerSubmitBtn.disabled = false;
+          answerSubmitBtn.className = 'btn primary';
+        } else {
+          answerInput.placeholder = '로그인 후 답변을 작성할 수 있습니다';
+          answerSubmitBtn.textContent = '로그인 필요';
+          answerSubmitBtn.disabled = true;
+          answerSubmitBtn.className = 'btn ghost';
+        }
+      }
+      
+      // 로그인 안내 메시지 표시/숨김
+      const loginNotice = $('loginNotice');
+      if (loginNotice) {
+        loginNotice.style.display = isLoggedIn ? 'none' : 'block';
+      }
+      
+    } catch (error) {
+      console.error('로그인 상태 확인 실패:', error);
+    }
+  }
+
   window.addEventListener('load', async ()=>{
     dataset = await loadQuestions(); const h = buildHierarchy(dataset);
     wireAsk(h); wireFilters(h); loadQuestionsList(); loadRanks();
-    try { myUid = await window.firebaseData?.getCurrentUserUid?.(); } catch {}
+    
+    // 초기 로그인 상태 확인
+    await updateLoginStatus();
+    
+    // 로그인 상태 변경 감지 (firebase-data.js에서 제공하는 경우)
+    if (window.firebaseData?.onAuthStateChanged) {
+      window.firebaseData.onAuthStateChanged(updateLoginStatus);
+    }
+    
     $('answerForm').addEventListener('submit', submitAnswer);
   });
 })();
