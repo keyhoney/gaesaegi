@@ -6,6 +6,7 @@
     <title>GSG - 피드백</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="favorites.css" />
+    <link rel="stylesheet" href="individual-study.css" />
     <link rel="icon" href="/favicon.ico" />
   </head>
   <body>
@@ -49,11 +50,28 @@
               </div>
 
               <h3 style="margin-top:12px;">검색/필터</h3>
-              <div class="login-form">
-                <div class="field"><label>검색</label><input id="searchBox" type="text" placeholder="제목/내용 검색"/></div>
-                <div class="grid" style="grid-template-columns: 1fr 1fr; gap:8px;">
-                  <select id="filterCategory"><option value="">카테고리(전체)</option><option value="bug">오류</option><option value="improve">개선</option><option value="feature">기능 요청</option></select>
-                  <select id="filterStatus"><option value="">상태(전체)</option><option value="open">접수</option><option value="answered">응답</option><option value="resolved">해결</option></select>
+              <div class="filters" role="group" aria-label="피드백 검색 및 필터">
+                <div class="field">
+                  <label for="searchBox">검색</label>
+                  <input id="searchBox" type="text" placeholder="제목/내용 검색" aria-label="피드백 검색"/>
+                </div>
+                <div class="field">
+                  <label for="filterCategory">카테고리</label>
+                  <select id="filterCategory" aria-label="카테고리 필터">
+                    <option value="">전체</option>
+                    <option value="bug">오류</option>
+                    <option value="improve">개선</option>
+                    <option value="feature">기능 요청</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="filterStatus">상태</label>
+                  <select id="filterStatus" aria-label="상태 필터">
+                    <option value="">전체</option>
+                    <option value="open">접수</option>
+                    <option value="answered">응답</option>
+                    <option value="resolved">해결</option>
+                  </select>
                 </div>
               </div>
             </aside>

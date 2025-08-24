@@ -6,6 +6,7 @@
     <title>GSG - 질문과 답변</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="favorites.css" />
+    <link rel="stylesheet" href="individual-study.css" />
     <link rel="icon" href="/favicon.ico" />
   </head>
   <body>
@@ -56,12 +57,31 @@
             </aside>
 
             <section class="card">
-              <div class="login-form">
-                <div class="field"><label>검색</label><input id="searchBox" type="text" placeholder="제목/내용/태그 검색"/></div>
-                <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap:8px;">
-                  <select id="filterSubject"><option value="">과목(전체)</option></select>
-                  <select id="filterAccepted"><option value="">채택여부(전체)</option><option value="accepted">채택됨</option><option value="not">미채택</option></select>
-                  <select id="sortBy"><option value="new">최신순</option><option value="popular">인기순(답변수)</option></select>
+              <div class="filters" role="group" aria-label="질문 검색 및 필터">
+                <div class="field">
+                  <label for="searchBox">검색</label>
+                  <input id="searchBox" type="text" placeholder="제목/내용/태그 검색" aria-label="질문 검색"/>
+                </div>
+                <div class="field">
+                  <label for="filterSubject">과목</label>
+                  <select id="filterSubject" aria-label="과목 필터">
+                    <option value="">전체</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="filterAccepted">채택여부</label>
+                  <select id="filterAccepted" aria-label="채택여부 필터">
+                    <option value="">전체</option>
+                    <option value="accepted">채택됨</option>
+                    <option value="not">미채택</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="sortBy">정렬</label>
+                  <select id="sortBy" aria-label="정렬 기준">
+                    <option value="new">최신순</option>
+                    <option value="popular">인기순(답변수)</option>
+                  </select>
                 </div>
               </div>
               <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 12px;">

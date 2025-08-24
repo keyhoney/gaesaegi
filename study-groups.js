@@ -514,7 +514,7 @@
       const { db, doc, setDoc, getDoc, serverTimestamp } = await ensureFirebase();
       const cRef = doc(db,'studyGroups', currentGroupId, 'meta', 'weekly');
       const snap = await getDoc(cRef);
-      let cur = 0; let startKey = null;
+      let cur = 0; let startKey = null; let rewardGiven = false;
       if (!snap.exists()) {
         // 초기화 - 클라이언트 시간 사용
         const now = new Date();
@@ -522,7 +522,7 @@
         const k = koreaTime.getFullYear().toString() + 
                   (koreaTime.getMonth() + 1).toString().padStart(2, '0') + 
                   koreaTime.getDate().toString().padStart(2, '0');
-        await setDoc(cRef, { progress: 0, target, startKey: k, updatedAt: serverTimestamp() }, { merge: true });
+        await setDoc(cRef, { progress: 0, target, startKey: k, rewardGiven: false, updatedAt: serverTimestamp() }, { merge: true });
         
         // 공개 정보 업데이트 (권한 문제로 실패할 수 있으므로 무시)
                  try {
@@ -540,10 +540,17 @@
           console.warn('공개 그룹 정보 업데이트 실패 (권한 제한):', error);
         }
         
-        cur = 0; startKey = k;
+        cur = 0; startKey = k; rewardGiven = false;
       } else {
-        const d = snap.data()||{}; cur = Number(d.progress||0); startKey = d.startKey||null;
+        const d = snap.data()||{}; cur = Number(d.progress||0); startKey = d.startKey||null; rewardGiven = Boolean(d.rewardGiven||false);
         if (Number(d.target||0) !== target) { try { await setDoc(cRef, { target }, { merge: true }); } catch {} }
+        
+        // 챌린지 달성 시 보상 지급
+        if (cur >= target && !rewardGiven && target > 0) {
+          await giveChallengeRewards(cur);
+          await setDoc(cRef, { rewardGiven: true }, { merge: true });
+          rewardGiven = true;
+        }
         
         // 공개 정보 업데이트 (권한 문제로 실패할 수 있으므로 무시)
         try {
@@ -562,6 +569,74 @@
       const ratio = target>0 ? Math.max(0, Math.min(100, Math.round(cur/target*100))) : 0;
       $('challengeBar').style.width = `${ratio}%`;
     } catch { $('challengeMeta').textContent = '주간 챌린지를 불러오지 못했습니다.'; }
+  }
+
+  // 챌린지 달성 시 보상 지급 함수
+  async function giveChallengeRewards(currentProgress) {
+    try {
+      const members = Array.isArray(currentGroup.members) ? currentGroup.members : [];
+      if (members.length === 0) return;
+
+      // 각 멤버의 기여도 계산
+      const memberContributions = [];
+      for (const uid of members) {
+        try {
+          const { db, collection, getDocs } = await ensureFirebase();
+          const ref = collection(db, 'users', uid, 'events');
+          const qs = await getDocs(ref);
+          const cnt = qs.docs.filter(d => d.data() && d.data().type === 'answer').length;
+          memberContributions.push({ uid, contribution: cnt });
+        } catch (error) {
+          console.warn(`멤버 ${uid} 기여도 계산 실패:`, error);
+          memberContributions.push({ uid, contribution: 0 });
+        }
+      }
+
+      // 기여도 순으로 정렬
+      memberContributions.sort((a, b) => b.contribution - a.contribution);
+
+      // 그룹 전체 보상: 모든 그룹원에게 1개 코인 지급
+      for (const member of members) {
+        try {
+          await window.firebaseData?.adjustCoins?.(1, `challenge:group:${currentGroupId}:reward:all`);
+        } catch (error) {
+          console.warn(`멤버 ${member} 그룹 보상 지급 실패:`, error);
+        }
+      }
+
+      // 개인 보상: 기여도가 가장 높은 그룹원에게 1개 코인 추가 지급 (그룹원이 2명 이상인 경우만)
+      if (members.length > 1 && memberContributions.length > 0) {
+        const topContributor = memberContributions[0];
+        try {
+          await window.firebaseData?.adjustCoins?.(1, `challenge:group:${currentGroupId}:reward:top:${topContributor.uid}`);
+          showToast(`🎉 주간 챌린지 달성! 모든 그룹원에게 1코인, 최고 기여자에게 추가 1코인이 지급되었습니다.`, 'success');
+        } catch (error) {
+          console.warn(`최고 기여자 ${topContributor.uid} 개인 보상 지급 실패:`, error);
+          showToast(`🎉 주간 챌린지 달성! 모든 그룹원에게 1코인이 지급되었습니다.`, 'success');
+        }
+      } else if (members.length === 1) {
+        showToast(`🎉 주간 챌린지 달성! 1코인이 지급되었습니다.`, 'success');
+      }
+
+      // 보상 지급 기록 (권한 문제로 실패할 수 있으므로 무시)
+      try {
+        const { db, collection, addDoc, serverTimestamp } = await ensureFirebase();
+        await addDoc(collection(db, 'studyGroups', currentGroupId, 'rewards'), {
+          type: 'weekly_challenge',
+          progress: currentProgress,
+          memberCount: members.length,
+          topContributor: members.length > 1 ? memberContributions[0]?.uid : null,
+          topContribution: members.length > 1 ? memberContributions[0]?.contribution : null,
+          rewardedAt: serverTimestamp()
+        });
+      } catch (error) {
+        console.warn('보상 지급 기록 실패:', error);
+      }
+
+    } catch (error) {
+      console.error('챌린지 보상 지급 실패:', error);
+      showToast('챌린지 보상 지급 중 오류가 발생했습니다.', 'error');
+    }
   }
 
   async function saveMessage(e){
