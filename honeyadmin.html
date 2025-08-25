@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 페이지 - 개새기</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .admin-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .admin-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .data-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .data-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .user-email {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+        
+        .refresh-btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .access-denied {
+            text-align: center;
+            padding: 100px 20px;
+            color: #c62828;
+        }
+        
+        .access-denied h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>🔐 관리자 페이지</h1>
+            <p>개새기 서비스 관리자 전용 페이지</p>
+        </div>
+        
+        <div id="accessDenied" class="access-denied" style="display: none;">
+            <h1>🚫 접근 권한이 없습니다</h1>
+            <p>이 페이지는 관리자만 접근할 수 있습니다.</p>
+        </div>
+        
+        <div id="adminContent" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalUsers">-</div>
+                    <div class="stat-label">총 사용자 수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalPoints">-</div>
+                    <div class="stat-label">총 포인트</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalCoins">-</div>
+                    <div class="stat-label">총 코인</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalPurchases">-</div>
+                    <div class="stat-label">총 구매 건수</div>
+                </div>
+            </div>
+            
+            <button class="refresh-btn" onclick="refreshAllData()">🔄 데이터 새로고침</button>
+            
+            <div class="admin-section">
+                <h2>💰 사용자 포인트/코인 현황</h2>
+                <div id="balancesLoading" class="loading">데이터를 불러오는 중...</div>
+                <div id="balancesError" class="error" style="display: none;"></div>
+                <table id="balancesTable" class="data-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>사용자</th>
+                            <th>이메일</th>
+                            <th>포인트</th>
+                            <th>코인</th>
+                            <th>총 포인트</th>
+                            <th>총 코인</th>
+                        </tr>
+                    </thead>
+                    <tbody id="balancesBody"></tbody>
+                </table>
+            </div>
+            
+            <div class="admin-section">
+                <h2>🛒 상점 구매 내역</h2>
+                <div id="purchasesLoading" class="loading">데이터를 불러오는 중...</div>
+                <div id="purchasesError" class="error" style="display: none;"></div>
+                <table id="purchasesTable" class="data-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>사용자</th>
+                            <th>상품명</th>
+                            <th>카테고리</th>
+                            <th>가격</th>
+                            <th>구매일시</th>
+                        </tr>
+                    </thead>
+                    <tbody id="purchasesBody"></tbody>
+                </table>
+            </div>
+            
+            <div class="admin-section">
+                <h2>🎰 로또 구매 내역</h2>
+                <div id="lotteryLoading" class="loading">데이터를 불러오는 중...</div>
+                <div id="lotteryError" class="error" style="display: none;"></div>
+                <table id="lotteryTable" class="data-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>사용자</th>
+                            <th>선택 번호</th>
+                            <th>당첨 번호</th>
+                            <th>보너스</th>
+                            <th>맞은 개수</th>
+                            <th>등수</th>
+                            <th>구매일시</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lotteryBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script src="firebase-config.js"></script>
+    <script src="firebase-data.js"></script>
+    <script src="honeyadmin.js"></script>
+</body>
+</html>
