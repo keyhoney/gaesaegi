@@ -4,12 +4,13 @@
   // 관리자 UID
   const ADMIN_UID = 'zcaWS7Kl8xSeBoWrVY5w2LpMwsj2';
   
-  // 전역 변수
-  let currentUserUid = null;
-  let allUsers = [];
-  let allBalances = [];
-  let allPurchases = [];
-  let allLotteryTickets = [];
+     // 전역 변수
+   let currentUserUid = null;
+   let allUsers = [];
+   let allBalances = [];
+   let allPurchases = [];
+   let allLotteryTickets = [];
+   let allCoinHistory = [];
 
   // 숫자 포맷팅 함수
   function formatNumber(num) {
@@ -176,74 +177,116 @@
     }
   }
 
-  // 모든 로또 내역 가져오기
-  async function fetchAllLotteryTickets() {
-    try {
-      const { db } = await window.getFirebaseAppAndDb();
-      const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-      
-      allLotteryTickets = [];
-      
-      for (const user of allUsers) {
-        try {
-          const lotteryRef = collection(db, 'users', user.uid, 'lotteryTickets');
-          const lotteryQuery = query(lotteryRef, orderBy('at', 'desc'));
-          const lotterySnap = await getDocs(lotteryQuery);
-          
-          lotterySnap.forEach(doc => {
-            const ticketData = doc.data();
-            allLotteryTickets.push({
-              id: doc.id,
-              uid: user.uid,
-              user: user,
-              ...ticketData
-            });
-          });
-        } catch (error) {
-          console.error(`사용자 ${user.uid} 로또 내역 가져오기 실패:`, error);
-        }
-      }
-      
-      return allLotteryTickets;
-    } catch (error) {
-      console.error('로또 내역 가져오기 실패:', error);
-      throw error;
-    }
-  }
+     // 모든 로또 내역 가져오기
+   async function fetchAllLotteryTickets() {
+     try {
+       const { db } = await window.getFirebaseAppAndDb();
+       const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+       
+       allLotteryTickets = [];
+       
+       for (const user of allUsers) {
+         try {
+           const lotteryRef = collection(db, 'users', user.uid, 'lotteryTickets');
+           const lotteryQuery = query(lotteryRef, orderBy('at', 'desc'));
+           const lotterySnap = await getDocs(lotteryQuery);
+           
+           lotterySnap.forEach(doc => {
+             const ticketData = doc.data();
+             allLotteryTickets.push({
+               id: doc.id,
+               uid: user.uid,
+               user: user,
+               ...ticketData
+             });
+           });
+         } catch (error) {
+           console.error(`사용자 ${user.uid} 로또 내역 가져오기 실패:`, error);
+         }
+       }
+       
+       return allLotteryTickets;
+     } catch (error) {
+       console.error('로또 내역 가져오기 실패:', error);
+       throw error;
+     }
+   }
+
+   // 모든 코인 지급 내역 가져오기
+   async function fetchAllCoinHistory() {
+     try {
+       const { db } = await window.getFirebaseAppAndDb();
+       const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+       
+       allCoinHistory = [];
+       
+       for (const user of allUsers) {
+         try {
+           const coinHistoryRef = collection(db, 'users', user.uid, 'coinHistory');
+           const coinHistoryQuery = query(coinHistoryRef, orderBy('givenAt', 'desc'));
+           const coinHistorySnap = await getDocs(coinHistoryQuery);
+           
+           coinHistorySnap.forEach(doc => {
+             const historyData = doc.data();
+             allCoinHistory.push({
+               id: doc.id,
+               uid: user.uid,
+               user: user,
+               ...historyData
+             });
+           });
+         } catch (error) {
+           console.error(`사용자 ${user.uid} 코인 지급 내역 가져오기 실패:`, error);
+         }
+       }
+       
+       return allCoinHistory;
+     } catch (error) {
+       console.error('코인 지급 내역 가져오기 실패:', error);
+       throw error;
+     }
+   }
 
   // 통계 업데이트 (사용하지 않음)
   function updateStats() {
     // 통계 카드가 제거되어 사용하지 않음
   }
 
-  // 잔액 테이블 렌더링
-  function renderBalancesTable() {
-    const tbody = document.getElementById('balancesBody');
-    const loading = document.getElementById('balancesLoading');
-    const error = document.getElementById('balancesError');
-    const table = document.getElementById('balancesTable');
-    
-    try {
-      const sortedBalances = allBalances.sort((a, b) => b.points - a.points);
-      
-      tbody.innerHTML = sortedBalances.map(balance => `
-        <tr>
-          <td>${renderUserInfo(balance.user)}</td>
-          <td>${formatNumber(balance.points)} pt</td>
-          <td>${formatNumber(balance.coins)} coin</td>
-        </tr>
-      `).join('');
-      
-      loading.style.display = 'none';
-      error.style.display = 'none';
-      table.style.display = 'table';
-    } catch (err) {
-      loading.style.display = 'none';
-      error.style.display = 'block';
-      error.textContent = '잔액 정보를 불러오는 중 오류가 발생했습니다.';
-      table.style.display = 'none';
-    }
-  }
+     // 잔액 테이블 렌더링
+   function renderBalancesTable() {
+     const tbody = document.getElementById('balancesBody');
+     const loading = document.getElementById('balancesLoading');
+     const error = document.getElementById('balancesError');
+     const table = document.getElementById('balancesTable');
+     
+     try {
+       const sortedBalances = allBalances.sort((a, b) => b.points - a.points);
+       
+       tbody.innerHTML = sortedBalances.map(balance => `
+         <tr>
+           <td>${renderUserInfo(balance.user)}</td>
+           <td>${formatNumber(balance.points)} pt</td>
+           <td>${formatNumber(balance.coins)} coin</td>
+           <td>
+             <div class="coin-give-form">
+               <input type="number" min="1" max="100" placeholder="코인" class="coin-amount" data-uid="${balance.uid}">
+               <input type="text" placeholder="사유 (예: 수업 중 활발한 참여)" class="coin-reason" data-uid="${balance.uid}">
+               <button class="coin-give-btn" onclick="giveCoin('${balance.uid}')" data-uid="${balance.uid}">지급</button>
+             </div>
+           </td>
+         </tr>
+       `).join('');
+       
+       loading.style.display = 'none';
+       error.style.display = 'none';
+       table.style.display = 'table';
+     } catch (err) {
+       loading.style.display = 'none';
+       error.style.display = 'block';
+       error.textContent = '잔액 정보를 불러오는 중 오류가 발생했습니다.';
+       table.style.display = 'none';
+     }
+   }
 
   // 구매 내역 테이블 렌더링
   function renderPurchasesTable() {
@@ -280,84 +323,194 @@
     }
   }
 
-  // 로또 내역 테이블 렌더링
-  function renderLotteryTable() {
-    const tbody = document.getElementById('lotteryBody');
-    const loading = document.getElementById('lotteryLoading');
-    const error = document.getElementById('lotteryError');
-    const table = document.getElementById('lotteryTable');
-    
-    try {
-      const sortedTickets = allLotteryTickets.sort((a, b) => {
-        const aTime = a.at?.toDate ? a.at.toDate().getTime() : 0;
-        const bTime = b.at?.toDate ? b.at.toDate().getTime() : 0;
-        return bTime - aTime;
-      });
-      
-      tbody.innerHTML = sortedTickets.map(ticket => {
-        const nums = Array.isArray(ticket.nums) ? ticket.nums.join(', ') : '-';
-        const drawNums = Array.isArray(ticket.drawNums) ? ticket.drawNums.join(', ') : '-';
-        const bonus = ticket.drawBonus || '-';
-        const hitCount = ticket.hitCount || 0;
-        const rank = ticket.rank ? `${ticket.rank}등` : '미당첨';
-        
-        return `
-          <tr>
-            <td>${renderUserInfo(ticket.user)}</td>
-            <td>${nums}</td>
-            <td>${drawNums}</td>
-            <td>${bonus}</td>
-            <td>${hitCount}개</td>
-            <td>${rank}</td>
-            <td>${formatDate(ticket.at)}</td>
-          </tr>
-        `;
-      }).join('');
-      
-      loading.style.display = 'none';
-      error.style.display = 'none';
-      table.style.display = 'table';
-    } catch (err) {
-      loading.style.display = 'none';
-      error.style.display = 'block';
-      error.textContent = '로또 내역을 불러오는 중 오류가 발생했습니다.';
-      table.style.display = 'none';
-    }
-  }
+     // 로또 내역 테이블 렌더링
+   function renderLotteryTable() {
+     const tbody = document.getElementById('lotteryBody');
+     const loading = document.getElementById('lotteryLoading');
+     const error = document.getElementById('lotteryError');
+     const table = document.getElementById('lotteryTable');
+     
+     try {
+       const sortedTickets = allLotteryTickets.sort((a, b) => {
+         const aTime = a.at?.toDate ? a.at.toDate().getTime() : 0;
+         const bTime = b.at?.toDate ? b.at.toDate().getTime() : 0;
+         return bTime - aTime;
+       });
+       
+       tbody.innerHTML = sortedTickets.map(ticket => {
+         const nums = Array.isArray(ticket.nums) ? ticket.nums.join(', ') : '-';
+         const drawNums = Array.isArray(ticket.drawNums) ? ticket.drawNums.join(', ') : '-';
+         const bonus = ticket.drawBonus || '-';
+         const hitCount = ticket.hitCount || 0;
+         const rank = ticket.rank ? `${ticket.rank}등` : '미당첨';
+         
+         return `
+           <tr>
+             <td>${renderUserInfo(ticket.user)}</td>
+             <td>${nums}</td>
+             <td>${drawNums}</td>
+             <td>${bonus}</td>
+             <td>${hitCount}개</td>
+             <td>${rank}</td>
+             <td>${formatDate(ticket.at)}</td>
+           </tr>
+         `;
+       }).join('');
+       
+       loading.style.display = 'none';
+       error.style.display = 'none';
+       table.style.display = 'table';
+     } catch (err) {
+       loading.style.display = 'none';
+       error.style.display = 'block';
+       error.textContent = '로또 내역을 불러오는 중 오류가 발생했습니다.';
+       table.style.display = 'none';
+     }
+   }
 
-  // 모든 데이터 새로고침
-  async function refreshAllData() {
-    try {
-      // 로딩 상태 표시
-      document.getElementById('balancesLoading').style.display = 'block';
-      document.getElementById('purchasesLoading').style.display = 'block';
-      document.getElementById('lotteryLoading').style.display = 'block';
-      
-      document.getElementById('balancesTable').style.display = 'none';
-      document.getElementById('purchasesTable').style.display = 'none';
-      document.getElementById('lotteryTable').style.display = 'none';
-      
-      // 데이터 가져오기
-      await fetchAllUsers();
-      await Promise.all([
-        fetchAllBalances(),
-        fetchAllPurchases(),
-        fetchAllLotteryTickets()
-      ]);
-      
-      // 테이블 업데이트
-      renderBalancesTable();
-      renderPurchasesTable();
-      renderLotteryTable();
-      
-    } catch (error) {
-      console.error('데이터 새로고침 실패:', error);
-      alert('데이터를 새로고침하는 중 오류가 발생했습니다.');
-    }
-  }
+   // 코인 지급 내역 테이블 렌더링
+   function renderCoinHistoryTable() {
+     const tbody = document.getElementById('coinHistoryBody');
+     const loading = document.getElementById('coinHistoryLoading');
+     const error = document.getElementById('coinHistoryError');
+     const table = document.getElementById('coinHistoryTable');
+     
+     try {
+       const sortedHistory = allCoinHistory.sort((a, b) => {
+         const aTime = a.givenAt?.toDate ? a.givenAt.toDate().getTime() : 0;
+         const bTime = b.givenAt?.toDate ? b.givenAt.toDate().getTime() : 0;
+         return bTime - aTime;
+       });
+       
+       tbody.innerHTML = sortedHistory.map(history => `
+         <tr>
+           <td>${renderUserInfo(history.user)}</td>
+           <td>${formatNumber(history.amount || 0)} coin</td>
+           <td>${history.reason || '-'}</td>
+           <td>${formatDate(history.givenAt)}</td>
+         </tr>
+       `).join('');
+       
+       loading.style.display = 'none';
+       error.style.display = 'none';
+       table.style.display = 'table';
+     } catch (err) {
+       loading.style.display = 'none';
+       error.style.display = 'block';
+       error.textContent = '코인 지급 내역을 불러오는 중 오류가 발생했습니다.';
+       table.style.display = 'none';
+     }
+   }
 
-  // 전역 함수로 노출
-  window.refreshAllData = refreshAllData;
+     // 모든 데이터 새로고침
+   async function refreshAllData() {
+     try {
+       // 로딩 상태 표시
+       document.getElementById('balancesLoading').style.display = 'block';
+       document.getElementById('purchasesLoading').style.display = 'block';
+       document.getElementById('lotteryLoading').style.display = 'block';
+       document.getElementById('coinHistoryLoading').style.display = 'block';
+       
+       document.getElementById('balancesTable').style.display = 'none';
+       document.getElementById('purchasesTable').style.display = 'none';
+       document.getElementById('lotteryTable').style.display = 'none';
+       document.getElementById('coinHistoryTable').style.display = 'none';
+       
+       // 데이터 가져오기
+       await fetchAllUsers();
+       await Promise.all([
+         fetchAllBalances(),
+         fetchAllPurchases(),
+         fetchAllLotteryTickets(),
+         fetchAllCoinHistory()
+       ]);
+       
+       // 테이블 업데이트
+       renderBalancesTable();
+       renderPurchasesTable();
+       renderLotteryTable();
+       renderCoinHistoryTable();
+       
+     } catch (error) {
+       console.error('데이터 새로고침 실패:', error);
+       alert('데이터를 새로고침하는 중 오류가 발생했습니다.');
+     }
+   }
+
+   // 코인 지급 함수
+   async function giveCoin(uid) {
+     try {
+       const amountInput = document.querySelector(`input.coin-amount[data-uid="${uid}"]`);
+       const reasonInput = document.querySelector(`input.coin-reason[data-uid="${uid}"]`);
+       const button = document.querySelector(`button.coin-give-btn[data-uid="${uid}"]`);
+       
+       const amount = Number(amountInput.value);
+       const reason = reasonInput.value.trim();
+       
+       if (!amount || amount <= 0) {
+         alert('지급할 코인 수량을 입력해주세요.');
+         return;
+       }
+       
+       if (!reason) {
+         alert('코인 지급 사유를 입력해주세요.');
+         return;
+       }
+       
+       if (amount > 100) {
+         alert('한 번에 최대 100코인까지만 지급할 수 있습니다.');
+         return;
+       }
+       
+       // 버튼 비활성화
+       button.disabled = true;
+       button.textContent = '처리중...';
+       
+       const { db } = await window.getFirebaseAppAndDb();
+       const { doc, updateDoc, addDoc, collection, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+       
+       // 사용자 지갑 업데이트
+       const walletRef = doc(db, 'users', uid, 'wallet', 'main');
+       await updateDoc(walletRef, {
+         coins: window.firebaseData.increment(amount),
+         totalCoins: window.firebaseData.increment(amount)
+       });
+       
+       // 코인 지급 내역 기록
+       const coinHistoryRef = collection(db, 'users', uid, 'coinHistory');
+       await addDoc(coinHistoryRef, {
+         amount: amount,
+         reason: reason,
+         givenAt: serverTimestamp(),
+         givenBy: currentUserUid
+       });
+       
+       // 입력 필드 초기화
+       amountInput.value = '';
+       reasonInput.value = '';
+       
+       // 성공 메시지
+       alert(`${amount}코인이 성공적으로 지급되었습니다.`);
+       
+       // 데이터 새로고침
+       await refreshAllData();
+       
+     } catch (error) {
+       console.error('코인 지급 실패:', error);
+       alert('코인 지급 중 오류가 발생했습니다.');
+       
+       // 버튼 재활성화
+       const button = document.querySelector(`button.coin-give-btn[data-uid="${uid}"]`);
+       if (button) {
+         button.disabled = false;
+         button.textContent = '지급';
+       }
+     }
+   }
+
+     // 전역 함수로 노출
+   window.refreshAllData = refreshAllData;
+   window.giveCoin = giveCoin;
 
   // 페이지 로드 시 초기화
   window.addEventListener('load', async () => {

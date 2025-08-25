@@ -153,10 +153,50 @@
             color: #c62828;
         }
         
-        .access-denied h1 {
-            font-size: 2em;
-            margin-bottom: 20px;
-        }
+                 .access-denied h1 {
+             font-size: 2em;
+             margin-bottom: 20px;
+         }
+         
+         .coin-give-form {
+             display: flex;
+             gap: 10px;
+             align-items: center;
+             margin-top: 10px;
+         }
+         
+         .coin-give-form input[type="number"] {
+             width: 80px;
+             padding: 5px;
+             border: 1px solid #ddd;
+             border-radius: 4px;
+         }
+         
+         .coin-give-form input[type="text"] {
+             flex: 1;
+             padding: 5px;
+             border: 1px solid #ddd;
+             border-radius: 4px;
+         }
+         
+         .coin-give-btn {
+             background: #28a745;
+             color: white;
+             border: none;
+             padding: 5px 10px;
+             border-radius: 4px;
+             cursor: pointer;
+             font-size: 12px;
+         }
+         
+         .coin-give-btn:hover {
+             background: #218838;
+         }
+         
+         .coin-give-btn:disabled {
+             background: #6c757d;
+             cursor: not-allowed;
+         }
     </style>
 </head>
 <body>
@@ -174,21 +214,39 @@
         <div id="adminContent" style="display: none;">
             <button class="refresh-btn" onclick="refreshAllData()">🔄 데이터 새로고침</button>
             
-            <div class="admin-section">
-                <h2>💰 사용자 포인트/코인 현황</h2>
-                <div id="balancesLoading" class="loading">데이터를 불러오는 중...</div>
-                <div id="balancesError" class="error" style="display: none;"></div>
-                                 <table id="balancesTable" class="data-table" style="display: none;">
+                         <div class="admin-section">
+                 <h2>💰 사용자 포인트/코인 현황</h2>
+                 <div id="balancesLoading" class="loading">데이터를 불러오는 중...</div>
+                 <div id="balancesError" class="error" style="display: none;"></div>
+                 <table id="balancesTable" class="data-table" style="display: none;">
                      <thead>
                          <tr>
                              <th>사용자</th>
                              <th>가용 포인트</th>
                              <th>가용 코인</th>
+                             <th>코인 지급</th>
                          </tr>
                      </thead>
                      <tbody id="balancesBody"></tbody>
                  </table>
-            </div>
+             </div>
+             
+             <div class="admin-section">
+                 <h2>🎁 코인 지급 내역</h2>
+                 <div id="coinHistoryLoading" class="loading">데이터를 불러오는 중...</div>
+                 <div id="coinHistoryError" class="error" style="display: none;"></div>
+                 <table id="coinHistoryTable" class="data-table" style="display: none;">
+                     <thead>
+                         <tr>
+                             <th>받은 학생</th>
+                             <th>지급한 코인</th>
+                             <th>사유</th>
+                             <th>지급일시</th>
+                         </tr>
+                     </thead>
+                     <tbody id="coinHistoryBody"></tbody>
+                 </table>
+             </div>
             
             <div class="admin-section">
                 <h2>🛒 상점 구매 내역</h2>
