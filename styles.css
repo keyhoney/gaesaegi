@@ -571,8 +571,8 @@ a:visited { color: var(--text); }
 
 /* 당첨 상품 안내 스타일 */
 .prize-info {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 8px;
 }
 
@@ -603,6 +603,10 @@ a:visited { color: var(--text); }
 }
 
 @media (max-width: 640px) {
+  .prize-info {
+    grid-template-columns: 1fr;
+  }
+  
   .prize-item {
     flex-direction: column;
     align-items: flex-start;
@@ -611,5 +615,50 @@ a:visited { color: var(--text); }
   
   .prize-rank {
     min-width: auto;
+  }
+}
+
+/* 로또 번호 선택 원형 버튼 스타일 */
+.lottery-number-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--card);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  margin: 0;
+}
+
+.lottery-number-btn:hover {
+  border-color: var(--primary);
+  background: var(--bg-alt);
+  transform: scale(1.05);
+}
+
+.lottery-number-btn.selected {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(138, 75, 83, 0.3);
+}
+
+.lottery-number-btn.selected:hover {
+  background: var(--primary-strong);
+  transform: scale(1.05);
+}
+
+@media (max-width: 640px) {
+  .lottery-number-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
   }
 }

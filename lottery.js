@@ -22,7 +22,7 @@
     const items = [];
     for (let i=1;i<=20;i++){
       const on = nums.has(i);
-      items.push(`<button class="btn small ${on? 'primary':''}" data-n="${i}">${i}</button>`);
+      items.push(`<button class="lottery-number-btn ${on? 'selected':''}" data-n="${i}">${i}</button>`);
     }
     gridEl.innerHTML = items.join('');
     gridEl.querySelectorAll('[data-n]').forEach(btn=>{
