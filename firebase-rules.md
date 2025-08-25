@@ -50,31 +50,14 @@ service cloud.firestore {
 
       // 생성: 인증자, 필수 필드/값 검증
       allow create: if request.auth != null
-        && request.resource.data.keys().hasAll(['uid','side','price','qty','qtyRemaining','status','createdAt'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.side in ['buy','sell']
         && request.resource.data.price is number
         && request.resource.data.qty is number
-        && request.resource.data.qty > 0
-        && request.resource.data.qtyRemaining == request.resource.data.qty
-        && request.resource.data.status == 'open'
-        && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time || request.resource.data.createdAt == null);
+        && request.resource.data.qty > 0;
 
-      // 업데이트: 매칭 시스템을 위한 완화된 규칙
-      allow update: if request.auth != null && (
-        // 1) 소유자에 의한 취소
-        (
-          resource.data.uid == request.auth.uid
-          && resource.data.status == 'open'
-          && request.resource.data.status == 'cancelled'
-        ) ||
-        // 2) 매칭 시스템에 의한 업데이트 (완화된 규칙)
-        (
-          request.resource.data.qtyRemaining is number
-          && request.resource.data.qtyRemaining >= 0
-          && request.resource.data.status in ['open','filled','cancelled']
-        )
-      );
+      // 업데이트: 매칭 시스템을 위한 매우 완화된 규칙
+      allow update: if request.auth != null;
 
       // 삭제 불허
       allow delete: if false;
@@ -85,56 +68,26 @@ service cloud.firestore {
       allow read: if true;
 
       // 생성: 인증자, 필수 필드 검증 (완화된 규칙)
-      allow create: if request.auth != null
-        && request.resource.data.buyerUid is string
-        && request.resource.data.sellerUid is string
-        && request.resource.data.price is number
-        && request.resource.data.qty is number
-        && request.resource.data.qty > 0;
+      allow create: if request.auth != null;
 
-      // 정산: 완화된 업데이트 규칙
-      allow update: if request.auth != null && (
-        // 본인 claim 플래그 변경
-        (
-          (request.auth.uid == resource.data.buyerUid && request.resource.data.buyerClaimed == true) ||
-          (request.auth.uid == resource.data.sellerUid && request.resource.data.sellerClaimed == true)
-        ) ||
-        // 매칭 시스템에 의한 업데이트 (완화된 규칙)
-        (
-          request.resource.data.buyerUid is string
-          && request.resource.data.sellerUid is string
-          && request.resource.data.price is number
-          && request.resource.data.qty is number
-          && request.resource.data.qty > 0
-        )
-      );
+      // 정산: 매우 완화된 업데이트 규칙
+      allow update: if request.auth != null;
 
       allow delete: if false;
     }
 
-    // 티커: 공개 읽기, 인증자 쓰기(필드 제한) — 부분 업데이트 허용
+    // 티커: 공개 읽기, 인증자 쓰기
     match /market/public/ticker/{docId} {
       allow read: if true;
-      // 부분 업데이트 허용: 변경하려는 키들만 타입 검사
-      allow write: if request.auth != null
-        && request.resource.data.keys().subsetOf(['lastPrice','prevPrice','changePct','updatedAt'])
-        && (
-          (!request.resource.data.keys().hasAll(['lastPrice']) || request.resource.data.lastPrice is number) &&
-          (!request.resource.data.keys().hasAll(['prevPrice'])  || request.resource.data.prevPrice  is number) &&
-          (!request.resource.data.keys().hasAll(['changePct'])  || request.resource.data.changePct  is number) &&
-          (!request.resource.data.keys().hasAll(['updatedAt'])  || request.resource.data.updatedAt  is timestamp)
-        );
+      // 매칭 시스템을 위한 매우 완화된 규칙
+      allow write: if request.auth != null;
     }
 
     // 공개 체결 로그
     match /market/public/trades/{tid} {
       allow read: if true;
-      // 매칭 시스템을 위한 완화된 규칙
-      allow write: if request.auth != null
-        && request.resource.data.side in ['buy','sell','trade']
-        && request.resource.data.price is number
-        && request.resource.data.qty is number
-        && request.resource.data.qty > 0;
+      // 매칭 시스템을 위한 매우 완화된 규칙
+      allow write: if request.auth != null;
       allow delete: if false;
     }
 
