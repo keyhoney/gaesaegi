@@ -954,54 +954,158 @@
         const ordersRef = collection(db, 'market', 'public', 'orders');
         const snap = await getDocs(ordersRef);
         if (snap.empty) return { ok:false, reason:'no-orders' };
-        // 클라이언트 집계로 최우선 매수/매도 선택 (인덱스 불필요)
+        
+        // 모든 오픈 주문 가져오기
         const docs = snap.docs.filter(d => (d.data()||{}).status === 'open');
         const bids = docs.filter(d => d.data().side === 'buy');
         const asks = docs.filter(d => d.data().side === 'sell');
         if (bids.length === 0 || asks.length === 0) return { ok:false, reason:'no-orders' };
+        
+        // 매수/매도 주문을 가격순으로 정렬
         function tsMillis(d){ const c=d.data().createdAt; return Number(c?.toMillis?.()||0); }
-        const bestBidDoc = bids.sort((a,b)=>{
-          const pa = Number(b.data().price), pb = Number(a.data().price); // sort desc by price
+        const sortedBids = bids.sort((a,b)=>{
+          const pa = Number(b.data().price), pb = Number(a.data().price); // 매수: 높은 가격 우선
           if (pa !== pb) return pa - pb;
-          return tsMillis(a) - tsMillis(b); // earlier first
-        })[0];
-        const bestAskDoc = asks.sort((a,b)=>{
-          const pa = Number(a.data().price), pb = Number(b.data().price); // sort asc by price
-          if (pa !== pb) return pa - pb;
-          return tsMillis(a) - tsMillis(b);
-        })[0];
-        const b0 = bestBidDoc.data();
-        const a0 = bestAskDoc.data();
-        if (Number(b0.price) < Number(a0.price)) return { ok:false, reason:'no-cross' };
-        const bidRef = bestBidDoc.ref; const askRef = bestAskDoc.ref;
-        await runTransaction(db, async (trx) => {
-          const b = (await trx.get(bidRef)).data();
-          const a = (await trx.get(askRef)).data();
-          if (!b || !a || b.status!=='open' || a.status!=='open') return;
-          if (Number(b.price) < Number(a.price)) return; // no cross
-          const qty = Math.min(Number(b.qtyRemaining||b.qty||0), Number(a.qtyRemaining||a.qty||0));
-          if (!(qty>0)) return;
-          const bCreated = Number(b.createdAt?.toMillis?.()||0);
-          const aCreated = Number(a.createdAt?.toMillis?.()||0);
-          const execPrice = (bCreated <= aCreated) ? Number(a.price) : Number(b.price);
-          const nb = Number(b.qtyRemaining||b.qty||0) - qty; const na = Number(a.qtyRemaining||a.qty||0) - qty;
-          trx.set(bidRef, { qtyRemaining: nb, status: nb<=0? 'filled' : 'open' }, { merge: true });
-          trx.set(askRef, { qtyRemaining: na, status: na<=0? 'filled' : 'open' }, { merge: true });
-          // settlement doc (public). 각 사용자가 스스로 claim
-          const setRef = doc(collection(db, 'market', 'public', 'settlements'));
-          trx.set(setRef, { buyerUid: b.uid, sellerUid: a.uid, price: execPrice, qty, buyerClaimed:false, sellerClaimed:false, at: serverTimestamp() });
-          // ticker
-          const tickRef = doc(db, 'market', 'public', 'ticker', 'main');
-          trx.set(tickRef, { lastPrice: execPrice, updatedAt: serverTimestamp() }, { merge: true });
-          // 공개/개인 체결 기록(OHLC/통계/내 이력용)
-          const pubTradeRef = doc(collection(db, 'market', 'public', 'trades'));
-          trx.set(pubTradeRef, { side: 'trade', price: execPrice, qty, at: serverTimestamp() });
-          const buyerTradeRef = doc(collection(db, 'users', b.uid, 'trades'));
-          trx.set(buyerTradeRef, { side: 'buy', price: execPrice, qty, at: serverTimestamp() });
-          const sellerTradeRef = doc(collection(db, 'users', a.uid, 'trades'));
-          trx.set(sellerTradeRef, { side: 'sell', price: execPrice, qty, at: serverTimestamp() });
+          return tsMillis(a) - tsMillis(b); // 같은 가격이면 시간순
         });
-        return { ok:true };
+        const sortedAsks = asks.sort((a,b)=>{
+          const pa = Number(a.data().price), pb = Number(b.data().price); // 매도: 낮은 가격 우선
+          if (pa !== pb) return pa - pb;
+          return tsMillis(a) - tsMillis(b); // 같은 가격이면 시간순
+        });
+        
+        // 교차하는 모든 주문 찾기
+        const matches = [];
+        let bidIndex = 0, askIndex = 0;
+        
+        while (bidIndex < sortedBids.length && askIndex < sortedAsks.length) {
+          const bid = sortedBids[bidIndex].data();
+          const ask = sortedAsks[askIndex].data();
+          const bidPrice = Number(bid.price);
+          const askPrice = Number(ask.price);
+          
+          // 가격이 교차하지 않으면 종료
+          if (bidPrice < askPrice) break;
+          
+          // 교차하는 주문 발견 - 매칭 생성
+          const qty = Math.min(
+            Number(bid.qtyRemaining || bid.qty || 0),
+            Number(ask.qtyRemaining || ask.qty || 0)
+          );
+          
+          if (qty > 0) {
+            matches.push({
+              bidDoc: sortedBids[bidIndex],
+              askDoc: sortedAsks[askIndex],
+              bid: bid,
+              ask: ask,
+              qty: qty,
+              // 체결 가격: 기존 호가의 가격 (매도 호가가 있으면 매도가, 없으면 매수가)
+              execPrice: askPrice
+            });
+          }
+          
+          // 수량이 적은 쪽의 인덱스 증가
+          const bidQty = Number(bid.qtyRemaining || bid.qty || 0);
+          const askQty = Number(ask.qtyRemaining || ask.qty || 0);
+          
+          if (bidQty <= askQty) {
+            bidIndex++; // 매수 주문이 소진되거나 같으면 다음 매수로
+          }
+          if (askQty <= bidQty) {
+            askIndex++; // 매도 주문이 소진되거나 같으면 다음 매도로
+          }
+        }
+        
+        if (matches.length === 0) return { ok:false, reason:'no-cross' };
+        
+        // 모든 매칭을 트랜잭션으로 처리
+        await runTransaction(db, async (trx) => {
+          for (const match of matches) {
+            const bidRef = match.bidDoc.ref;
+            const askRef = match.askDoc.ref;
+            
+            // 최신 상태 확인
+            const bSnap = await trx.get(bidRef);
+            const aSnap = await trx.get(askRef);
+            
+            if (!bSnap.exists() || !aSnap.exists()) continue;
+            
+            const b = bSnap.data();
+            const a = aSnap.data();
+            
+            if (b.status !== 'open' || a.status !== 'open') continue;
+            
+            const bidQty = Number(b.qtyRemaining || b.qty || 0);
+            const askQty = Number(a.qtyRemaining || a.qty || 0);
+            
+            if (bidQty <= 0 || askQty <= 0) continue;
+            
+            // 실제 거래 가능한 수량 계산
+            const actualQty = Math.min(bidQty, askQty, match.qty);
+            if (actualQty <= 0) continue;
+            
+            // 주문 상태 업데이트
+            const newBidQty = bidQty - actualQty;
+            const newAskQty = askQty - actualQty;
+            
+            trx.set(bidRef, { 
+              qtyRemaining: newBidQty, 
+              status: newBidQty <= 0 ? 'filled' : 'open' 
+            }, { merge: true });
+            
+            trx.set(askRef, { 
+              qtyRemaining: newAskQty, 
+              status: newAskQty <= 0 ? 'filled' : 'open' 
+            }, { merge: true });
+            
+            // 정산 문서 생성
+            const setRef = doc(collection(db, 'market', 'public', 'settlements'));
+            trx.set(setRef, { 
+              buyerUid: b.uid, 
+              sellerUid: a.uid, 
+              price: match.execPrice, 
+              qty: actualQty, 
+              buyerClaimed: false, 
+              sellerClaimed: false, 
+              at: serverTimestamp() 
+            });
+            
+            // 티커 업데이트
+            const tickRef = doc(db, 'market', 'public', 'ticker', 'main');
+            trx.set(tickRef, { 
+              lastPrice: match.execPrice, 
+              updatedAt: serverTimestamp() 
+            }, { merge: true });
+            
+            // 거래 기록 생성
+            const pubTradeRef = doc(collection(db, 'market', 'public', 'trades'));
+            trx.set(pubTradeRef, { 
+              side: 'trade', 
+              price: match.execPrice, 
+              qty: actualQty, 
+              at: serverTimestamp() 
+            });
+            
+            const buyerTradeRef = doc(collection(db, 'users', b.uid, 'trades'));
+            trx.set(buyerTradeRef, { 
+              side: 'buy', 
+              price: match.execPrice, 
+              qty: actualQty, 
+              at: serverTimestamp() 
+            });
+            
+            const sellerTradeRef = doc(collection(db, 'users', a.uid, 'trades'));
+            trx.set(sellerTradeRef, { 
+              side: 'sell', 
+              price: match.execPrice, 
+              qty: actualQty, 
+              at: serverTimestamp() 
+            });
+          }
+        });
+        
+        return { ok: true, matches: matches.length };
       } catch (e) { return { ok:false, error:String(e&&e.message||e) }; }
     },
     async tradingMatchWithOrders(openOrders) {

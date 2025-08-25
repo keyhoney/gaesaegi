@@ -14,8 +14,8 @@
   const volumeData = []; // 일봉 거래량
   let latestTradePrice = null; // 최신 체결가
   let isMatchingRunning = false; // 매칭 작업 동시 실행 방지
-  let matchIntervalMs = 60000;   // 매칭 실행 주기 (60초)
-  let lastMatchMinute = -1;      // 마지막 매칭이 실행된 분
+  let matchIntervalMs = 3600000;   // 매칭 실행 주기 (1시간)
+  let lastMatchHour = -1;      // 마지막 매칭이 실행된 시간
 
   function initChart() {
     priceChart = echarts.init(document.getElementById('priceChart'));
@@ -311,20 +311,20 @@
       setInterval(refreshOrderbook, 9000);
       setInterval(refreshMyOrders, 10000);
       setInterval(refreshTrades, 11000);
-      // 체결 매칭: 매 정각 분마다 실행
+      // 체결 매칭: 매 시 정각마다 실행
       const attemptMatch = async () => {
         try {
           if (document.hidden) return; // 탭이 백그라운드일 때는 쉬기
           if (isMatchingRunning) return;
           
           const now = new Date();
-          const currentMinute = now.getMinutes(); // 현재 분 (0-59)
+          const currentHour = now.getHours(); // 현재 시간 (0-23)
           
-          // 이미 이번 분에 매칭을 실행했다면 스킵
-          if (lastMatchMinute === currentMinute) return;
+          // 이미 이번 시간에 매칭을 실행했다면 스킵
+          if (lastMatchHour === currentHour) return;
           
           isMatchingRunning = true;
-          lastMatchMinute = currentMinute;
+          lastMatchHour = currentHour;
 
           await window.firebaseData?.tradingMatchOnce?.();
           try {
@@ -340,7 +340,7 @@
           isMatchingRunning = false;
         }
       };
-      // 매 정각 분마다 매칭 실행 (1초마다 체크)
+      // 매 시 정각마다 매칭 실행 (1초마다 체크)
       setInterval(attemptMatch, 1000);
     }
   });
