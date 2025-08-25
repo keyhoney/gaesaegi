@@ -30,9 +30,9 @@
         type: 'candlestick',
         data: [],
         itemStyle: {
-          color: '#c62828',       // 상승(시가 대비 종가 상승) - 붉은색
+          color: '#c62828',       // 상승(시가 대비 종가 상승) - 붉은색 (오더북 ask 색상)
           borderColor: '#c62828',
-          color0: '#1565c0',      // 하락(시가 대비 종가 하락) - 푸른색
+          color0: '#1565c0',      // 하락(시가 대비 종가 하락) - 푸른색 (오더북 bid 색상)
           borderColor0: '#1565c0'
         }
       }],
@@ -42,7 +42,14 @@
       xAxis: { type: 'category', boundaryGap: true, data: [], axisLabel: { show: false } },
       yAxis: { splitNumber: 2 },
       tooltip: { show: false },
-      series: [{ name:'거래량', type: 'bar', data: [] }],
+      series: [{ 
+        name:'거래량', 
+        type: 'bar', 
+        data: [],
+        itemStyle: {
+          color: '#1565c0'  // 오더북 bid 색상과 통일
+        }
+      }],
     });
   }
 
@@ -238,7 +245,7 @@
         const w = Math.max(0.04, Math.min(1, cumQty / maxCum));
         return `<div class=\"ob-row ${side}\" style=\"--w:${w};\">`
           + `<div class=\"ob-price ${side}\">${fmt(price)} pt</div>`
-          + `<div class=\"ob-qty\">${fmt(qty)} (${fmt(cumQty)}↑)</div>`
+          + `<div class=\"ob-qty\">${fmt(qty)}</div>`
           + `</div>`;
       }).join('');
     }

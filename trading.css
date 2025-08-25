@@ -22,6 +22,12 @@
 .trading-form .field input { background:#fff; border:1px solid var(--border-strong); border-radius: 10px; padding:10px 12px; outline:none; }
 .trading-form .field input:focus-visible { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(138,75,83,0.12); }
 
+/* 매수/매도 버튼 색상 통일 */
+.trading-form .btn.buy { background-color: #1565c0; border-color: #1565c0; color: white; }
+.trading-form .btn.buy:hover { background-color: #0d47a1; border-color: #0d47a1; }
+.trading-form .btn.sell { background-color: #c62828; border-color: #c62828; color: white; }
+.trading-form .btn.sell:hover { background-color: #b71c1c; border-color: #b71c1c; }
+
 /* Orderbook */
 .orderbook { border:1px solid var(--border); box-shadow: var(--shadow); }
 .orderbook .ob-title { font-size: 14px; }
