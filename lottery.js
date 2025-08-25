@@ -79,16 +79,7 @@
     const box = document.getElementById('stats');
     const card = (title, val) => `<div class="card small"><div class="muted">${title}</div><div class="stat-value">${val}</div></div>`;
     try {
-      let s = await window.firebaseData?.lotteryStats?.();
-      // 전역 통계가 생성/권한 문제로 0인 경우, 사용자 티켓으로 대체 통계를 계산
-      if (!s || Number(s.totalTickets||0) === 0) {
-        try {
-          const mine = await window.firebaseData?.lotteryListMyTickets?.(500);
-          const totals = { totalTickets: (mine||[]).length, w1:0,w2:0,w3:0,w4:0,w5:0 };
-          (mine||[]).forEach(t=>{ const r=Number(t.rank||0); if (r>=1 && r<=5) totals[`w${r}`] += 1; });
-          s = totals;
-        } catch {}
-      }
+      const s = await window.firebaseData?.lotteryStats?.();
       box.innerHTML = [
         card('총 구매 수', (s?.totalTickets||0).toLocaleString()),
         card('1등', (s?.w1||0)),

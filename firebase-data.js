@@ -917,12 +917,23 @@
     },
     async lotteryStats(){
       try {
-        const { db } = await ensureFirebase();
-        const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-        const ref = doc(db, 'lottery', 'public', 'stats', 'main');
-        const s = await getDoc(ref);
-        if (!s.exists()) return { totalTickets:0,w1:0,w2:0,w3:0,w4:0,w5:0 };
-        const d = s.data()||{}; return { totalTickets:Number(d.totalTickets||0), w1:Number(d.w1||0), w2:Number(d.w2||0), w3:Number(d.w3||0), w4:Number(d.w4||0), w5:Number(d.w5||0) };
+        const { user, db } = await withUser();
+        const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+        const ref = collection(db, 'users', user.uid, 'lotteryTickets');
+        const q = query(ref, orderBy('at', 'desc'));
+        const snap = await getDocs(q);
+        const tickets = snap.docs.map(d => d.data());
+        
+        // 개인 통계 계산
+        const stats = { totalTickets: tickets.length, w1: 0, w2: 0, w3: 0, w4: 0, w5: 0 };
+        tickets.forEach(ticket => {
+          const rank = Number(ticket.rank || 0);
+          if (rank >= 1 && rank <= 5) {
+            stats[`w${rank}`]++;
+          }
+        });
+        
+        return stats;
       } catch (_) { return { totalTickets:0,w1:0,w2:0,w3:0,w4:0,w5:0 }; }
     },
     async tradingGetTicker() {
