@@ -569,3 +569,47 @@ a:visited { color: var(--text); }
   }
 }
 
+/* 당첨 상품 안내 스타일 */
+.prize-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prize-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-alt);
+  border-radius: 8px;
+  border-left: 4px solid var(--accent);
+}
+
+.prize-rank {
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 40px;
+  text-align: center;
+  background: var(--card);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+.prize-desc {
+  color: var(--text);
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .prize-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .prize-rank {
+    min-width: auto;
+  }
+}
