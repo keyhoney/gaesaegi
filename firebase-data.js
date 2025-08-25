@@ -712,10 +712,8 @@
     },
     async tradingAdjustPoints(delta, reason) {
       try {
-        const key = this.getLocalDateSeoulKey();
-        const res = await this.incrementDailyStats(key, 0, Number(delta), { exp: 2147483647, points: 2147483647 });
         await this.addPointTransaction(Number(delta), reason||'trade');
-        return res;
+        return { expApplied: 0, ptsApplied: 0, expReached: false, ptsReached: false };
       } catch (_) { return null; }
     },
     async tradingRecordTrade(side, price, qty) {
