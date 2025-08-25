@@ -130,7 +130,7 @@
       const ml = document.getElementById('challengeMonthly');
       if (dl) dl.textContent = `보상: 200pt | 챌린지 달성까지 남은 문제 수: ${Math.max(0, targets.daily - (daily?.total||0))}`;
       if (wl) wl.textContent = `보상: 1코인 | 챌린지 달성까지 남은 문제 수: ${Math.max(0, targets.weekly - (weekly?.total||0))} | 기간: ${weekPeriod} (주간/월간은 하루 최대 10문제까지만 카운트됩니다)`;
-      if (ml) ml.textContent = `보상: 9코인 | 챌린지 달성까지 남은 문제 수: ${Math.max(0, targets.monthly - (monthly?.total||0))} | 기간: ${monthPeriod} (주간/월간은 하루 최대 10문제까지만 카운트됩니다)`;
+      if (ml) ml.textContent = `보상: 10코인 | 챌린지 달성까지 남은 문제 수: ${Math.max(0, targets.monthly - (monthly?.total||0))} | 기간: ${monthPeriod} (주간/월간은 하루 최대 10문제까지만 카운트됩니다)`;
     } catch {}
   }
 
