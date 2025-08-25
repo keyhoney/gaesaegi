@@ -1,4 +1,4 @@
-﻿[
+[
 
     {"과목": "수학Ⅰ", "대분류": "1. 지수함수와 로그함수", "중분류": "A. 지수와 로그", "소분류": "지수의 연산", "문항들": [
         {
@@ -1644,97 +1644,7 @@
             "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000737/S20240000737_1M4_100030059809.mp4&strStartTm=205&pType=2"
         }
     ]},
-    {"과목": "확률과 통계", "대분류": "1. 경우의 수", "중분류": "P. 조건부 확률", "소분류": "조건부 확률", "문항들": [
-        {
-            "문항번호": "20220624(♥)",
-            "문항주소": "mun/20220624.png",
-            "정답": "2",
-            "난이도": "♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210000761/S20210000761_1M4_100030001261.mp4&strStartTm=651&pType=2"
-        },
-        {
-            "문항번호": "20220627(♥♥♥)",
-            "문항주소": "mun/20220627.png",
-            "정답": "1",
-            "난이도": "♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210000761/S20210000761_1M4_100030001261.mp4&strStartTm=1423&pType=2"
-        },
-        {
-            "문항번호": "20220926(♥♥)",
-            "문항주소": "mun/20220926.png",
-            "정답": "1",
-            "난이도": "♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001003/S20210001003_1M4_100030008433.mp4&strStartTm=925&pType=2"
-        },
-        {
-            "문항번호": "20230630(♥♥♥♥♥)",
-            "문항주소": "mun/20230630.png",
-            "정답": "9",
-            "난이도": "♥♥♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000268/S20220000268_1M4_100030024244.mp4&strStartTm=2445&pType=2"
-        },
-        {
-            "문항번호": "20230924(♥)",
-            "문항주소": "mun/20230924.png",
-            "정답": "3",
-            "난이도": "♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000415/S20220000415_1M4_100030027368.mp4&strStartTm=565&pType=2"
-        },
-        {
-            "문항번호": "20231129(♥♥♥♥)",
-            "문항주소": "mun/20231129.png",
-            "정답": "49",
-            "난이도": "♥♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000620/S20220000620_1M4_100030028822.mp4&strStartTm=1957&pType=2"
-        },
-        {
-            "문항번호": "20240627(♥♥♥)",
-            "문항주소": "mun/20240627.png",
-            "정답": "2",
-            "난이도": "♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000297/S20230000297_1M4_100030039326.mp4&strStartTm=1259&pType=2"
-        },
-        {
-            "문항번호": "20241128(♥♥♥♥♥)",
-            "문항주소": "mun/20241128.png",
-            "정답": "4",
-            "난이도": "♥♥♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000616/S20230000616_1M4_100030044876.mp4&strStartTm=1477&pType=2"
-        },
-        {
-            "문항번호": "20250628(♥♥♥♥)",
-            "문항주소": "mun/20250628.png",
-            "정답": "1",
-            "난이도": "♥♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000260/S20240000260_1M4_100030054382.mp4&strStartTm=1406&pType=2"
-        },
-        {
-            "문항번호": "20250928(♥♥♥♥)",
-            "문항주소": "mun/20250928.png",
-            "정답": "4",
-            "난이도": "♥♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000528/S20240000528_1M4_100030058242.mp4&strStartTm=1327&pType=2"
-        },
-        {
-            "문항번호": "20251124(♥)",
-            "문항주소": "mun/20251124.png",
-            "정답": "3",
-            "난이도": "♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000737/S20240000737_1M4_100030059809.mp4&strStartTm=273&pType=2"
-        }
-    ]},
-    {"과목": "확률과 통계", "대분류": "1. 경우의 수", "중분류": "O. 수학적 확률", "소분류": "수학적 확률", "문항들": [
+    {"과목": "확률과 통계", "대분류": "2. 확률", "중분류": "O. 수학적 확률", "소분류": "수학적 확률", "문항들": [
         {
             "문항번호": "20220625(♥♥)",
             "문항주소": "mun/20220625.png",
@@ -2434,58 +2344,6 @@
             "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000528/S20240000528_1M4_100030058240.mp4&strStartTm=1703&pType=2"
         }
     ]},
-    {"과목": "확률과 통계", "대분류": "1. 경우의 수", "중분류": "Q. 확률분포", "소분류": "이항분포", "문항들": [
-        {
-            "문항번호": "20220923(♥)",
-            "문항주소": "mun/20220923.png",
-            "정답": "3",
-            "난이도": "♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001003/S20210001003_1M4_100030008433.mp4&strStartTm=295&pType=2"
-        },
-        {
-            "문항번호": "20221124(♥)",
-            "문항주소": "mun/20221124.png",
-            "정답": "4",
-            "난이도": "♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001189/S20210001189_1M4_100030011708.mp4&strStartTm=458&pType=2"
-        },
-        {
-            "문항번호": "20240923(♥)",
-            "문항주소": "mun/20240923.png",
-            "정답": "1",
-            "난이도": "♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000491/S20230000491_1M4_100030043587.mp4&strStartTm=392&pType=2"
-        }
-    ]},
-    {"과목": "확률과 통계", "대분류": "1. 경우의 수", "중분류": "R. 통계적 추정", "소분류": "표본평균의 분포", "문항들": [
-        {
-            "문항번호": "20220927(♥♥♥)",
-            "문항주소": "mun/20220927.png",
-            "정답": "5",
-            "난이도": "♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001003/S20210001003_1M4_100030008433.mp4&strStartTm=1414&pType=2"
-        },
-        {
-            "문항번호": "20250926(♥♥)",
-            "문항주소": "mun/20250926.png",
-            "정답": "3",
-            "난이도": "♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000528/S20240000528_1M4_100030058242.mp4&strStartTm=792&pType=2"
-        },
-        {
-            "문항번호": "20251127(♥♥♥)",
-            "문항주소": "mun/20251127.png",
-            "정답": "3",
-            "난이도": "♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000737/S20240000737_1M4_100030059809.mp4&strStartTm=887&pType=2"
-        }
-    ]},
     {"과목": "확률과 통계", "대분류": "1. 경우의 수", "중분류": "M. 여러 가지 순열과 중복 조합", "소분류": "중복 순열", "문항들": [
         {
             "문항번호": "20220928(♥♥♥♥)",
@@ -2534,40 +2392,6 @@
             "난이도": "♥♥♥♥♥",
             "중요도": "★",
             "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000297/S20230000297_1M4_100030039326.mp4&strStartTm=1536&pType=2"
-        }
-    ]},
-    {"과목": "확률과 통계", "대분류": "1. 경우의 수", "중분류": "Q. 확률분포", "소분류": "이산확률분포", "문항들": [
-        {
-            "문항번호": "20220929(♥♥♥♥)",
-            "문항주소": "mun/20220929.png",
-            "정답": "78",
-            "난이도": "♥♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001003/S20210001003_1M4_100030008433.mp4&strStartTm=2320&pType=2"
-        },
-        {
-            "문항번호": "20230927(♥♥♥)",
-            "문항주소": "mun/20230927.png",
-            "정답": "5",
-            "난이도": "♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000415/S20220000415_1M4_100030027368.mp4&strStartTm=1661&pType=2"
-        },
-        {
-            "문항번호": "20241126(♥♥)",
-            "문항주소": "mun/20241126.png",
-            "정답": "2",
-            "난이도": "♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000616/S20230000616_1M4_100030044876.mp4&strStartTm=660&pType=2"
-        },
-        {
-            "문항번호": "20250927(♥♥♥)",
-            "문항주소": "mun/20250927.png",
-            "정답": "4",
-            "난이도": "♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000528/S20240000528_1M4_100030058242.mp4&strStartTm=1050&pType=2"
         }
     ]},
     {"과목": "수학Ⅱ", "대분류": "2. 미분", "중분류": "J. 도함수의 활용", "소분류": "접선의 방정식", "문항들": [
@@ -2680,100 +2504,6 @@
             "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000491/S20230000491_1M4_100030043586.mp4&strStartTm=1946&pType=2"
         }
     ]},
-    {"과목": "확률과 통계", "대분류": "1. 경우의 수", "중분류": "R. 통계적 추정", "소분류": "모평균의 추정", "문항들": [
-        {
-            "문항번호": "20221127(♥♥♥)",
-            "문항주소": "mun/20221127.png",
-            "정답": "2",
-            "난이도": "♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001189/S20210001189_1M4_100030011708.mp4&strStartTm=1404&pType=2"
-        },
-        {
-            "문항번호": "20231127(♥♥♥)",
-            "문항주소": "mun/20231127.png",
-            "정답": "2",
-            "난이도": "♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000620/S20220000620_1M4_100030028822.mp4&strStartTm=1180&pType=2"
-        },
-        {
-            "문항번호": "20241127(♥♥♥)",
-            "문항주소": "mun/20241127.png",
-            "정답": "2",
-            "난이도": "♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000616/S20230000616_1M4_100030044876.mp4&strStartTm=1098&pType=2"
-        },
-        {
-            "문항번호": "20251125(♥♥)",
-            "문항주소": "mun/20251125.png",
-            "정답": "1",
-            "난이도": "♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000737/S20240000737_1M4_100030059809.mp4&strStartTm=526&pType=2"
-        }
-    ]},
-    {"과목": "확률과 통계", "대분류": "1. 경우의 수", "중분류": "Q. 확률분포", "소분류": "연속확률분포", "문항들": [
-        {
-            "문항번호": "20221129(♥♥♥♥)",
-            "문항주소": "mun/20221129.png",
-            "정답": "31",
-            "난이도": "♥♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001189/S20210001189_1M4_100030011708.mp4&strStartTm=2731&pType=2"
-        },
-        {
-            "문항번호": "20231128(♥♥♥♥)",
-            "문항주소": "mun/20231128.png",
-            "정답": "4",
-            "난이도": "♥♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000620/S20220000620_1M4_100030028822.mp4&strStartTm=1598&pType=2"
-        }
-    ]},
-    {"과목": "확률과 통계", "대분류": "1. 경우의 수", "중분류": "P. 조건부 확률", "소분류": "독립과 종속", "문항들": [
-        {
-            "문항번호": "20221130(♥♥♥♥♥)",
-            "문항주소": "mun/20221130.png",
-            "정답": "191",
-            "난이도": "♥♥♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001189/S20210001189_1M4_100030011708.mp4&strStartTm=3086&pType=2"
-        },
-        {
-            "문항번호": "20230625(♥♥)",
-            "문항주소": "mun/20230625.png",
-            "정답": "4",
-            "난이도": "♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000268/S20220000268_1M4_100030024244.mp4&strStartTm=631&pType=2"
-        },
-        {
-            "문항번호": "20240929(♥♥♥♥)",
-            "문항주소": "mun/20240929.png",
-            "정답": "62",
-            "난이도": "♥♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000491/S20230000491_1M4_100030043587.mp4&strStartTm=2312&pType=2"
-        },
-        {
-            "문항번호": "20241124(♥)",
-            "문항주소": "mun/20241124.png",
-            "정답": "4",
-            "난이도": "♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000616/S20230000616_1M4_100030044876.mp4&strStartTm=281&pType=2"
-        },
-        {
-            "문항번호": "20250924(♥)",
-            "문항주소": "mun/20250924.png",
-            "정답": "1",
-            "난이도": "♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000528/S20240000528_1M4_100030058242.mp4&strStartTm=386&pType=2"
-        }
-    ]},
     {"과목": "수학Ⅰ", "대분류": "2. 삼각함수", "중분류": "C. 삼각함수", "소분류": "함수의 최대 또는 최소", "문항들": [
         {
             "문항번호": "20230607(♥♥)",
@@ -2836,56 +2566,46 @@
             "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000297/S20230000297_1M4_100030039325.mp4&strStartTm=1283&pType=2"
         }
     ]},
-    {"과목": "확률과 통계", "대분류": "1. 경우의 수", "중분류": "Q. 확률분포", "소분류": "정규분포", "문항들": [
+    {"과목": "확률과 통계", "대분류": "2. 확률", "중분류": "P. 조건부 확률", "소분류": "독립과 종속", "문항들": [
         {
-            "문항번호": "20230925(♥♥)",
-            "문항주소": "mun/20230925.png",
+            "문항번호": "20221130(♥♥♥♥♥)",
+            "문항주소": "mun/20221130.png",
+            "정답": "191",
+            "난이도": "♥♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001189/S20210001189_1M4_100030011708.mp4&strStartTm=3086&pType=2"
+        },
+        {
+            "문항번호": "20230625(♥♥)",
+            "문항주소": "mun/20230625.png",
             "정답": "4",
             "난이도": "♥♥",
             "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000415/S20220000415_1M4_100030027368.mp4&strStartTm=891&pType=2"
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000268/S20220000268_1M4_100030024244.mp4&strStartTm=631&pType=2"
         },
         {
-            "문항번호": "20240926(♥♥)",
-            "문항주소": "mun/20240926.png",
-            "정답": "2",
-            "난이도": "♥♥",
+            "문항번호": "20240929(♥♥♥♥)",
+            "문항주소": "mun/20240929.png",
+            "정답": "62",
+            "난이도": "♥♥♥♥",
             "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000491/S20230000491_1M4_100030043587.mp4&strStartTm=789&pType=2"
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000491/S20230000491_1M4_100030043587.mp4&strStartTm=2312&pType=2"
         },
         {
-            "문항번호": "20241130(♥♥♥♥)",
-            "문항주소": "mun/20241130.png",
-            "정답": "673",
-            "난이도": "♥♥♥♥",
+            "문항번호": "20241124(♥)",
+            "문항주소": "mun/20241124.png",
+            "정답": "4",
+            "난이도": "♥",
             "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000616/S20230000616_1M4_100030044876.mp4&strStartTm=2444&pType=2"
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000616/S20230000616_1M4_100030044876.mp4&strStartTm=281&pType=2"
         },
         {
-            "문항번호": "20251129(♥♥♥♥)",
-            "문항주소": "mun/20251129.png",
-            "정답": "25",
-            "난이도": "♥♥♥♥",
+            "문항번호": "20250924(♥)",
+            "문항주소": "mun/20250924.png",
+            "정답": "1",
+            "난이도": "♥",
             "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000737/S20240000737_1M4_100030059809.mp4&strStartTm=1700&pType=2"
-        }
-    ]},
-    {"과목": "확률과 통계", "대분류": "1. 경우의 수", "중분류": "R. 통계적 추정", "소분류": "표본평균", "문항들": [
-        {
-            "문항번호": "20230929(♥♥♥♥)",
-            "문항주소": "mun/20230929.png",
-            "정답": "175",
-            "난이도": "♥♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000415/S20220000415_1M4_100030027368.mp4&strStartTm=2504&pType=2"
-        },
-        {
-            "문항번호": "20240928(♥♥♥♥)",
-            "문항주소": "mun/20240928.png",
-            "정답": "5",
-            "난이도": "♥♥♥♥",
-            "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000491/S20230000491_1M4_100030043587.mp4&strStartTm=1523&pType=2"
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000528/S20240000528_1M4_100030058242.mp4&strStartTm=386&pType=2"
         }
     ]},
     {"과목": "수학Ⅰ", "대분류": "1. 지수함수와 로그함수", "중분류": "B. 지수함수와 로그함수", "소분류": "로그함수의 그래프", "문항들": [
@@ -2904,6 +2624,96 @@
             "난이도": "♥♥",
             "중요도": "★",
             "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000297/S20230000297_1M4_100030039324.mp4&strStartTm=643&pType=2"
+        }
+    ]},
+    {"과목": "확률과 통계", "대분류": "2. 확률", "중분류": "P. 조건부 확률", "소분류": "조건부 확률", "문항들": [
+        {
+            "문항번호": "20220624(♥)",
+            "문항주소": "mun/20220624.png",
+            "정답": "2",
+            "난이도": "♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210000761/S20210000761_1M4_100030001261.mp4&strStartTm=651&pType=2"
+        },
+        {
+            "문항번호": "20220627(♥♥♥)",
+            "문항주소": "mun/20220627.png",
+            "정답": "1",
+            "난이도": "♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210000761/S20210000761_1M4_100030001261.mp4&strStartTm=1423&pType=2"
+        },
+        {
+            "문항번호": "20220926(♥♥)",
+            "문항주소": "mun/20220926.png",
+            "정답": "1",
+            "난이도": "♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001003/S20210001003_1M4_100030008433.mp4&strStartTm=925&pType=2"
+        },
+        {
+            "문항번호": "20230630(♥♥♥♥♥)",
+            "문항주소": "mun/20230630.png",
+            "정답": "9",
+            "난이도": "♥♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000268/S20220000268_1M4_100030024244.mp4&strStartTm=2445&pType=2"
+        },
+        {
+            "문항번호": "20230924(♥)",
+            "문항주소": "mun/20230924.png",
+            "정답": "3",
+            "난이도": "♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000415/S20220000415_1M4_100030027368.mp4&strStartTm=565&pType=2"
+        },
+        {
+            "문항번호": "20231129(♥♥♥♥)",
+            "문항주소": "mun/20231129.png",
+            "정답": "49",
+            "난이도": "♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000620/S20220000620_1M4_100030028822.mp4&strStartTm=1957&pType=2"
+        },
+        {
+            "문항번호": "20240627(♥♥♥)",
+            "문항주소": "mun/20240627.png",
+            "정답": "2",
+            "난이도": "♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000297/S20230000297_1M4_100030039326.mp4&strStartTm=1259&pType=2"
+        },
+        {
+            "문항번호": "20241128(♥♥♥♥♥)",
+            "문항주소": "mun/20241128.png",
+            "정답": "4",
+            "난이도": "♥♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000616/S20230000616_1M4_100030044876.mp4&strStartTm=1477&pType=2"
+        },
+        {
+            "문항번호": "20250628(♥♥♥♥)",
+            "문항주소": "mun/20250628.png",
+            "정답": "1",
+            "난이도": "♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000260/S20240000260_1M4_100030054382.mp4&strStartTm=1406&pType=2"
+        },
+        {
+            "문항번호": "20250928(♥♥♥♥)",
+            "문항주소": "mun/20250928.png",
+            "정답": "4",
+            "난이도": "♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000528/S20240000528_1M4_100030058242.mp4&strStartTm=1327&pType=2"
+        },
+        {
+            "문항번호": "20251124(♥)",
+            "문항주소": "mun/20251124.png",
+            "정답": "3",
+            "난이도": "♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000737/S20240000737_1M4_100030059809.mp4&strStartTm=273&pType=2"
         }
     ]},
     {"과목": "수학Ⅰ", "대분류": "3. 수열", "중분류": "E. 수열의 합", "소분류": "수열의 합과 일반항 사이의 관계", "문항들": [
@@ -2952,6 +2762,24 @@
             "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000737/S20240000737_1M4_100030059807.mp4&strStartTm=2250&pType=2"
         }
     ]},
+    {"과목": "확률과 통계", "대분류": "3. 통계", "중분류": "Q. 확률분포", "소분류": "연속확률분포", "문항들": [
+        {
+            "문항번호": "20221129(♥♥♥♥)",
+            "문항주소": "mun/20221129.png",
+            "정답": "31",
+            "난이도": "♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001189/S20210001189_1M4_100030011708.mp4&strStartTm=2731&pType=2"
+        },
+        {
+            "문항번호": "20231128(♥♥♥♥)",
+            "문항주소": "mun/20231128.png",
+            "정답": "4",
+            "난이도": "♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000620/S20220000620_1M4_100030028822.mp4&strStartTm=1598&pType=2"
+        }
+    ]},
     {"과목": "수학Ⅰ", "대분류": "1. 지수함수와 로그함수", "중분류": "B. 지수함수와 로그함수", "소분류": "제한된 범위에서 최대 또는 최소", "문항들": [
         {
             "문항번호": "20241121(♥♥♥♥)",
@@ -2960,6 +2788,110 @@
             "난이도": "♥♥♥♥",
             "중요도": "★",
             "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000616/S20230000616_1M4_100030044874.mp4&strStartTm=3565&pType=2"
+        }
+    ]},
+    {"과목": "확률과 통계", "대분류": "3. 통계", "중분류": "Q. 확률분포", "소분류": "이산확률분포", "문항들": [
+        {
+            "문항번호": "20220929(♥♥♥♥)",
+            "문항주소": "mun/20220929.png",
+            "정답": "78",
+            "난이도": "♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001003/S20210001003_1M4_100030008433.mp4&strStartTm=2320&pType=2"
+        },
+        {
+            "문항번호": "20230927(♥♥♥)",
+            "문항주소": "mun/20230927.png",
+            "정답": "5",
+            "난이도": "♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000415/S20220000415_1M4_100030027368.mp4&strStartTm=1661&pType=2"
+        },
+        {
+            "문항번호": "20241126(♥♥)",
+            "문항주소": "mun/20241126.png",
+            "정답": "2",
+            "난이도": "♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000616/S20230000616_1M4_100030044876.mp4&strStartTm=660&pType=2"
+        },
+        {
+            "문항번호": "20250927(♥♥♥)",
+            "문항주소": "mun/20250927.png",
+            "정답": "4",
+            "난이도": "♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000528/S20240000528_1M4_100030058242.mp4&strStartTm=1050&pType=2"
+        }
+    ]},
+    {"과목": "확률과 통계", "대분류": "3. 통계", "중분류": "Q. 확률분포", "소분류": "이항분포", "문항들": [
+        {
+            "문항번호": "20220923(♥)",
+            "문항주소": "mun/20220923.png",
+            "정답": "3",
+            "난이도": "♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001003/S20210001003_1M4_100030008433.mp4&strStartTm=295&pType=2"
+        },
+        {
+            "문항번호": "20221124(♥)",
+            "문항주소": "mun/20221124.png",
+            "정답": "4",
+            "난이도": "♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001189/S20210001189_1M4_100030011708.mp4&strStartTm=458&pType=2"
+        },
+        {
+            "문항번호": "20240923(♥)",
+            "문항주소": "mun/20240923.png",
+            "정답": "1",
+            "난이도": "♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000491/S20230000491_1M4_100030043587.mp4&strStartTm=392&pType=2"
+        }
+    ]},
+    {"과목": "확률과 통계", "대분류": "3. 통계", "중분류": "Q. 확률분포", "소분류": "이항분포와 정규분포의 관계", "문항들": [
+        {
+            "문항번호": "20250929(♥♥♥♥)",
+            "문항주소": "mun/20250929.png",
+            "정답": "994",
+            "난이도": "♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000528/S20240000528_1M4_100030058242.mp4&strStartTm=1876&pType=2"
+        }
+    ]},
+    {"과목": "확률과 통계", "대분류": "3. 통계", "중분류": "Q. 확률분포", "소분류": "정규분포", "문항들": [
+        {
+            "문항번호": "20230925(♥♥)",
+            "문항주소": "mun/20230925.png",
+            "정답": "4",
+            "난이도": "♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000415/S20220000415_1M4_100030027368.mp4&strStartTm=891&pType=2"
+        },
+        {
+            "문항번호": "20240926(♥♥)",
+            "문항주소": "mun/20240926.png",
+            "정답": "2",
+            "난이도": "♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000491/S20230000491_1M4_100030043587.mp4&strStartTm=789&pType=2"
+        },
+        {
+            "문항번호": "20241130(♥♥♥♥)",
+            "문항주소": "mun/20241130.png",
+            "정답": "673",
+            "난이도": "♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000616/S20230000616_1M4_100030044876.mp4&strStartTm=2444&pType=2"
+        },
+        {
+            "문항번호": "20251129(♥♥♥♥)",
+            "문항주소": "mun/20251129.png",
+            "정답": "25",
+            "난이도": "♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000737/S20240000737_1M4_100030059809.mp4&strStartTm=1700&pType=2"
         }
     ]},
     {"과목": "수학Ⅱ", "대분류": "2. 미분", "중분류": "J. 도함수의 활용", "소분류": "속도와 가속도", "문항들": [
@@ -2980,14 +2912,82 @@
             "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000737/S20240000737_1M4_100030059808.mp4&strStartTm=839&pType=2"
         }
     ]},
-    {"과목": "확률과 통계", "대분류": "1. 경우의 수", "중분류": "Q. 확률분포", "소분류": "이항분포와 정규분포의 관계", "문항들": [
+    {"과목": "확률과 통계", "대분류": "3. 통계", "중분류": "R. 통계적 추정", "소분류": "모평균의 추정", "문항들": [
         {
-            "문항번호": "20250929(♥♥♥♥)",
-            "문항주소": "mun/20250929.png",
-            "정답": "994",
+            "문항번호": "20221127(♥♥♥)",
+            "문항주소": "mun/20221127.png",
+            "정답": "2",
+            "난이도": "♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001189/S20210001189_1M4_100030011708.mp4&strStartTm=1404&pType=2"
+        },
+        {
+            "문항번호": "20231127(♥♥♥)",
+            "문항주소": "mun/20231127.png",
+            "정답": "2",
+            "난이도": "♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000620/S20220000620_1M4_100030028822.mp4&strStartTm=1180&pType=2"
+        },
+        {
+            "문항번호": "20241127(♥♥♥)",
+            "문항주소": "mun/20241127.png",
+            "정답": "2",
+            "난이도": "♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000616/S20230000616_1M4_100030044876.mp4&strStartTm=1098&pType=2"
+        },
+        {
+            "문항번호": "20251125(♥♥)",
+            "문항주소": "mun/20251125.png",
+            "정답": "1",
+            "난이도": "♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000737/S20240000737_1M4_100030059809.mp4&strStartTm=526&pType=2"
+        }
+    ]},
+    {"과목": "확률과 통계", "대분류": "3. 통계", "중분류": "R. 통계적 추정", "소분류": "표본평균", "문항들": [
+        {
+            "문항번호": "20230929(♥♥♥♥)",
+            "문항주소": "mun/20230929.png",
+            "정답": "175",
             "난이도": "♥♥♥♥",
             "중요도": "★",
-            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000528/S20240000528_1M4_100030058242.mp4&strStartTm=1876&pType=2"
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2201/S20220000415/S20220000415_1M4_100030027368.mp4&strStartTm=2504&pType=2"
+        },
+        {
+            "문항번호": "20240928(♥♥♥♥)",
+            "문항주소": "mun/20240928.png",
+            "정답": "5",
+            "난이도": "♥♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2301/S20230000491/S20230000491_1M4_100030043587.mp4&strStartTm=1523&pType=2"
+        }
+    ]},
+    {"과목": "확률과 통계", "대분류": "3. 통계", "중분류": "R. 통계적 추정", "소분류": "표본평균의 분포", "문항들": [
+        {
+            "문항번호": "20220927(♥♥♥)",
+            "문항주소": "mun/20220927.png",
+            "정답": "5",
+            "난이도": "♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2101/S20210001003/S20210001003_1M4_100030008433.mp4&strStartTm=1414&pType=2"
+        },
+        {
+            "문항번호": "20250926(♥♥)",
+            "문항주소": "mun/20250926.png",
+            "정답": "3",
+            "난이도": "♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000528/S20240000528_1M4_100030058242.mp4&strStartTm=792&pType=2"
+        },
+        {
+            "문항번호": "20251127(♥♥♥)",
+            "문항주소": "mun/20251127.png",
+            "정답": "3",
+            "난이도": "♥♥♥",
+            "중요도": "★",
+            "해설주소": "https://ebsi.co.kr/ebs/lms/player/retrieveLmsPlayerHtml5Simple.ebs?medUrl=https://WSTR.ebsi.co.kr/M41M2401/S20240000737/S20240000737_1M4_100030059809.mp4&strStartTm=887&pType=2"
         }
     ]}
 ]
