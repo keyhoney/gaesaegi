@@ -35,16 +35,17 @@
 
   // 사용자 정보 표시 함수
   function renderUserInfo(user) {
-    const displayName = user.displayName || user.email?.split('@')[0] || '사용자';
-    const email = user.email || '-';
-    const initials = displayName.substring(0, 2).toUpperCase();
+    const className = user.className || user.class || '미분반';
+    const studentNumber = user.studentNumber || user.number || '미번호';
+    const name = user.name || user.displayName || '미이름';
+    const initials = name.substring(0, 2).toUpperCase();
     
     return `
       <div class="user-info">
         <div class="user-avatar">${initials}</div>
         <div class="user-details">
-          <div class="user-name">${displayName}</div>
-          <div class="user-email">${email}</div>
+          <div class="user-name">${name}</div>
+          <div class="user-email">${className} ${studentNumber}번</div>
         </div>
       </div>
     `;
@@ -210,17 +211,9 @@
     }
   }
 
-  // 통계 업데이트
+  // 통계 업데이트 (사용하지 않음)
   function updateStats() {
-    const totalUsers = allUsers.length;
-    const totalPoints = allBalances.reduce((sum, balance) => sum + balance.points, 0);
-    const totalCoins = allBalances.reduce((sum, balance) => sum + balance.coins, 0);
-    const totalPurchases = allPurchases.length;
-    
-    document.getElementById('totalUsers').textContent = formatNumber(totalUsers);
-    document.getElementById('totalPoints').textContent = formatNumber(totalPoints);
-    document.getElementById('totalCoins').textContent = formatNumber(totalCoins);
-    document.getElementById('totalPurchases').textContent = formatNumber(totalPurchases);
+    // 통계 카드가 제거되어 사용하지 않음
   }
 
   // 잔액 테이블 렌더링
@@ -236,11 +229,8 @@
       tbody.innerHTML = sortedBalances.map(balance => `
         <tr>
           <td>${renderUserInfo(balance.user)}</td>
-          <td>${balance.user.email || '-'}</td>
           <td>${formatNumber(balance.points)} pt</td>
           <td>${formatNumber(balance.coins)} coin</td>
-          <td>${formatNumber(balance.points)} pt</td>
-          <td>${formatNumber(balance.totalCoins)} coin</td>
         </tr>
       `).join('');
       
@@ -355,8 +345,7 @@
         fetchAllLotteryTickets()
       ]);
       
-      // 통계 및 테이블 업데이트
-      updateStats();
+      // 테이블 업데이트
       renderBalancesTable();
       renderPurchasesTable();
       renderLotteryTable();
