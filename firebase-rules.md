@@ -9,18 +9,40 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // 코인 지급 내역 - 관리자만 생성 가능
-    match /users/{userId}/coinHistory/{historyId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == 'zcaWS7Kl8xSeBoWrVY5w2LpMwsj2'
-        && request.resource.data.keys().hasAll(['amount','reason','givenAt','givenBy'])
-        && request.resource.data.amount is number
-        && request.resource.data.amount > 0
-        && request.resource.data.reason is string
-        && (request.resource.data.givenAt is timestamp || request.resource.data.givenAt == request.time || request.resource.data.givenAt == null)
-        && request.resource.data.givenBy == 'zcaWS7Kl8xSeBoWrVY5w2LpMwsj2';
-      allow update, delete: if false;
-    }
+         // 코인 지급 내역 - 관리자만 생성 가능
+     match /users/{userId}/coinHistory/{historyId} {
+       allow read: if request.auth != null && request.auth.uid == userId;
+       allow create: if request.auth != null && request.auth.uid == 'zcaWS7Kl8xSeBoWrVY5w2LpMwsj2'
+         && request.resource.data.keys().hasAll(['amount','reason','givenAt','givenBy'])
+         && request.resource.data.amount is number
+         && request.resource.data.amount > 0
+         && request.resource.data.reason is string
+         && (request.resource.data.givenAt is timestamp || request.resource.data.givenAt == request.time || request.resource.data.givenAt == null)
+         && request.resource.data.givenBy == 'zcaWS7Kl8xSeBoWrVY5w2LpMwsj2';
+       allow update, delete: if false;
+     }
+     
+     // 관리자 페이지용 사용자 데이터 읽기 권한
+     match /users/{userId} {
+       allow read: if request.auth != null && request.auth.uid == 'zcaWS7Kl8xSeBoWrVY5w2LpMwsj2';
+     }
+     
+     // 관리자 페이지용 사용자 하위 컬렉션 읽기 권한
+     match /users/{userId}/wallet/{docId} {
+       allow read: if request.auth != null && request.auth.uid == 'zcaWS7Kl8xSeBoWrVY5w2LpMwsj2';
+     }
+     
+     match /users/{userId}/dailyStats/{docId} {
+       allow read: if request.auth != null && request.auth.uid == 'zcaWS7Kl8xSeBoWrVY5w2LpMwsj2';
+     }
+     
+     match /users/{userId}/purchases/{docId} {
+       allow read: if request.auth != null && request.auth.uid == 'zcaWS7Kl8xSeBoWrVY5w2LpMwsj2';
+     }
+     
+     match /users/{userId}/lotteryTickets/{docId} {
+       allow read: if request.auth != null && request.auth.uid == 'zcaWS7Kl8xSeBoWrVY5w2LpMwsj2';
+     }
 
     // ===== 리더보드 =====
     match /leaderboard/{userId} {
