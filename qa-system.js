@@ -43,9 +43,21 @@
     const when = q.createdAt?.toDate ? new Intl.DateTimeFormat('ko-KR',{dateStyle:'medium', timeStyle:'short'}).format(q.createdAt.toDate()) : '';
     const tags = (q.tags||[]).map(t=>`#${t}`).join(' ');
     const accepted = q.acceptedAnswerId ? '채택됨' : '미채택';
-    return `<div class="row">
-      <div class="line top"><div class="meta">${q.title||'질문'}</div></div>
-      <div class="line bottom"><div class="id">${tags}</div><div class="diff">${accepted} · ${when}</div><div class="actions"><button class="btn small" data-open="${q.id}">열기</button></div></div>
+    const answers = q.answers || 0;
+    const statusClass = q.acceptedAnswerId ? 'status-accepted' : 'status-pending';
+    return `<div class="row question-row">
+      <div class="question-main">
+        <div class="question-title">${q.title||'질문'}</div>
+        <div class="question-meta">
+          <span class="question-tags">${tags}</span>
+          <span class="question-status ${statusClass}">${accepted}</span>
+          <span class="question-answers">답변 ${answers}개</span>
+          <span class="question-date">${when}</span>
+        </div>
+      </div>
+      <div class="question-actions">
+        <button class="btn small" data-open="${q.id}">열기</button>
+      </div>
     </div>`;
   }
 
@@ -103,7 +115,7 @@
   }
 
   async function loadQuestionsList(){
-    const box = $('questionList'); const pop = $('popularList');
+    const box = $('questionList');
     try {
       const { db, collection, getDocs, query, orderBy } = await ensureFirebase();
       const qs = await getDocs(query(collection(db,'qaQuestions'), orderBy('createdAt','desc')));
@@ -122,11 +134,6 @@
       if (sort === 'popular') view.sort((a,b)=> Number(b.answers||0) - Number(a.answers||0));
       box.innerHTML = view.map(questionRow).join('') || '질문이 없습니다.';
       box.querySelectorAll('[data-open]').forEach(btn=>btn.addEventListener('click', ()=> openDetail(btn.getAttribute('data-open'))));
-
-      // 인기 질문 (답변 많은 순 Top 10)
-      const top = list.slice().sort((a,b)=> Number(b.answers||0) - Number(a.answers||0)).slice(0,10);
-      pop.innerHTML = top.map(questionRow).join('') || '데이터 없음';
-      pop.querySelectorAll('[data-open]').forEach(btn=>btn.addEventListener('click', ()=> openDetail(btn.getAttribute('data-open'))));
     } catch { box.textContent='질문을 불러오지 못했습니다.'; }
   }
 

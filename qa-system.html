@@ -7,6 +7,99 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="favorites.css" />
     <link rel="stylesheet" href="individual-study.css" />
+    <style>
+      /* 질문 목록 개선 스타일 */
+      .question-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 12px;
+        background: var(--card);
+        transition: all 0.2s ease;
+      }
+      
+      .question-row:hover {
+        border-color: var(--primary);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      
+      .question-main {
+        flex: 1;
+        min-width: 0;
+      }
+      
+      .question-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 8px;
+        line-height: 1.4;
+      }
+      
+      .question-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      
+      .question-tags {
+        color: var(--primary);
+        font-weight: 500;
+      }
+      
+      .question-status {
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      
+      .question-status.status-accepted {
+        background: #d4edda;
+        color: #155724;
+      }
+      
+      .question-status.status-pending {
+        background: #fff3cd;
+        color: #856404;
+      }
+      
+      .question-answers {
+        font-weight: 500;
+      }
+      
+      .question-date {
+        color: var(--muted);
+      }
+      
+      .question-actions {
+        flex-shrink: 0;
+        margin-left: 16px;
+      }
+      
+      /* 반응형 디자인 */
+      @media (max-width: 768px) {
+        .question-row {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        
+        .question-actions {
+          margin-left: 0;
+          margin-top: 12px;
+          text-align: right;
+        }
+        
+        .question-meta {
+          gap: 8px;
+        }
+      }
+    </style>
     <link rel="icon" href="/favicon.ico" />
   </head>
   <body>
@@ -88,16 +181,8 @@
                   </select>
                 </div>
               </div>
-              <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 12px;">
-                <article>
-                  <h3>질문 목록</h3>
-                  <div id="questionList" class="list-grid"></div>
-                </article>
-                <aside>
-                  <h3>인기 질문</h3>
-                  <div id="popularList" class="list-grid"></div>
-                </aside>
-              </div>
+              <h3>질문 목록</h3>
+              <div id="questionList" class="list-grid"></div>
 
               <article class="card" style="margin-top:12px;" id="detailCard" hidden>
                 <h3 id="dTitle">질문</h3>
