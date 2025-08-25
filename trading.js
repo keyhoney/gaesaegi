@@ -326,6 +326,11 @@
           
           const now = new Date();
           const currentHour = now.getHours(); // 현재 시간 (0-23)
+          const currentMinute = now.getMinutes(); // 현재 분 (0-59)
+          const currentSecond = now.getSeconds(); // 현재 초 (0-59)
+          
+          // 정각(분=0, 초=0)이 아니면 스킵
+          if (currentMinute !== 0 || currentSecond !== 0) return;
           
           // 이미 이번 시간에 매칭을 실행했다면 스킵
           if (lastMatchHour === currentHour) return;
