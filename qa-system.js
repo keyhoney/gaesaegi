@@ -6,12 +6,9 @@
 
   // Firebase helpers
   async function ensureFirebase(){
-    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
     const { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
     const { getAuth } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
-    const cfg = await window.loadFirebaseConfig?.();
-    const app = initializeApp(cfg);
-    const db = getFirestore(app);
+    const { app, db } = await window.getFirebaseAppAndDb();
     const auth = getAuth(app);
     return { db, auth, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, serverTimestamp };
   }
@@ -46,9 +43,21 @@
     const when = q.createdAt?.toDate ? new Intl.DateTimeFormat('ko-KR',{dateStyle:'medium', timeStyle:'short'}).format(q.createdAt.toDate()) : '';
     const tags = (q.tags||[]).map(t=>`#${t}`).join(' ');
     const accepted = q.acceptedAnswerId ? '채택됨' : '미채택';
-    return `<div class="row">
-      <div class="line top"><div class="meta">${q.title||'질문'}</div></div>
-      <div class="line bottom"><div class="id">${tags}</div><div class="diff">${accepted} · ${when}</div><div class="actions"><button class="btn small" data-open="${q.id}">열기</button></div></div>
+    const answers = q.answers || 0;
+    const statusClass = q.acceptedAnswerId ? 'status-accepted' : 'status-pending';
+    return `<div class="row question-row">
+      <div class="question-main">
+        <div class="question-title">${q.title||'질문'}</div>
+        <div class="question-meta">
+          <span class="question-tags">${tags}</span>
+          <span class="question-status ${statusClass}">${accepted}</span>
+          <span class="question-answers">답변 ${answers}개</span>
+          <span class="question-date">${when}</span>
+        </div>
+      </div>
+      <div class="question-actions">
+        <button class="btn small" data-open="${q.id}">열기</button>
+      </div>
     </div>`;
   }
 
@@ -106,7 +115,7 @@
   }
 
   async function loadQuestionsList(){
-    const box = $('questionList'); const pop = $('popularList');
+    const box = $('questionList');
     try {
       const { db, collection, getDocs, query, orderBy } = await ensureFirebase();
       const qs = await getDocs(query(collection(db,'qaQuestions'), orderBy('createdAt','desc')));
@@ -125,11 +134,6 @@
       if (sort === 'popular') view.sort((a,b)=> Number(b.answers||0) - Number(a.answers||0));
       box.innerHTML = view.map(questionRow).join('') || '질문이 없습니다.';
       box.querySelectorAll('[data-open]').forEach(btn=>btn.addEventListener('click', ()=> openDetail(btn.getAttribute('data-open'))));
-
-      // 인기 질문 (답변 많은 순 Top 10)
-      const top = list.slice().sort((a,b)=> Number(b.answers||0) - Number(a.answers||0)).slice(0,10);
-      pop.innerHTML = top.map(questionRow).join('') || '데이터 없음';
-      pop.querySelectorAll('[data-open]').forEach(btn=>btn.addEventListener('click', ()=> openDetail(btn.getAttribute('data-open'))));
     } catch { box.textContent='질문을 불러오지 못했습니다.'; }
   }
 
@@ -233,10 +237,66 @@
     $('postQuestion').addEventListener('click', postQuestion);
   }
 
+  // 로그인 상태 확인 및 UI 업데이트
+  async function updateLoginStatus() {
+    try {
+      myUid = await window.firebaseData?.getCurrentUserUid?.();
+      const isLoggedIn = !!myUid;
+      
+      // 질문 작성 폼 상태 업데이트
+      const postBtn = $('postQuestion');
+      if (postBtn) {
+        if (isLoggedIn) {
+          postBtn.textContent = '질문 올리기';
+          postBtn.disabled = false;
+          postBtn.className = 'btn primary';
+        } else {
+          postBtn.textContent = '로그인 후 질문 작성';
+          postBtn.disabled = true;
+          postBtn.className = 'btn ghost';
+        }
+      }
+      
+      // 답변 폼 상태 업데이트
+      const answerInput = $('answerInput');
+      const answerSubmitBtn = $('answerForm')?.querySelector('button[type="submit"]');
+      if (answerInput && answerSubmitBtn) {
+        if (isLoggedIn) {
+          answerInput.placeholder = '답변을 입력하세요';
+          answerSubmitBtn.textContent = '등록';
+          answerSubmitBtn.disabled = false;
+          answerSubmitBtn.className = 'btn primary';
+        } else {
+          answerInput.placeholder = '로그인 후 답변을 작성할 수 있습니다';
+          answerSubmitBtn.textContent = '로그인 필요';
+          answerSubmitBtn.disabled = true;
+          answerSubmitBtn.className = 'btn ghost';
+        }
+      }
+      
+      // 로그인 안내 메시지 표시/숨김
+      const loginNotice = $('loginNotice');
+      if (loginNotice) {
+        loginNotice.style.display = isLoggedIn ? 'none' : 'block';
+      }
+      
+    } catch (error) {
+      console.error('로그인 상태 확인 실패:', error);
+    }
+  }
+
   window.addEventListener('load', async ()=>{
     dataset = await loadQuestions(); const h = buildHierarchy(dataset);
     wireAsk(h); wireFilters(h); loadQuestionsList(); loadRanks();
-    try { myUid = await window.firebaseData?.getCurrentUserUid?.(); } catch {}
+    
+    // 초기 로그인 상태 확인
+    await updateLoginStatus();
+    
+    // 로그인 상태 변경 감지 (firebase-data.js에서 제공하는 경우)
+    if (window.firebaseData?.onAuthStateChanged) {
+      window.firebaseData.onAuthStateChanged(updateLoginStatus);
+    }
+    
     $('answerForm').addEventListener('submit', submitAnswer);
   });
 })();

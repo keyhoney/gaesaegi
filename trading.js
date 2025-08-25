@@ -14,8 +14,8 @@
   const volumeData = []; // 일봉 거래량
   let latestTradePrice = null; // 최신 체결가
   let isMatchingRunning = false; // 매칭 작업 동시 실행 방지
-  let matchBackoffMs = 12000;   // 매칭 폴링 기본 주기(가변)
-  let matchNextAt = 0;          // 다음 실행 허용 시각
+  let matchIntervalMs = 3600000;   // 매칭 실행 주기 (1시간)
+  let lastMatchHour = -1;      // 마지막 매칭이 실행된 시간
 
   function initChart() {
     priceChart = echarts.init(document.getElementById('priceChart'));
@@ -311,13 +311,20 @@
       setInterval(refreshOrderbook, 9000);
       setInterval(refreshMyOrders, 10000);
       setInterval(refreshTrades, 11000);
-      // 체결 매칭 폴링: 백오프 + 가시성 고려 + 동시 실행 방지
+      // 체결 매칭: 매 시 정각마다 실행
       const attemptMatch = async () => {
         try {
           if (document.hidden) return; // 탭이 백그라운드일 때는 쉬기
-          const now = Date.now();
-          if (isMatchingRunning || now < matchNextAt) return;
+          if (isMatchingRunning) return;
+          
+          const now = new Date();
+          const currentHour = now.getHours(); // 현재 시간 (0-23)
+          
+          // 이미 이번 시간에 매칭을 실행했다면 스킵
+          if (lastMatchHour === currentHour) return;
+          
           isMatchingRunning = true;
+          lastMatchHour = currentHour;
 
           await window.firebaseData?.tradingMatchOnce?.();
           try {
@@ -327,21 +334,14 @@
             if (toClaim.length>0) { refreshBalances(); refreshTicker(); refreshOrderbook(); refreshMyOrders(); }
           } catch {}
 
-          // 성공 시 주기 원복
-          matchBackoffMs = 12000;
         } catch (e) {
-          const msg = String(e?.message || e || '');
-          // 429 또는 resource-exhausted 시 백오프 증가
-          if (e?.code === 'resource-exhausted' || msg.includes('resource-exhausted') || msg.includes('429')) {
-            matchBackoffMs = Math.min(Math.round(matchBackoffMs * 1.8 + Math.random()*1000), 60000);
-          }
+          console.warn('매칭 실행 중 오류:', e);
         } finally {
-          matchNextAt = Date.now() + matchBackoffMs + Math.floor(Math.random()*1500); // 지터 추가
           isMatchingRunning = false;
         }
       };
-      // 폴링 체크 타이머(가벼운 빈 인터벌에 내부 스케줄 적용)
-      setInterval(attemptMatch, 2000);
+      // 매 시 정각마다 매칭 실행 (1초마다 체크)
+      setInterval(attemptMatch, 1000);
     }
   });
 })();
