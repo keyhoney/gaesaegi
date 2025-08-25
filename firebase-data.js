@@ -740,7 +740,7 @@
         const P = Number(price); const Q = Number(qty);
         if (!(P>0 && Q>0) || !Number.isFinite(P) || !Number.isFinite(Q)) return { ok: false, error: 'invalid' };
         if (!(side === 'buy' || side === 'sell')) return { ok: false, error: 'invalid' };
-        if (side === 'sell' && P > 1500) return { ok: false, error: 'price-cap' };
+        if (P > 1500) return { ok: false, error: 'price-cap' };
         const bal = await this.tradingGetBalances();
         const { user, db } = await withUser();
         const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');

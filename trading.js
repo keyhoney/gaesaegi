@@ -14,8 +14,8 @@
   const volumeData = []; // 일봉 거래량
   let latestTradePrice = null; // 최신 체결가
   let isMatchingRunning = false; // 매칭 작업 동시 실행 방지
-  let matchIntervalMs = 3600000;   // 매칭 실행 주기 (1시간)
-  let lastMatchHour = -1;      // 마지막 매칭이 실행된 시간
+  let matchIntervalMs = 600000;    // 매칭 실행 주기 (10분)
+  let lastMatchMinute = -1;    // 마지막 매칭이 실행된 분
 
   function initChart() {
     priceChart = echarts.init(document.getElementById('priceChart'));
@@ -214,7 +214,7 @@
       const res = await window.firebaseData?.tradingPlaceOrder?.(side, price, qty);
       if (!res?.ok) {
         let m = '주문 실패';
-        if (res?.error === 'price-cap') m = '매도 가격은 1,500pt를 초과할 수 없습니다.';
+        if (res?.error === 'price-cap') m = '주문 가격은 1,500pt를 초과할 수 없습니다.';
         if (res?.error === 'insufficient-points') m = '포인트가 부족합니다.';
         if (res?.error === 'insufficient-coins') m = '코인이 부족합니다.';
         if (res?.error === 'invalid') m = '가격/수량이 유효하지 않습니다.';
@@ -329,14 +329,16 @@
           const currentMinute = now.getMinutes(); // 현재 분 (0-59)
           const currentSecond = now.getSeconds(); // 현재 초 (0-59)
           
-          // 정각(분=0, 초=0)이 아니면 스킵
-          if (currentMinute !== 0 || currentSecond !== 0) return;
+          // 10분 단위(분이 0, 10, 20, 30, 40, 50이고 초가 0)일 때만 실행
+          if (currentMinute % 10 !== 0 || currentSecond !== 0) return;
           
-          // 이미 이번 시간에 매칭을 실행했다면 스킵
-          if (lastMatchHour === currentHour) return;
+          // 이미 이번 10분에 매칭을 실행했다면 스킵
+          if (lastMatchMinute === currentMinute) return;
+          
+          console.log(`매칭 실행: ${currentHour}:${currentMinute.toString().padStart(2,'0')}:${currentSecond.toString().padStart(2,'0')}`);
           
           isMatchingRunning = true;
-          lastMatchHour = currentHour;
+          lastMatchMinute = currentMinute;
 
           await window.firebaseData?.tradingMatchOnce?.();
           try {
@@ -352,7 +354,7 @@
           isMatchingRunning = false;
         }
       };
-      // 매 시 정각마다 매칭 실행 (1초마다 체크)
+      // 10분마다 매칭 실행 (1초마다 체크)
       setInterval(attemptMatch, 1000);
     }
   });

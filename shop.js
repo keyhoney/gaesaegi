@@ -9,8 +9,8 @@
 
   const PRODUCTS = [
     // 교환권
-    { id: 'chicken', category: 'voucher', name: '치킨 교환권', price: 20000, minLevel: 1, icon: '🍗', desc: '치킨 1마리 교환권' },
-    { id: 'tteokbokki', category: 'voucher', name: '엽기 떡볶이', price: 15000, minLevel: 1, icon: '🍲', desc: '엽떡 배달 교환권' },
+    { id: 'chicken', category: 'voucher', name: '치킨 교환권', price: 200000, minLevel: 1, icon: '🍗', desc: '치킨 1마리 교환권' },
+    { id: 'tteokbokki', category: 'voucher', name: '엽기 떡볶이', price: 150000, minLevel: 1, icon: '🍲', desc: '엽떡 배달 교환권' },
     // 특별 아이템
     { id: 'booster2x', category: 'special', name: '포인트 2배 부스터(48h)', price: 2000, minLevel: 10, icon: '⚡', desc: '사용 후 48시간 동안 포인트 적립 2배' },
     { id: 'coin1', category: 'special', name: '코인 1개', price: 1500, minLevel: 5, icon: '🪙', desc: '지갑에 코인 1개 충전' },
