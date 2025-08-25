@@ -336,9 +336,9 @@
         // monthly
         const mRef = doc(db, 'users', user.uid, 'challenges', `monthly-${monthKey}`);
         const mon = await bumpBy(mRef, deltaToday, isCorrect ? deltaToday : 0);
-        if (!mon.rewardGiven && mon.total >= 300) {
+        if (!mon.rewardGiven && mon.total >= 200) {
           await setDoc(mRef, { rewardGiven: true }, { merge: true });
-          await this.addCoins(9);
+          await this.addCoins(10);
         }
         return true;
       } catch (_) { return false; }
@@ -364,7 +364,7 @@
         if (!week.rewardGiven && week.days >= 7) { await setDoc(wRef, { rewardGiven: true }, { merge: true }); await this.addCoins(1); }
         const mRef = doc(db, 'users', user.uid, 'challenges', `monthly-${monthKey}-login`);
         const mon = await mark(mRef);
-        if (!mon.rewardGiven && mon.days >= 25) { await setDoc(mRef, { rewardGiven: true }, { merge: true }); await this.addCoins(9); }
+        if (!mon.rewardGiven && mon.days >= 25) { await setDoc(mRef, { rewardGiven: true }, { merge: true }); await this.addCoins(10); }
         return true;
       } catch (_) { return false; }
     },
