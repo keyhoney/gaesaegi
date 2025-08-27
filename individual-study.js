@@ -60,14 +60,15 @@
       const key = await window.firebaseData?.getServerDateSeoulKey?.();
       const k = key || window.firebaseData?.getLocalDateSeoulKey?.();
       const d = await window.firebaseData?.getDailyStats?.(k);
-      return { exp: Number(d?.exp||0), points: Number(d?.points||0) };
-    } catch (_) { return { exp: 0, points: 0 }; }
+      return { exp: Number(d?.exp||0), points: Number(d?.points||0), studyExp: Number(d?.studyExp||0), studyPoints: Number(d?.studyPoints||0) };
+    } catch (_) { return { exp: 0, points: 0, studyExp: 0, studyPoints: 0 }; }
   }
 
   async function updateStatsUI() {
     const stats = await loadDailyStats();
     $expToday.textContent = String(stats.exp);
-    $pointsToday.textContent = String(stats.points);
+    // 개별 학습을 통한 포인트만 표시 (일일 한계 적용 대상)
+    $pointsToday.textContent = String(stats.studyPoints);
   }
 
   function withinCooldown(lastDate) {
@@ -110,7 +111,7 @@
     if (applied.expReached || applied.ptsReached) {
       const hits = [];
       if (applied.expReached) hits.push('경험치 일일 최대치(2,000 exp)');
-      if (applied.ptsReached) hits.push('포인트 일일 최대치(1,000 pt)');
+      if (applied.ptsReached) hits.push('개별 학습 포인트 일일 최대치(1,000 pt)');
       msgs.push(`${hits.join(' 및 ')}에 도달하여 추가 보상이 제한됩니다.`);
     }
     return msgs.join(' ');

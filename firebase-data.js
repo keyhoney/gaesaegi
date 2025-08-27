@@ -99,9 +99,14 @@
       const { getDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
       const ref = doc(db, 'users', user.uid, 'dailyStats', dateKey);
       const snap = await getDoc(ref);
-      const data = snap.exists() ? snap.data() : { exp: 0, points: 0 };
-      return { exp: data.exp || 0, points: data.points || 0 };
-    } catch (_) { return { exp: 0, points: 0 }; }
+      const data = snap.exists() ? snap.data() : { exp: 0, points: 0, studyExp: 0, studyPoints: 0 };
+      return { 
+        exp: data.exp || 0, 
+        points: data.points || 0,
+        studyExp: data.studyExp || 0,
+        studyPoints: data.studyPoints || 0
+      };
+    } catch (_) { return { exp: 0, points: 0, studyExp: 0, studyPoints: 0 }; }
   }
 
   async function incrementDailyStats(dateKey, addExp, addPoints, caps = { exp: 2000, points: 1000 }) {
@@ -118,6 +123,53 @@
         const ptsApplied = Math.min(addPoints || 0, ptsAvail);
         trx.set(ref, { exp: (cur.exp || 0) + expApplied, points: (cur.points || 0) + ptsApplied }, { merge: true });
         return { expApplied, ptsApplied, expReached: expAvail === 0, ptsReached: ptsAvail === 0 };
+      });
+      return result;
+    } catch (_) { return { expApplied: 0, ptsApplied: 0, expReached: false, ptsReached: false }; }
+  }
+
+  // 개별 학습을 통한 포인트만 일일 한계에 적용하는 함수
+  async function incrementDailyStudyStats(dateKey, addExp, addPoints, caps = { exp: 2000, points: 1000 }) {
+    try {
+      const { user, db } = await withUser();
+      const { runTransaction, doc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      const ref = doc(db, 'users', user.uid, 'dailyStats', dateKey);
+      const result = await runTransaction(db, async (trx) => {
+        const snap = await trx.get(ref);
+        const cur = snap.exists() ? snap.data() : { exp: 0, points: 0, studyExp: 0, studyPoints: 0 };
+        // 개별 학습 통계는 별도로 관리
+        const studyExpAvail = Math.max((caps.exp ?? 2000) - (cur.studyExp || 0), 0);
+        const studyPtsAvail = Math.max((caps.points ?? 1000) - (cur.studyPoints || 0), 0);
+        const expApplied = Math.min(addExp || 0, studyExpAvail);
+        const ptsApplied = Math.min(addPoints || 0, studyPtsAvail);
+        trx.set(ref, { 
+          exp: (cur.exp || 0) + expApplied, 
+          points: (cur.points || 0) + ptsApplied,
+          studyExp: (cur.studyExp || 0) + expApplied,
+          studyPoints: (cur.studyPoints || 0) + ptsApplied
+        }, { merge: true });
+        return { expApplied, ptsApplied, expReached: studyExpAvail === 0, ptsReached: studyPtsAvail === 0 };
+      });
+      return result;
+    } catch (_) { return { expApplied: 0, ptsApplied: 0, expReached: false, ptsReached: false }; }
+  }
+
+  // 제한 없이 포인트를 추가하는 함수
+  async function addPointsUnlimited(dateKey, addExp, addPoints) {
+    try {
+      const { user, db } = await withUser();
+      const { runTransaction, doc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      const ref = doc(db, 'users', user.uid, 'dailyStats', dateKey);
+      const result = await runTransaction(db, async (trx) => {
+        const snap = await trx.get(ref);
+        const cur = snap.exists() ? snap.data() : { exp: 0, points: 0 };
+        const expApplied = addExp || 0;
+        const ptsApplied = addPoints || 0;
+        trx.set(ref, { 
+          exp: (cur.exp || 0) + expApplied, 
+          points: (cur.points || 0) + ptsApplied
+        }, { merge: true });
+        return { expApplied, ptsApplied, expReached: false, ptsReached: false };
       });
       return result;
     } catch (_) { return { expApplied: 0, ptsApplied: 0, expReached: false, ptsReached: false }; }
@@ -154,6 +206,8 @@
       const snap = await getDoc(ref);
       if (snap.exists()) return { granted: false };
       await setDoc(ref, { exp, points, at: Date.now() });
+      // 모의고사 보상은 제한 없이 지급
+      await window.firebaseData?.addPointsUnlimited?.(dateKey, exp, points);
       return { granted: true };
     } catch (_) { return { granted: false }; }
   }
@@ -191,6 +245,8 @@
     fetchAnsweredLogs,
     getDailyStats,
     incrementDailyStats,
+    incrementDailyStudyStats,
+    addPointsUnlimited,
     getSubmissionAt,
     setSubmissionNow,
     maybeGrantExamReward,
@@ -324,7 +380,7 @@
         const deltaToday = prevDayTotal < 10 ? 1 : 0;
         if (!day.rewardGiven && day.total >= 10) { // 일일 목표: 10문제
           await setDoc(dRef, { rewardGiven: true }, { merge: true });
-          await this.incrementDailyStats(dateKey, 0, 200); // 200pt
+          await this.addPointsUnlimited(dateKey, 0, 200); // 200pt - 제한 없이 지급
         }
         // weekly
         const wRef = doc(db, 'users', user.uid, 'challenges', `weekly-${weekKey}`);
@@ -579,8 +635,8 @@
         const dateKey = await this.getServerDateSeoulKey();
         if (refundPoints > 0) {
           // 환불 포인트는 일일 한도와 무관하게 전액 반환
-          await this.incrementDailyStats(dateKey, 0, refundPoints, { exp: 2147483647, points: 2147483647 });
-          await this.addPointTransaction(refundPoints, `refund:item:${itemId}`);
+                  await this.addPointsUnlimited(dateKey, 0, refundPoints);
+        await this.addPointTransaction(refundPoints, `refund:item:${itemId}`);
         }
         if (refundCoins > 0) {
           await this.addCoins(refundCoins);
@@ -713,6 +769,13 @@
     async tradingAdjustPoints(delta, reason) {
       try {
         await this.addPointTransaction(Number(delta), reason||'trade');
+        
+        // 거래를 통한 포인트 획득은 제한 없이 일일 통계에 추가
+        if (delta > 0) {
+          const dateKey = await this.getServerDateSeoulKey();
+          await this.addPointsUnlimited(dateKey, 0, delta);
+        }
+        
         return { expApplied: 0, ptsApplied: 0, expReached: false, ptsReached: false };
       } catch (_) { return null; }
     },
@@ -1243,7 +1306,8 @@
         const ptsBase = Number(addPoints || 0);
         const pts = active ? ptsBase * 2 : ptsBase;
         const effectiveCaps = { exp: Number(caps.exp||2000), points: active ? Number(caps.points||1000) * 2 : Number(caps.points||1000) };
-        const res = await this.incrementDailyStats(dateKey, exp, pts, effectiveCaps);
+        // 개별 학습을 통한 포인트만 일일 한계에 적용
+        const res = await this.incrementDailyStudyStats(dateKey, exp, pts, effectiveCaps);
         try { if ((res?.ptsApplied||0) > 0) await this.addPointTransaction(res.ptsApplied, 'earn:study'); } catch {}
         return res;
       } catch (_) { return { expApplied: 0, ptsApplied: 0, expReached: false, ptsReached: false }; }
