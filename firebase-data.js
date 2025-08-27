@@ -313,9 +313,18 @@
         // 코인 보상 미지급 상태면 지급
         let granted = 0;
         if (!alreadyCoined && Number(coins||0) > 0) {
-          const res = await this.addCoins(Number(coins||0), `achievement:${id}`);
+          const res = await this.addCoins(Number(coins||0));
           granted = res?.applied || 0;
-          try { await setDoc(ref, { coinGranted: true, coinAmount: Number(coins||0), coinAt: serverTimestamp() }, { merge: true }); } catch {}
+          console.log(`[배지] ${id} 코인 지급 시도: ${granted}개`);
+          
+          if (granted > 0) {
+            try { 
+              await setDoc(ref, { coinGranted: true, coinAmount: Number(coins||0), coinAt: serverTimestamp() }, { merge: true }); 
+              console.log(`[배지] ${id} 코인 지급 완료`);
+            } catch (e) {
+              console.error(`[배지] ${id} 코인 지급 상태 업데이트 실패:`, e);
+            }
+          }
         }
         return { awarded: !exists, coinsGranted: granted };
       } catch (_) { return { awarded: false, coinsGranted: 0 }; }

@@ -191,9 +191,24 @@
       } catch {}
       // 레벨 달성 배지(레벨 10=+2코인, 레벨 20=+3코인, 레벨 5=+1코인)
       try {
-        if (level >= 5) await window.firebaseData?.awardAchievementCoinsOnce?.('level-5', { name: '레벨 5 달성' }, 1);
-        if (level >= 10) await window.firebaseData?.awardAchievementCoinsOnce?.('level-10', { name: '레벨 10 달성' }, 2);
-        if (level >= 20) await window.firebaseData?.awardAchievementCoinsOnce?.('level-20', { name: '레벨 20 달성' }, 3);
+        if (level >= 5) {
+          const r = await window.firebaseData?.awardAchievementCoinsOnce?.('level-5', { name: '레벨 5 달성' }, 1);
+          if (r?.awarded) {
+            window.showToast?.('배지 획득: 레벨 5 달성! +1코인', 'success');
+          }
+        }
+        if (level >= 10) {
+          const r = await window.firebaseData?.awardAchievementCoinsOnce?.('level-10', { name: '레벨 10 달성' }, 2);
+          if (r?.awarded) {
+            window.showToast?.('배지 획득: 레벨 10 달성! +2코인', 'success');
+          }
+        }
+        if (level >= 20) {
+          const r = await window.firebaseData?.awardAchievementCoinsOnce?.('level-20', { name: '레벨 20 달성' }, 3);
+          if (r?.awarded) {
+            window.showToast?.('배지 획득: 레벨 20 달성! +3코인', 'success');
+          }
+        }
       } catch {}
     } catch {}
 
@@ -230,8 +245,18 @@
       const total = recent.length;
       const correct = recent.filter(x=>x.correct).length;
       const acc = total>0 ? correct/total : 0;
-      if (acc >= 0.9 && total >= 10) await window.firebaseData?.awardAchievementCoinsOnce?.('acc-90', { name: '정답률 90%' }, 3);
-      else if (acc >= 0.8 && total >= 10) await window.firebaseData?.awardAchievementCoinsOnce?.('acc-80', { name: '정답률 80%' }, 2);
+      if (acc >= 0.9 && total >= 10) {
+        const r = await window.firebaseData?.awardAchievementCoinsOnce?.('acc-90', { name: '정답률 90%' }, 3);
+        if (r?.awarded) {
+          window.showToast?.('배지 획득: 정답률 90%! +3코인', 'success');
+        }
+      }
+      else if (acc >= 0.8 && total >= 10) {
+        const r = await window.firebaseData?.awardAchievementCoinsOnce?.('acc-80', { name: '정답률 80%' }, 2);
+        if (r?.awarded) {
+          window.showToast?.('배지 획득: 정답률 80%! +2코인', 'success');
+        }
+      }
     } catch {}
 
     renderChallenges();

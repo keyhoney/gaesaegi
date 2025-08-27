@@ -260,11 +260,28 @@ window.addEventListener('load', async () => {
       const key = (window.firebaseData?.getLocalDateSeoulKey?.() 
         || (function(){ const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
       const gateKey = `gsg_login_marked_${key}`;
+      
+      // 첫 로그인 배지 체크 (markLogin 호출 전에 수행)
+      const dates = await window.firebaseData?.listLoginDates?.();
+      if (Array.isArray(dates)) {
+        // 첫 로그인 배지 + 코인 1개 (로그인 기록이 없을 때만)
+        if (dates.length === 0) {
+          const has = await window.firebaseData?.hasAchievement?.('first-login');
+          if (!has) {
+            const r = await window.firebaseData?.awardAchievementCoinsOnce?.('first-login', { name: '첫 로그인' }, 1);
+            if (r?.awarded) {
+              showToast('배지 획득: 첫 로그인! +1코인', 'success');
+            }
+          }
+        }
+      }
+      
       if (!localStorage.getItem(gateKey)) {
         await window.firebaseData?.markLogin?.(key);
         try { await window.firebaseData?.updateChallengesOnLogin?.(); } catch {}
         localStorage.setItem(gateKey, '1');
       }
+      
       // 프로필 누락 시 입력 페이지로 이동 (인증된 사용자에 한해 검사)
       try {
         const uid = await window.firebaseData?.getCurrentUserUid?.();
@@ -279,25 +296,36 @@ window.addEventListener('load', async () => {
           }
         }
       } catch {}
-      const dates = await window.firebaseData?.listLoginDates?.();
-      if (Array.isArray(dates)) {
-        // 첫 로그인 배지 + 코인 1개
-        if (dates.length === 1) {
-          const has = await window.firebaseData?.hasAchievement?.('first-login');
-          if (!has) {
-            const r = await window.firebaseData?.awardAchievementCoinsOnce?.('first-login', { name: '첫 로그인' }, 1);
-            showToast('배지 획득: 첫 로그인! +1코인', 'success');
-          }
-        }
+      
+      // 연속 로그인 배지 체크 (markLogin 호출 후에 수행)
+      const updatedDates = await window.firebaseData?.listLoginDates?.();
+      if (Array.isArray(updatedDates)) {
         // 연속 로그인: Asia/Seoul 기준 키를 사용해 인접일 확인
-        const sorted = dates.slice().sort();
+        const sorted = updatedDates.slice().sort();
         const str = (dt) => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
         function nextDay(s) { const [y,m,d] = s.split('-').map(Number); const t = new Date(y, m-1, d); t.setDate(t.getDate()+1); return str(t); }
         let bestStreak = 0; let curr = 0; let prev = null;
         sorted.forEach(k => { if (prev && k === nextDay(prev)) { curr += 1; } else { curr = 1; } bestStreak = Math.max(bestStreak, curr); prev = k; });
-        if (bestStreak >= 3) { await window.firebaseData?.awardAchievement?.('streak-login-3', { name: '연속 로그인 3일' }); }
-        if (bestStreak >= 5) { await window.firebaseData?.awardAchievement?.('streak-login-5', { name: '연속 로그인 5일' }); }
-        if (bestStreak >= 10) { await window.firebaseData?.awardAchievement?.('streak-login-10', { name: '연속 로그인 10일' }); }
+        
+        // 연속 로그인 배지들도 코인 지급하도록 수정
+        if (bestStreak >= 3) { 
+          const r = await window.firebaseData?.awardAchievementCoinsOnce?.('streak-login-3', { name: '연속 로그인 3일' }, 1);
+          if (r?.awarded) {
+            showToast('배지 획득: 연속 로그인 3일! +1코인', 'success');
+          }
+        }
+        if (bestStreak >= 5) { 
+          const r = await window.firebaseData?.awardAchievementCoinsOnce?.('streak-login-5', { name: '연속 로그인 5일' }, 2);
+          if (r?.awarded) {
+            showToast('배지 획득: 연속 로그인 5일! +2코인', 'success');
+          }
+        }
+        if (bestStreak >= 10) { 
+          const r = await window.firebaseData?.awardAchievementCoinsOnce?.('streak-login-10', { name: '연속 로그인 10일' }, 3);
+          if (r?.awarded) {
+            showToast('배지 획득: 연속 로그인 10일! +3코인', 'success');
+          }
+        }
       }
     } catch {}
   } catch {}
