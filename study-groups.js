@@ -158,6 +158,17 @@
       };
       if (desc) groupData.desc = desc; // 비어있으면 필드 자체를 추가하지 않음
       
+      // 필수 필드 검증
+      if (!groupData.name || typeof groupData.name !== 'string') {
+        throw new Error('그룹 이름이 유효하지 않습니다.');
+      }
+      if (!groupData.inviteCode || typeof groupData.inviteCode !== 'string') {
+        throw new Error('초대 코드 생성에 실패했습니다.');
+      }
+      if (!groupData.challengeStartKey || typeof groupData.challengeStartKey !== 'string') {
+        throw new Error('챌린지 시작 키 생성에 실패했습니다.');
+      }
+      
       // createdAt은 반드시 서버 타임스탬프
       groupData.createdAt = serverTimestamp();
       
@@ -217,9 +228,15 @@
     const code = ($('joinCode').value||'').trim().toUpperCase(); const msg=$('joinMsg'); msg.textContent='';
     if (!code) { msg.textContent='초대 코드를 입력해 주세요.'; return; }
     try {
-      const uid = await window.firebaseData?.getCurrentUserUid?.(); if (!uid) { msg.textContent='로그인이 필요합니다.'; return; }
+      const uid = await window.firebaseData?.getCurrentUserUid?.(); 
+      if (!uid) { 
+        msg.textContent='로그인이 필요합니다.'; 
+        return; 
+      }
       myUid = uid;
       const { db, collection, getDocs, query, where, doc, updateDoc, setDoc, serverTimestamp, getDoc } = await ensureFirebase();
+      
+      console.log('그룹 참여 시도:', { code, uid });
       
       // 사용자별 소속 인덱스 확인 (본인 경로이므로 권한 문제 없음)
       const userGroupRef = doc(db, 'users', uid, 'private', 'group');
@@ -228,13 +245,34 @@
         msg.textContent='이미 다른 그룹에 소속되어 있어 참여할 수 없습니다.'; 
         return; 
       }
+      
+      // 초대 코드로 그룹 찾기
       const q1 = query(collection(db,'studyGroups'), where('inviteCode','==', code));
       const snap = await getDocs(q1);
-      if (snap.empty) { msg.textContent='코드를 찾을 수 없습니다.'; return; }
-      const d = snap.docs[0]; const gid = d.id; const data = d.data()||{};
+      if (snap.empty) { 
+        msg.textContent='코드를 찾을 수 없습니다.'; 
+        return; 
+      }
+      
+      const d = snap.docs[0]; 
+      const gid = d.id; 
+      const data = d.data()||{};
+      
+      console.log('찾은 그룹 정보:', { gid, data });
+      
+      // 이미 멤버인지 확인
       const members = Array.isArray(data.members)? data.members: [];
-      if (!members.includes(uid)) members.push(uid);
-      await updateDoc(doc(db,'studyGroups',gid), { members });
+      if (members.includes(uid)) {
+        msg.textContent='이미 이 그룹의 멤버입니다.'; 
+        return; 
+      }
+      
+      // 멤버 추가
+      const newMembers = [...members, uid];
+      console.log('멤버 업데이트:', { oldMembers: members, newMembers });
+      
+      await updateDoc(doc(db,'studyGroups',gid), { members: newMembers });
+      console.log('그룹 멤버 업데이트 성공');
       
       // 사용자별 소속 인덱스 업데이트 (본인 경로이므로 권한 문제 없음)
       try {
@@ -243,6 +281,7 @@
           joinedAt: serverTimestamp(),
           role: 'member'
         });
+        console.log('사용자 소속 인덱스 업데이트 성공');
       } catch (error) {
         console.warn('사용자 소속 인덱스 업데이트 실패:', error);
         // 인덱스 업데이트 실패해도 그룹 참여는 성공으로 처리
@@ -252,10 +291,11 @@
       try {
         const { doc: d2, setDoc: s2, serverTimestamp: st } = await ensureFirebase();
         await s2(d2(db,'studyGroupsPublic', gid), { 
-          memberCount: members.length, 
-          target: Math.max(0, members.length*50), 
+          memberCount: newMembers.length, 
+          target: Math.max(0, newMembers.length*50), 
           updatedAt: st() 
         }, { merge: true });
+        console.log('공개 그룹 정보 업데이트 성공');
       } catch (error) {
         console.warn('공개 그룹 정보 업데이트 실패 (권한 제한):', error);
       }
@@ -264,7 +304,10 @@
       $('joinCode').value='';
       await loadMyGroups();
       openGroup(gid);
-    } catch { msg.textContent='참여에 실패했습니다.'; }
+    } catch (error) { 
+      console.error('그룹 참여 실패:', error);
+      msg.textContent='참여에 실패했습니다. 오류: ' + (error.message || error);
+    }
   }
 
   async function openGroup(gid){
