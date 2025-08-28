@@ -281,13 +281,30 @@
     return last !== todayKey();
   }
 
-  function grantExamReward(ratio) {
+  async function grantExamReward(ratio) {
     const tier = REWARD_TIERS.find(t => ratio >= t.min) || REWARD_TIERS[REWARD_TIERS.length - 1];
     if (!canReward()) {
       return `보상은 하루에 한 번만 지급됩니다. 내일 다시 시도해 주세요.`;
     }
+    
+    // 실제 경험치와 포인트 적용
+    const applied = await window.firebaseData?.applyExpPoints?.(todayKey(), tier.exp, tier.points, { exp: 2000, points: 1000 })
+      || { expApplied: 0, ptsApplied: 0, expReached: false, ptsReached: false };
+    
     localStorage.setItem(STORAGE.lastExamRewardDate, todayKey());
-    return `보상 지급: 경험치 +${tier.exp} exp, 포인트 +${tier.points} pt`;
+    
+    const msgs = [];
+    if (applied.expApplied > 0 || applied.ptsApplied > 0) {
+      msgs.push(`보상 지급: 경험치 +${applied.expApplied} exp, 포인트 +${applied.ptsApplied} pt`);
+    }
+    if (applied.expReached || applied.ptsReached) {
+      const hits = [];
+      if (applied.expReached) hits.push('경험치 일일 최대치(2,000 exp)');
+      if (applied.ptsReached) hits.push('포인트 일일 최대치(1,000 pt)');
+      msgs.push(`${hits.join(' 및 ')}에 도달하여 추가 보상이 제한됩니다.`);
+    }
+    
+    return msgs.join(' ');
   }
 
   function submitExam() {
@@ -309,7 +326,22 @@
 
     $exam.hidden = true; $result.hidden = false;
     $summary.textContent = `정답 ${correct} / ${total} (${percent}%)`;
-    $rewardMsg.textContent = grantExamReward(ratio);
+    
+    // 보상 지급 (비동기 처리)
+    (async () => {
+      try {
+        const rewardMsg = await grantExamReward(ratio);
+        $rewardMsg.textContent = rewardMsg;
+        
+        // 보상이 실제로 지급되었는지 확인하여 토스트 메시지 표시
+        if (rewardMsg.includes('보상 지급:')) {
+          window.showToast && window.showToast('모의고사 보상이 지급되었습니다!', 'success');
+        }
+      } catch (error) {
+        console.error('모의고사 보상 지급 실패:', error);
+        $rewardMsg.textContent = '보상 지급 중 오류가 발생했습니다.';
+      }
+    })();
 
     // 상세
     $breakdown.innerHTML = '';
@@ -326,6 +358,21 @@
     (async () => {
       try { await window.firebaseData?.addManyLearningLogs(fbLogs); } catch (_) {}
       try { await window.firebaseData?.addManyAnsweredLogs(fbAnswered); } catch (_) {}
+      
+      // 챌린지 업데이트 (일/주/월)
+      try { 
+        const correctCount = fbLogs.filter(log => log.correct === 1).length;
+        for (let i = 0; i < correctCount; i++) {
+          await window.firebaseData?.updateChallengesOnAnswer?.(true);
+        }
+      } catch (_) {}
+      
+      // 정답 이벤트 기록 (배지용)
+      try {
+        for (const log of fbLogs) {
+          await window.firebaseData?.addAnswerEvent?.(log.correct === 1);
+        }
+      } catch (_) {}
     })();
 
     // 문제별 응답 기록(학습 진행률 계산용)
@@ -335,6 +382,9 @@
       const id = _q.id; ansSet.add(id); ansLog.push({ date: todayKey(), qid: id });
     });
     saveSet(ANSWERED_SET_KEY, ansSet); saveAnsLog(ansLog);
+    
+    // 리더보드 갱신 플래그 설정 (성취도 페이지 진입 시 갱신)
+    try { localStorage.setItem('gsg_lb_dirty', '1'); } catch {}
 
     detail.forEach(d => {
       const el = document.createElement('div');
