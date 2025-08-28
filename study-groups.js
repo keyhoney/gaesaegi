@@ -183,7 +183,9 @@
       console.log('- desc 필드 존재 여부:', 'desc' in groupData);
       console.log('- desc 값:', groupData.desc);
       
+      console.log('그룹 생성 시도...');
       const ref = await addDoc(collection(db,'studyGroups'), groupData);
+      console.log('그룹 생성 성공:', ref.id);
       
       // 사용자별 소속 인덱스 업데이트 (본인 경로이므로 권한 문제 없음)
       try {
@@ -215,12 +217,23 @@
       }
       
       showToast('그룹이 생성되었습니다.','success');
+      console.log('생성된 그룹의 초대 코드:', code);
       $('grpName').value=''; $('grpDesc').value='';
       await loadMyGroups();
       openGroup(ref.id);
     } catch (error) { 
       console.error('그룹 생성 실패:', error);
-      msg.textContent='생성에 실패했습니다. 오류: ' + (error.message || error);
+      
+      // 더 상세한 오류 메시지
+      let errorMsg = '생성에 실패했습니다.';
+      if (error.code === 'permission-denied') {
+        errorMsg = '권한이 없습니다. 로그인 상태를 확인해주세요.';
+      } else if (error.message) {
+        errorMsg += ' 오류: ' + error.message;
+      }
+      
+      msg.textContent = errorMsg;
+      showToast(errorMsg, 'error');
     }
   }
 
@@ -247,9 +260,13 @@
       }
       
       // 초대 코드로 그룹 찾기
+      console.log('초대 코드로 그룹 검색:', code);
       const q1 = query(collection(db,'studyGroups'), where('inviteCode','==', code));
       const snap = await getDocs(q1);
+      console.log('검색 결과:', { empty: snap.empty, size: snap.size });
+      
       if (snap.empty) { 
+        console.log('초대 코드에 해당하는 그룹을 찾을 수 없음');
         msg.textContent='코드를 찾을 수 없습니다.'; 
         return; 
       }
@@ -271,6 +288,7 @@
       const newMembers = [...members, uid];
       console.log('멤버 업데이트:', { oldMembers: members, newMembers });
       
+      console.log('그룹 멤버 업데이트 시도:', { gid, newMembers });
       await updateDoc(doc(db,'studyGroups',gid), { members: newMembers });
       console.log('그룹 멤버 업데이트 성공');
       
@@ -306,7 +324,19 @@
       openGroup(gid);
     } catch (error) { 
       console.error('그룹 참여 실패:', error);
-      msg.textContent='참여에 실패했습니다. 오류: ' + (error.message || error);
+      
+      // 더 상세한 오류 메시지
+      let errorMsg = '참여에 실패했습니다.';
+      if (error.code === 'permission-denied') {
+        errorMsg = '권한이 없습니다. 로그인 상태를 확인해주세요.';
+      } else if (error.code === 'not-found') {
+        errorMsg = '그룹을 찾을 수 없습니다. 초대 코드를 다시 확인해주세요.';
+      } else if (error.message) {
+        errorMsg += ' 오류: ' + error.message;
+      }
+      
+      msg.textContent = errorMsg;
+      showToast(errorMsg, 'error');
     }
   }
 
@@ -708,6 +738,29 @@
     }
   }
 
+  // 그룹 참여 테스트 함수
+  async function testGroupJoin(code) {
+    try {
+      console.log('그룹 참여 테스트 시작:', code);
+      const { db, collection, getDocs, query, where } = await ensureFirebase();
+      
+      // 1. 초대 코드로 그룹 검색
+      const q1 = query(collection(db,'studyGroups'), where('inviteCode','==', code));
+      const snap = await getDocs(q1);
+      console.log('그룹 검색 결과:', { empty: snap.empty, size: snap.size });
+      
+      if (!snap.empty) {
+        const group = snap.docs[0];
+        console.log('찾은 그룹:', { id: group.id, data: group.data() });
+      }
+      
+      return { success: true, found: !snap.empty };
+    } catch (error) {
+      console.error('그룹 참여 테스트 실패:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   window.addEventListener('load', async ()=>{
     await loadMyGroups();
     loadPublicGroups();
@@ -720,6 +773,10 @@
     $('dissolveBtn').addEventListener('click', dissolveGroup);
     $('giftBtn').addEventListener('click', sendGift);
     $('chatForm').addEventListener('submit', saveMessage);
+    
+    // 전역 함수로 노출 (디버깅용)
+    window.testAuthStatus = testAuthStatus;
+    window.testGroupJoin = testGroupJoin;
   });
 })();
 
