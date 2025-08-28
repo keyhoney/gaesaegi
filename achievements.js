@@ -99,7 +99,7 @@
       const daily = await read(doc(db, 'users', uid, 'challenges', `daily-${key}`));
       const weekly = await read(doc(db, 'users', uid, 'challenges', `weekly-${weekKey}`));
       const monthly = await read(doc(db, 'users', uid, 'challenges', `monthly-${monthKey}`));
-      const targets = { daily: 10, weekly: 70, monthly: 300 };
+      const targets = { daily: 10, weekly: 70, monthly: 200 };
       // 기간 문자열(Asia/Seoul)
       const [yy, mm, dd] = (key||'').split('-').map(Number);
       const fmtYMD = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' });
