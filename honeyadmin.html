@@ -209,6 +209,11 @@
         <div id="accessDenied" class="access-denied" style="display: none;">
             <h1>🚫 접근 권한이 없습니다</h1>
             <p>이 페이지는 관리자만 접근할 수 있습니다.</p>
+            <div id="authStatus" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <h3>인증 상태</h3>
+                <p id="authInfo">확인 중...</p>
+                <button onclick="checkAuthStatus()" style="margin-top: 10px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">인증 상태 확인</button>
+            </div>
         </div>
         
         <div id="adminContent" style="display: none;">
