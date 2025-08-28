@@ -106,12 +106,23 @@
       const { db } = await window.getFirebaseAppAndDb();
       const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
       
+      console.log('Firebase DB 객체:', !!db);
+      console.log('현재 관리자 UID:', currentUserUid);
+      
       const usersRef = collection(db, 'users');
+      console.log('users 컬렉션 참조 생성됨');
+      
       const snapshot = await getDocs(usersRef);
+      console.log('사용자 스냅샷:', { 
+        empty: snapshot.empty, 
+        size: snapshot.size,
+        docs: snapshot.docs.length 
+      });
       
       allUsers = [];
       snapshot.forEach(doc => {
         const userData = doc.data();
+        console.log('사용자 문서:', { id: doc.id, data: userData });
         allUsers.push({
           uid: doc.id,
           ...userData
@@ -119,9 +130,15 @@
       });
       
       console.log(`총 ${allUsers.length}명의 사용자 정보를 가져왔습니다.`);
+      console.log('사용자 목록:', allUsers.map(u => ({ uid: u.uid, name: u.name || u.displayName })));
       return allUsers;
     } catch (error) {
       console.error('사용자 정보 가져오기 실패:', error);
+      console.error('오류 상세:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -129,6 +146,9 @@
   // 사용자별 잔액 정보 가져오기
   async function fetchAllBalances() {
     try {
+      console.log('잔액 정보 가져오기 시작...');
+      console.log('처리할 사용자 수:', allUsers.length);
+      
       const { db } = await window.getFirebaseAppAndDb();
       const { collection, getDocs, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
       
@@ -136,10 +156,13 @@
       
       for (const user of allUsers) {
         try {
+          console.log(`사용자 ${user.uid} 잔액 정보 처리 중...`);
+          
           // 지갑 정보
           const walletRef = doc(db, 'users', user.uid, 'wallet', 'main');
           const walletSnap = await getDoc(walletRef);
           const wallet = walletSnap.exists() ? walletSnap.data() : { coins: 0, totalCoins: 0 };
+          console.log(`사용자 ${user.uid} 지갑 정보:`, wallet);
           
           // 일일 통계 합계 (포인트 계산용)
           const dailyStatsRef = collection(db, 'users', user.uid, 'dailyStats');
@@ -149,6 +172,7 @@
             const data = doc.data();
             totalPoints += Number(data.points || 0);
           });
+          console.log(`사용자 ${user.uid} 총 포인트:`, totalPoints);
           
           allBalances.push({
             uid: user.uid,
@@ -162,6 +186,7 @@
         }
       }
       
+      console.log(`총 ${allBalances.length}명의 잔액 정보를 가져왔습니다.`);
       return allBalances;
     } catch (error) {
       console.error('잔액 정보 가져오기 실패:', error);
@@ -577,10 +602,50 @@
      }
    }
 
+     // 사용자 접근 테스트 함수
+   async function testUserAccess() {
+     try {
+       console.log('사용자 접근 테스트 시작...');
+       
+       const { db } = await window.getFirebaseAppAndDb();
+       const { collection, getDocs, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+       
+       // 1. users 컬렉션 접근 테스트
+       console.log('1. users 컬렉션 접근 테스트...');
+       const usersRef = collection(db, 'users');
+       const usersSnap = await getDocs(usersRef);
+       console.log('users 컬렉션 결과:', { empty: usersSnap.empty, size: usersSnap.size });
+       
+       // 2. 특정 사용자 문서 접근 테스트
+       if (!usersSnap.empty) {
+         const firstUser = usersSnap.docs[0];
+         console.log('2. 첫 번째 사용자 문서 접근 테스트...');
+         console.log('첫 번째 사용자:', { id: firstUser.id, data: firstUser.data() });
+         
+         // 3. 사용자 하위 컬렉션 접근 테스트
+         console.log('3. 사용자 하위 컬렉션 접근 테스트...');
+         const walletRef = doc(db, 'users', firstUser.id, 'wallet', 'main');
+         const walletSnap = await getDoc(walletRef);
+         console.log('지갑 정보:', { exists: walletSnap.exists(), data: walletSnap.exists() ? walletSnap.data() : null });
+         
+         const dailyStatsRef = collection(db, 'users', firstUser.id, 'dailyStats');
+         const dailyStatsSnap = await getDocs(dailyStatsRef);
+         console.log('일일 통계:', { empty: dailyStatsSnap.empty, size: dailyStatsSnap.size });
+       }
+       
+       alert('사용자 접근 테스트 완료. 콘솔을 확인하세요.');
+       
+     } catch (error) {
+       console.error('사용자 접근 테스트 실패:', error);
+       alert(`사용자 접근 테스트 실패: ${error.message}`);
+     }
+   }
+
      // 전역 함수로 노출
    window.refreshAllData = refreshAllData;
    window.giveCoin = giveCoin;
    window.checkAuthStatus = checkAuthStatus;
+   window.testUserAccess = testUserAccess;
 
   // 페이지 로드 시 초기화
   window.addEventListener('load', async () => {
