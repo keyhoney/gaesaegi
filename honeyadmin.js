@@ -55,13 +55,37 @@
   // 접근 권한 확인
   async function checkAdminAccess() {
     try {
+      console.log('관리자 접근 권한 확인 시작...');
+      
+      // Firebase 초기화 확인
+      if (!window.firebaseData) {
+        console.error('firebaseData가 초기화되지 않았습니다.');
+        return false;
+      }
+      
+      // 인증 상태 확인
+      const isAuth = await window.firebaseData?.isAuthenticated?.();
+      console.log('인증 상태:', isAuth);
+      
+      if (!isAuth) {
+        console.log('로그인되지 않음');
+        document.getElementById('accessDenied').style.display = 'block';
+        document.getElementById('adminContent').style.display = 'none';
+        return false;
+      }
+      
       const uid = await window.firebaseData?.getCurrentUserUid?.();
+      console.log('현재 사용자 UID:', uid);
+      console.log('관리자 UID:', ADMIN_UID);
+      
       if (uid === ADMIN_UID) {
+        console.log('관리자 권한 확인됨');
         currentUserUid = uid;
         document.getElementById('accessDenied').style.display = 'none';
         document.getElementById('adminContent').style.display = 'block';
         return true;
       } else {
+        console.log('관리자 권한 없음');
         document.getElementById('accessDenied').style.display = 'block';
         document.getElementById('adminContent').style.display = 'none';
         return false;
@@ -77,6 +101,8 @@
   // 모든 사용자 정보 가져오기
   async function fetchAllUsers() {
     try {
+      console.log('사용자 정보 가져오기 시작...');
+      
       const { db } = await window.getFirebaseAppAndDb();
       const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
       
@@ -92,6 +118,7 @@
         });
       });
       
+      console.log(`총 ${allUsers.length}명의 사용자 정보를 가져왔습니다.`);
       return allUsers;
     } catch (error) {
       console.error('사용자 정보 가져오기 실패:', error);
@@ -405,6 +432,8 @@
      // 모든 데이터 새로고침
    async function refreshAllData() {
      try {
+       console.log('데이터 새로고침 시작...');
+       
        // 로딩 상태 표시
        document.getElementById('balancesLoading').style.display = 'block';
        document.getElementById('purchasesLoading').style.display = 'block';
@@ -417,19 +446,29 @@
        document.getElementById('coinHistoryTable').style.display = 'none';
        
        // 데이터 가져오기
+       console.log('사용자 정보 가져오기...');
        await fetchAllUsers();
-       await Promise.all([
-         fetchAllBalances(),
-         fetchAllPurchases(),
-         fetchAllLotteryTickets(),
-         fetchAllCoinHistory()
-       ]);
+       
+       console.log('잔액 정보 가져오기...');
+       await fetchAllBalances();
+       
+       console.log('구매 내역 가져오기...');
+       await fetchAllPurchases();
+       
+       console.log('로또 내역 가져오기...');
+       await fetchAllLotteryTickets();
+       
+       console.log('코인 지급 내역 가져오기...');
+       await fetchAllCoinHistory();
        
        // 테이블 업데이트
+       console.log('테이블 렌더링...');
        renderBalancesTable();
        renderPurchasesTable();
        renderLotteryTable();
        renderCoinHistoryTable();
+       
+       console.log('데이터 새로고침 완료');
        
      } catch (error) {
        console.error('데이터 새로고침 실패:', error);
@@ -508,19 +547,60 @@
      }
    }
 
+     // 인증 상태 확인 함수
+   async function checkAuthStatus() {
+     try {
+       const authInfo = document.getElementById('authInfo');
+       authInfo.textContent = '확인 중...';
+       
+       if (!window.firebaseData) {
+         authInfo.textContent = 'Firebase가 초기화되지 않았습니다.';
+         return;
+       }
+       
+       const isAuth = await window.firebaseData?.isAuthenticated?.();
+       const uid = await window.firebaseData?.getCurrentUserUid?.();
+       
+       let status = `로그인 상태: ${isAuth ? '로그인됨' : '로그인 안됨'}`;
+       if (uid) {
+         status += `\n사용자 UID: ${uid}`;
+         status += `\n관리자 UID: ${ADMIN_UID}`;
+         status += `\n관리자 권한: ${uid === ADMIN_UID ? '있음' : '없음'}`;
+       }
+       
+       authInfo.textContent = status;
+       console.log('인증 상태:', { isAuth, uid, isAdmin: uid === ADMIN_UID });
+       
+     } catch (error) {
+       console.error('인증 상태 확인 실패:', error);
+       document.getElementById('authInfo').textContent = `오류: ${error.message}`;
+     }
+   }
+
      // 전역 함수로 노출
    window.refreshAllData = refreshAllData;
    window.giveCoin = giveCoin;
+   window.checkAuthStatus = checkAuthStatus;
 
   // 페이지 로드 시 초기화
   window.addEventListener('load', async () => {
     try {
+      console.log('관리자 페이지 로드 시작...');
+      
       // Firebase 초기화 대기
+      console.log('Firebase 초기화 대기 중...');
       await new Promise(resolve => {
         const checkFirebase = () => {
+          console.log('Firebase 상태 확인:', {
+            getFirebaseAppAndDb: !!window.getFirebaseAppAndDb,
+            firebaseData: !!window.firebaseData
+          });
+          
           if (window.getFirebaseAppAndDb && window.firebaseData) {
+            console.log('Firebase 초기화 완료');
             resolve();
           } else {
+            console.log('Firebase 초기화 대기 중...');
             setTimeout(checkFirebase, 100);
           }
         };
@@ -528,10 +608,16 @@
       });
       
       // 관리자 접근 권한 확인
+      console.log('관리자 접근 권한 확인...');
       const hasAccess = await checkAdminAccess();
       if (hasAccess) {
+        console.log('초기 데이터 로드 시작...');
         // 초기 데이터 로드
         await refreshAllData();
+      } else {
+        console.log('관리자 권한 없음 - 데이터 로드 건너뜀');
+        // 인증 상태 표시
+        await checkAuthStatus();
       }
     } catch (error) {
       console.error('페이지 초기화 실패:', error);
