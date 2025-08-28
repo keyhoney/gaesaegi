@@ -88,11 +88,40 @@
   async function loadPublicGroups(){
     const box = $('publicGroups'); if (!box) return;
     try {
-      const { db, collection, getDocs } = await ensureFirebase();
+      const { db, collection, getDocs, doc, getDoc } = await ensureFirebase();
       const snap = await getDocs(collection(db,'studyGroupsPublic'));
       const items = snap.docs.map(d=>({ id:d.id, ...(d.data()||{}) }));
+      
+      console.log(`공개 그룹 목록 로드: ${items.length}개`);
+      
+      // 유효한 그룹만 필터링 (실제 studyGroups에 존재하는지 확인)
+      const validItems = [];
+      for (const item of items) {
+        try {
+          // 실제 그룹이 존재하는지 확인
+          const groupRef = doc(db, 'studyGroups', item.id);
+          const groupSnap = await getDoc(groupRef);
+          
+          if (groupSnap.exists()) {
+            const groupData = groupSnap.data();
+            // 멤버가 있는 그룹만 표시
+            if (Array.isArray(groupData.members) && groupData.members.length > 0) {
+              validItems.push(item);
+            } else {
+              console.log(`그룹 ${item.id}는 멤버가 없어서 제외됨`);
+            }
+          } else {
+            console.log(`그룹 ${item.id}는 실제로 존재하지 않아서 제외됨`);
+          }
+        } catch (error) {
+          console.warn(`그룹 ${item.id} 확인 중 오류:`, error);
+        }
+      }
+      
+      console.log(`유효한 공개 그룹: ${validItems.length}개`);
+      
       // 달성도( progress/target ) 내림차순, 동률이면 updatedAt 최신 우선
-      items.sort((a,b)=>{
+      validItems.sort((a,b)=>{
         const ra = (a.target>0) ? (a.progress||0)/a.target : 0;
         const rb = (b.target>0) ? (b.progress||0)/b.target : 0;
         if (rb !== ra) return rb - ra;
@@ -100,7 +129,8 @@
         const tb = b.updatedAt?.toDate ? b.updatedAt.toDate().getTime() : 0;
         return tb - ta;
       });
-      box.innerHTML = items.map(g => {
+      
+      box.innerHTML = validItems.map(g => {
         const pct = (g.target>0) ? Math.round((Number(g.progress||0)/Number(g.target||1))*100) : 0;
         return `<div class="row"><div class="line top"><div class="meta">${g.name||'그룹'}</div></div><div class="line bottom"><div class="id">${g.desc||''}</div><div class="diff">${pct}%</div></div></div>`;
       }).join('') || '공개 그룹이 없습니다.';
@@ -452,16 +482,24 @@
       // 챌린지 목표 재계산(meta.weekly.target = 멤버수*50)
       try { const mref = doc(db,'studyGroups', currentGroupId, 'meta', 'weekly'); await setDoc(mref, { target: Math.max(0, members.length*50), updatedAt: serverTimestamp() }, { merge: true }); } catch {}
       
-      // 공개 정보 업데이트 (권한 문제로 실패할 수 있으므로 무시)
+      // 공개 정보 업데이트 또는 삭제 (권한 문제로 실패할 수 있으므로 무시)
       try {
-        const { doc: d2, setDoc: s2, serverTimestamp: st } = await ensureFirebase();
-        await s2(d2(db,'studyGroupsPublic', currentGroupId), { 
-          memberCount: members.length, 
-          target: Math.max(0, members.length*50), 
-          updatedAt: st() 
-        }, { merge: true });
+        const { doc: d2, setDoc: s2, deleteDoc: del2, serverTimestamp: st } = await ensureFirebase();
+        
+        if (members.length === 0) {
+          // 멤버가 없으면 공개 정보 삭제
+          await del2(d2(db,'studyGroupsPublic', currentGroupId));
+          console.log('그룹이 비어서 공개 정보 삭제됨');
+        } else {
+          // 멤버가 있으면 공개 정보 업데이트
+          await s2(d2(db,'studyGroupsPublic', currentGroupId), { 
+            memberCount: members.length, 
+            target: Math.max(0, members.length*50), 
+            updatedAt: st() 
+          }, { merge: true });
+        }
       } catch (error) {
-        console.warn('공개 그룹 정보 업데이트 실패 (권한 제한):', error);
+        console.warn('공개 그룹 정보 업데이트/삭제 실패 (권한 제한):', error);
       }
       
       showToast('그룹에서 나왔습니다.','success');
@@ -510,6 +548,7 @@
       try {
         const { doc: d2, deleteDoc: del2 } = await ensureFirebase();
         await del2(d2(db,'studyGroupsPublic', gid));
+        console.log('공개 그룹 정보 삭제 성공');
       } catch (error) {
         console.warn('공개 그룹 정보 삭제 실패 (권한 제한):', error);
       }
@@ -777,6 +816,7 @@
     // 전역 함수로 노출 (디버깅용)
     window.testAuthStatus = testAuthStatus;
     window.testGroupJoin = testGroupJoin;
+    window.loadPublicGroups = loadPublicGroups;
   });
 })();
 
