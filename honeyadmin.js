@@ -631,6 +631,38 @@
          const dailyStatsRef = collection(db, 'users', firstUser.id, 'dailyStats');
          const dailyStatsSnap = await getDocs(dailyStatsRef);
          console.log('일일 통계:', { empty: dailyStatsSnap.empty, size: dailyStatsSnap.size });
+       } else {
+         console.log('2. users 컬렉션이 비어있음 - 다른 컬렉션 확인');
+         
+         // 3. 다른 컬렉션들 확인
+         console.log('3. 다른 컬렉션들 확인...');
+         
+         // leaderboard 확인
+         try {
+           const leaderboardRef = collection(db, 'leaderboard');
+           const leaderboardSnap = await getDocs(leaderboardRef);
+           console.log('leaderboard 컬렉션:', { empty: leaderboardSnap.empty, size: leaderboardSnap.size });
+         } catch (error) {
+           console.log('leaderboard 접근 실패:', error.message);
+         }
+         
+         // studyGroups 확인
+         try {
+           const studyGroupsRef = collection(db, 'studyGroups');
+           const studyGroupsSnap = await getDocs(studyGroupsRef);
+           console.log('studyGroups 컬렉션:', { empty: studyGroupsSnap.empty, size: studyGroupsSnap.size });
+         } catch (error) {
+           console.log('studyGroups 접근 실패:', error.message);
+         }
+         
+         // studyGroupsPublic 확인
+         try {
+           const studyGroupsPublicRef = collection(db, 'studyGroupsPublic');
+           const studyGroupsPublicSnap = await getDocs(studyGroupsPublicRef);
+           console.log('studyGroupsPublic 컬렉션:', { empty: studyGroupsPublicSnap.empty, size: studyGroupsPublicSnap.size });
+         } catch (error) {
+           console.log('studyGroupsPublic 접근 실패:', error.message);
+         }
        }
        
        alert('사용자 접근 테스트 완료. 콘솔을 확인하세요.');
@@ -641,11 +673,69 @@
      }
    }
 
+     // 테스트 사용자 생성 함수
+   async function createTestUser() {
+     try {
+       console.log('테스트 사용자 생성 시작...');
+       
+       const { db } = await window.getFirebaseAppAndDb();
+       const { doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+       
+       const testUserId = 'test-user-' + Date.now();
+       const testUserData = {
+         name: '테스트 사용자',
+         displayName: '테스트 사용자',
+         className: '테스트반',
+         studentNumber: '999',
+         createdAt: serverTimestamp()
+       };
+       
+       // 사용자 기본 정보 생성
+       await setDoc(doc(db, 'users', testUserId), testUserData);
+       console.log('사용자 기본 정보 생성됨:', testUserId);
+       
+       // 지갑 정보 생성
+       await setDoc(doc(db, 'users', testUserId, 'wallet', 'main'), {
+         coins: 0,
+         totalCoins: 0,
+         createdAt: serverTimestamp()
+       });
+       console.log('지갑 정보 생성됨');
+       
+       // 일일 통계 생성
+       const today = new Date().toISOString().split('T')[0];
+       await setDoc(doc(db, 'users', testUserId, 'dailyStats', today), {
+         exp: 0,
+         points: 0,
+         studyExp: 0,
+         studyPoints: 0,
+         totalExp: 0,
+         totalPoints: 0,
+         createdAt: serverTimestamp()
+       });
+       console.log('일일 통계 생성됨');
+       
+       // 프로필 정보 생성
+       await setDoc(doc(db, 'users', testUserId, 'profile', 'main'), {
+         nickname: '테스트',
+         createdAt: serverTimestamp()
+       });
+       console.log('프로필 정보 생성됨');
+       
+       alert(`테스트 사용자가 생성되었습니다.\n사용자 ID: ${testUserId}\n이제 데이터 새로고침을 해보세요.`);
+       
+     } catch (error) {
+       console.error('테스트 사용자 생성 실패:', error);
+       alert(`테스트 사용자 생성 실패: ${error.message}`);
+     }
+   }
+
      // 전역 함수로 노출
    window.refreshAllData = refreshAllData;
    window.giveCoin = giveCoin;
    window.checkAuthStatus = checkAuthStatus;
    window.testUserAccess = testUserAccess;
+   window.createTestUser = createTestUser;
 
   // 페이지 로드 시 초기화
   window.addEventListener('load', async () => {
