@@ -385,8 +385,21 @@
     await refreshOrderbook();
     await refreshMyOrders();
     await refreshTrades();
-    document.getElementById('placeBuyBtn').addEventListener('click', ()=>placeOrder('buy'));
-    document.getElementById('placeSellBtn').addEventListener('click', ()=>placeOrder('sell'));
+    // 주문 버튼 이벤트 리스너 (안전하게 추가)
+    const placeBuyBtn = document.getElementById('placeBuyBtn');
+    const placeSellBtn = document.getElementById('placeSellBtn');
+    
+    if (placeBuyBtn) {
+      placeBuyBtn.addEventListener('click', ()=>placeOrder('buy'));
+    } else {
+      console.warn('placeBuyBtn을 찾을 수 없습니다.');
+    }
+    
+    if (placeSellBtn) {
+      placeSellBtn.addEventListener('click', ()=>placeOrder('sell'));
+    } else {
+      console.warn('placeSellBtn을 찾을 수 없습니다.');
+    }
     
     // 포인트 잔액 정상화 버튼
     document.getElementById('fixPointsBtn').addEventListener('click', async () => {
