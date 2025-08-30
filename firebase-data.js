@@ -771,22 +771,63 @@
       try {
         const sum = await this.sumDailyStats();
         const w = await this.getWallet();
-        // 현재 사용 가능한 코인(coins) 기준으로 반환
-        return { points: Number(sum.totalPoints||0), coins: Number(w.coins||0) };
+        
+        // 거래 내역을 고려한 실제 사용 가능한 포인트 계산
+        const transactions = await this.listAllTransactions();
+        const tradePoints = transactions
+          .filter(t => t.type === 'point' && t.reason && t.reason.startsWith('trade'))
+          .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+        
+        // 실제 사용 가능한 포인트 = 일일 통계 누적 + 거래로 인한 변동
+        const availablePoints = Math.max(0, Number(sum.totalPoints || 0) + tradePoints);
+        
+        return { 
+          points: availablePoints, 
+          coins: Number(w.coins || 0) 
+        };
       } catch (_) { return { points: 0, coins: 0 }; }
     },
     async tradingAdjustPoints(delta, reason) {
       try {
+        // 거래 내역 기록
         await this.addPointTransaction(Number(delta), reason||'trade');
         
-        // 거래를 통한 포인트 획득은 제한 없이 일일 통계에 추가
+        // 실제 포인트 차감/증가 처리
+        const dateKey = await this.getServerDateSeoulKey();
         if (delta > 0) {
-          const dateKey = await this.getServerDateSeoulKey();
+          // 포인트 획득: 제한 없이 일일 통계에 추가
           await this.addPointsUnlimited(dateKey, 0, delta);
+        } else if (delta < 0) {
+          // 포인트 차감: 실제 잔액에서 차감
+          const absDelta = Math.abs(delta);
+          const { user, db } = await withUser();
+          const { doc, runTransaction, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+          
+          // 일일 통계에서 포인트 차감
+          const statsRef = doc(db, 'users', user.uid, 'dailyStats', dateKey);
+          await runTransaction(db, async (trx) => {
+            const snap = await trx.get(statsRef);
+            const cur = snap.exists() ? snap.data() : { exp: 0, points: 0 };
+            const currentPoints = Number(cur.points || 0);
+            
+            // 잔액 부족 체크
+            if (currentPoints < absDelta) {
+              throw new Error('insufficient-points');
+            }
+            
+            // 포인트 차감
+            trx.set(statsRef, { 
+              points: currentPoints - absDelta,
+              updatedAt: serverTimestamp() 
+            }, { merge: true });
+          });
         }
         
-        return { expApplied: 0, ptsApplied: 0, expReached: false, ptsReached: false };
-      } catch (_) { return null; }
+        return { expApplied: 0, ptsApplied: Math.abs(delta), expReached: false, ptsReached: false };
+      } catch (e) { 
+        console.error('tradingAdjustPoints 오류:', e);
+        return null; 
+      }
     },
     async tradingRecordTrade(side, price, qty) {
       try {
@@ -817,10 +858,12 @@
         // 예약(보증금) 처리: 체결 전까지 자산 락
         if (side === 'buy') {
           if (bal.points < P*Q) return { ok: false, error: 'insufficient-points' };
-          await this.tradingAdjustPoints(-(P*Q), 'reserve:buy');
+          const adjustResult = await this.tradingAdjustPoints(-(P*Q), 'reserve:buy');
+          if (!adjustResult) return { ok: false, error: 'insufficient-points' };
         } else {
           if (bal.coins < Q) return { ok: false, error: 'insufficient-coins' };
-          await this.adjustCoins(-Q, 'reserve:sell');
+          const adjustResult = await this.adjustCoins(-Q, 'reserve:sell');
+          if (!adjustResult?.ok) return { ok: false, error: 'insufficient-coins' };
         }
         const payload = { uid: String(user.uid||''), side: String(side), price: Number(P), qty: Number(Q), qtyRemaining: Number(Q), status: 'open', createdAt: serverTimestamp() };
         // 디버그 로깅 + undefined 방지
@@ -1397,6 +1440,121 @@
         await deleteDoc(doc(db, 'users', user.uid, 'wrongs', qid));
         return true;
       } catch (_) { return false; }
+    },
+    // ===== 기존 무한 포인트 정상화 함수
+    async fixInfinitePoints() {
+      try {
+        const { user, db } = await withUser();
+        const { collection, getDocs, query, orderBy, doc, runTransaction, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+        
+        console.log('무한 포인트 정상화 시작...');
+        
+        // 1. 모든 거래 내역 조회
+        const transactionsRef = collection(db, 'users', user.uid, 'transactions');
+        const transactionsSnap = await getDocs(query(transactionsRef, orderBy('at', 'asc')));
+        const transactions = transactionsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        // 2. 거래 관련 포인트 변동 계산
+        let totalTradePoints = 0;
+        const tradeHistory = [];
+        
+        for (const tx of transactions) {
+          if (tx.type === 'point' && tx.reason && tx.reason.startsWith('trade')) {
+            const amount = Number(tx.amount || 0);
+            totalTradePoints += amount;
+            tradeHistory.push({
+              id: tx.id,
+              amount: amount,
+              reason: tx.reason,
+              at: tx.at
+            });
+          }
+        }
+        
+        console.log(`총 거래 포인트 변동: ${totalTradePoints}`);
+        console.log(`거래 내역 수: ${tradeHistory.length}`);
+        
+        // 3. 현재 일일 통계 조회
+        const sum = await this.sumDailyStats();
+        const currentTotalPoints = Number(sum.totalPoints || 0);
+        
+        console.log(`현재 일일 통계 누적 포인트: ${currentTotalPoints}`);
+        
+        // 4. 실제 사용 가능한 포인트 계산
+        const actualAvailablePoints = Math.max(0, currentTotalPoints + totalTradePoints);
+        
+        console.log(`실제 사용 가능한 포인트: ${actualAvailablePoints}`);
+        
+        // 5. 차이가 있으면 조정
+        if (actualAvailablePoints !== currentTotalPoints) {
+          const adjustment = actualAvailablePoints - currentTotalPoints;
+          console.log(`조정 필요: ${adjustment} 포인트`);
+          
+          if (adjustment !== 0) {
+            const dateKey = await this.getServerDateSeoulKey();
+            const statsRef = doc(db, 'users', user.uid, 'dailyStats', dateKey);
+            
+            await runTransaction(db, async (trx) => {
+              const snap = await trx.get(statsRef);
+              const cur = snap.exists() ? snap.data() : { exp: 0, points: 0 };
+              const newPoints = Math.max(0, Number(cur.points || 0) + adjustment);
+              
+              trx.set(statsRef, { 
+                points: newPoints,
+                updatedAt: serverTimestamp() 
+              }, { merge: true });
+            });
+            
+            // 조정 내역 기록
+            await this.addPointTransaction(adjustment, 'fix:infinite-points');
+            
+            console.log(`포인트 조정 완료: ${adjustment > 0 ? '+' : ''}${adjustment}`);
+            return { 
+              success: true, 
+              adjustment: adjustment,
+              before: currentTotalPoints,
+              after: actualAvailablePoints,
+              tradeHistory: tradeHistory.length
+            };
+          }
+        }
+        
+        console.log('조정 불필요: 포인트가 정상 상태입니다.');
+        return { 
+          success: true, 
+          adjustment: 0,
+          before: currentTotalPoints,
+          after: actualAvailablePoints,
+          tradeHistory: tradeHistory.length
+        };
+        
+      } catch (e) {
+        console.error('무한 포인트 정상화 오류:', e);
+        return { success: false, error: String(e) };
+      }
+    },
+    // ===== 로그인 시 자동 포인트 정상화
+    async autoFixPointsOnLogin() {
+      try {
+        // 이미 정상화되었는지 확인 (세션당 1회만 실행)
+        if (sessionStorage.getItem('pointsFixed')) {
+          return { success: true, alreadyFixed: true };
+        }
+        
+        const result = await this.fixInfinitePoints();
+        if (result?.success) {
+          // 정상화 완료 표시
+          sessionStorage.setItem('pointsFixed', 'true');
+          
+          if (result.adjustment !== 0) {
+            console.log(`자동 포인트 정상화 완료: ${result.adjustment > 0 ? '+' : ''}${result.adjustment}pt`);
+          }
+        }
+        return result;
+      } catch (e) {
+        console.error('자동 포인트 정상화 오류:', e);
+        return { success: false, error: String(e) };
+      }
     },
   };
 })();
