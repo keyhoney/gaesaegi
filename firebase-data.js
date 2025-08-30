@@ -1074,7 +1074,7 @@
     async tradingMatchOnce() {
       try {
         const { db } = await ensureFirebase();
-        const { collection, getDocs, doc, runTransaction, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+        const { collection, getDocs, doc, runTransaction, serverTimestamp, increment } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
         const ordersRef = collection(db, 'market', 'public', 'orders');
         const snap = await getDocs(ordersRef);
         if (snap.empty) return { ok:false, reason:'no-orders' };
@@ -1083,6 +1083,9 @@
         const docs = snap.docs.filter(d => (d.data()||{}).status === 'open');
         const bids = docs.filter(d => d.data().side === 'buy');
         const asks = docs.filter(d => d.data().side === 'sell');
+        
+        console.log(`매칭 시도: 매수 ${bids.length}건, 매도 ${asks.length}건`);
+        
         if (bids.length === 0 || asks.length === 0) return { ok:false, reason:'no-orders' };
         
         // 매수/매도 주문을 가격순으로 정렬
@@ -1108,7 +1111,7 @@
           const bidPrice = Number(bid.price);
           const askPrice = Number(ask.price);
           
-          // 가격이 교차하지 않으면 종료
+          // 가격이 교차하지 않으면 종료 (같은 가격도 매칭 가능)
           if (bidPrice < askPrice) break;
           
           // 교차하는 주문 발견 - 매칭 생성
@@ -1116,6 +1119,8 @@
             Number(bid.qtyRemaining || bid.qty || 0),
             Number(ask.qtyRemaining || ask.qty || 0)
           );
+          
+          console.log(`매칭 발견: 매수 ${bidPrice}pt, 매도 ${askPrice}pt, 수량 ${qty}`);
           
           if (qty > 0) {
             matches.push({
@@ -1194,6 +1199,41 @@
               sellerClaimed: false, 
               at: serverTimestamp() 
             });
+            
+            // 즉시 정산 처리 (매칭과 동시에)
+            try {
+              // 매수자: 코인 지급
+              const buyerCoinsRef = doc(db, 'users', b.uid, 'wallet', 'main');
+              trx.update(buyerCoinsRef, { 
+                coins: increment(actualQty),
+                updatedAt: serverTimestamp() 
+              });
+              
+              // 매도자: 포인트 지급 (현재 날짜 키 사용)
+              const now = new Date();
+              const dateKey = new Intl.DateTimeFormat('en-CA', { 
+                timeZone: 'Asia/Seoul', 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit' 
+              }).format(now);
+              
+              const sellerPointsRef = doc(db, 'users', a.uid, 'dailyStats', dateKey);
+              trx.update(sellerPointsRef, { 
+                points: increment(match.execPrice * actualQty),
+                updatedAt: serverTimestamp() 
+              });
+              
+              // 정산 완료 표시
+              trx.update(setRef, { 
+                buyerClaimed: true, 
+                sellerClaimed: true,
+                settledAt: serverTimestamp() 
+              });
+            } catch (settlementError) {
+              console.error('즉시 정산 실패:', settlementError);
+              // 정산 실패해도 매칭은 계속 진행
+            }
             
             // 티커 업데이트
             const tickRef = doc(db, 'market', 'public', 'ticker', 'main');
