@@ -155,13 +155,27 @@
         document.getElementById('statVol').textContent = '-';
         document.getElementById('statAvg').textContent = '-';
       }
-    } catch {}
+    } catch (e) {
+      console.error('티커 갱신 오류:', e);
+    }
   }
 
   async function refreshBalances() {
-    const b = await window.firebaseData?.tradingGetBalances?.();
-    // 현재 사용 가능한 포인트/코인 표기
-    balancesEl.textContent = `보유: ${fmt(b.points)} pt / ${fmt(b.coins)} coin`;
+    try {
+      // 인증 상태 확인
+      const isAuth = await window.firebaseData?.isAuthenticated?.();
+      if (!isAuth) {
+        balancesEl.textContent = '로그인이 필요합니다.';
+        return;
+      }
+      
+      const b = await window.firebaseData?.tradingGetBalances?.();
+      // 현재 사용 가능한 포인트/코인 표기
+      balancesEl.textContent = `보유: ${fmt(b.points)} pt / ${fmt(b.coins)} coin`;
+    } catch (e) {
+      console.error('잔액 조회 오류:', e);
+      balancesEl.textContent = '잔액 조회 실패';
+    }
   }
 
   function renderTrades(box, list) {
@@ -174,23 +188,36 @@
   }
 
   async function refreshTrades() {
-    const all = await window.firebaseData?.tradingListRecentTrades?.(50);
-    renderTrades(publicBox, all);
-    // 최근 체결 테이블(zebra)
     try {
-      const tbody = document.getElementById('tradesTbody');
-      if (tbody) {
-        const fmtTime = new Intl.DateTimeFormat('ko-KR',{ timeStyle:'medium' });
-        tbody.innerHTML = (all||[]).slice(0,10).map(tr=>{
-          const t = tr.at?.toDate ? tr.at.toDate() : new Date();
-          return `<tr><td>${fmtTime.format(t)}</td><td>${fmt(tr.price)}</td><td>${fmt(tr.qty)}</td></tr>`;
-        }).join('') || '';
+      const all = await window.firebaseData?.tradingListRecentTrades?.(50);
+      renderTrades(publicBox, all);
+      // 최근 체결 테이블(zebra)
+      try {
+        const tbody = document.getElementById('tradesTbody');
+        if (tbody) {
+          const fmtTime = new Intl.DateTimeFormat('ko-KR',{ timeStyle:'medium' });
+          tbody.innerHTML = (all||[]).slice(0,10).map(tr=>{
+            const t = tr.at?.toDate ? tr.at.toDate() : new Date();
+            return `<tr><td>${fmtTime.format(t)}</td><td>${fmt(tr.price)}</td><td>${fmt(tr.qty)}</td></tr>`;
+          }).join('') || '';
+        }
+      } catch {}
+      
+      // 인증된 사용자만 내 거래 조회
+      const isAuth = await window.firebaseData?.isAuthenticated?.();
+      if (isAuth) {
+        try {
+          const mine = await window.firebaseData?.tradingListMyTrades?.(50);
+          renderTrades(myBox, mine||[]);
+        } catch { renderTrades(myBox, []); }
+      } else {
+        renderTrades(myBox, []);
       }
-    } catch {}
-    try {
-      const mine = await window.firebaseData?.tradingListMyTrades?.(50);
-      renderTrades(myBox, mine||[]);
-    } catch { renderTrades(myBox, []); }
+    } catch (e) {
+      console.error('거래 내역 조회 오류:', e);
+      renderTrades(publicBox, []);
+      renderTrades(myBox, []);
+    }
   }
 
   async function placeOrder(side) {
@@ -278,29 +305,63 @@
   }
 
   async function refreshOrderbook() {
-    const ob = await window.firebaseData?.tradingListOrderbook?.(20);
-    renderOrderbook(ob||{});
-    // 미니 호가(5개) 고정 표시
     try {
-      const mini = document.getElementById('miniOrderbook');
-      if (mini && ob) {
-        const bids = (ob.bids||[]).slice(0,5);
-        const asks = (ob.asks||[]).slice(0,5);
-        const row = (p,q,cls)=>`<div class="row ${cls}"><div>${fmt(p)} pt</div><div>${fmt(q)} coin</div></div>`;
-        mini.innerHTML = [
-          ...asks.map(([p,q])=>row(p,q,'ask')).reverse(),
-          ...bids.map(([p,q])=>row(p,q,'bid')),
-        ].join('') || '호가가 없습니다.';
-      }
-    } catch {}
+      const ob = await window.firebaseData?.tradingListOrderbook?.(20);
+      renderOrderbook(ob||{});
+      // 미니 호가(5개) 고정 표시
+      try {
+        const mini = document.getElementById('miniOrderbook');
+        if (mini && ob) {
+          const bids = (ob.bids||[]).slice(0,5);
+          const asks = (ob.asks||[]).slice(0,5);
+          const row = (p,q,cls)=>`<div class="row ${cls}"><div>${fmt(p)} pt</div><div>${fmt(q)} coin</div></div>`;
+          mini.innerHTML = [
+            ...asks.map(([p,q])=>row(p,q,'ask')).reverse(),
+            ...bids.map(([p,q])=>row(p,q,'bid')),
+          ].join('') || '호가가 없습니다.';
+        }
+      } catch {}
+    } catch (e) {
+      console.error('호가 조회 오류:', e);
+      renderOrderbook({});
+    }
   }
 
   async function refreshMyOrders() {
-    const mine = await window.firebaseData?.tradingListMyOrders?.();
-    const box = document.getElementById('myOrders');
-    if (!mine || mine.length===0) { box.textContent = '오픈 주문이 없습니다.'; return; }
-    box.innerHTML = mine.map(o=>`<div class=\"row\"><div class=\"line top\"><div class=\"meta\">${o.side==='buy'?'매수':'매도'} ${fmt(o.price)} pt</div></div><div class=\"line bottom\"><div class=\"id\">잔량 ${fmt(o.qtyRemaining||o.qty)} coin</div><div class=\"actions\"><button class=\"btn small\" data-cancel=\"${o.id}\">취소</button></div></div></div>`).join('');
-    box.querySelectorAll('[data-cancel]').forEach(btn=>btn.addEventListener('click', async()=>{ const id=btn.getAttribute('data-cancel'); const r=await window.firebaseData?.tradingCancelOrder?.(id); if(r?.ok){ window.showToast&&window.showToast('주문 취소 완료','success'); refreshMyOrders(); refreshOrderbook(); refreshBalances(); } else { window.showToast&&window.showToast('취소 실패','error'); } }));
+    try {
+      // 인증된 사용자만 내 주문 조회
+      const isAuth = await window.firebaseData?.isAuthenticated?.();
+      const box = document.getElementById('myOrders');
+      
+      if (!isAuth) {
+        box.textContent = '로그인이 필요합니다.';
+        return;
+      }
+      
+      const mine = await window.firebaseData?.tradingListMyOrders?.();
+      if (!mine || mine.length===0) { 
+        box.textContent = '오픈 주문이 없습니다.'; 
+        return; 
+      }
+      
+      box.innerHTML = mine.map(o=>`<div class=\"row\"><div class=\"line top\"><div class=\"meta\">${o.side==='buy'?'매수':'매도'} ${fmt(o.price)} pt</div></div><div class=\"line bottom\"><div class=\"id\">잔량 ${fmt(o.qtyRemaining||o.qty)} coin</div><div class=\"actions\"><button class=\"btn small\" data-cancel=\"${o.id}\">취소</button></div></div></div>`).join('');
+      box.querySelectorAll('[data-cancel]').forEach(btn=>btn.addEventListener('click', async()=>{ 
+        const id=btn.getAttribute('data-cancel'); 
+        const r=await window.firebaseData?.tradingCancelOrder?.(id); 
+        if(r?.ok){ 
+          window.showToast&&window.showToast('주문 취소 완료','success'); 
+          refreshMyOrders(); 
+          refreshOrderbook(); 
+          refreshBalances(); 
+        } else { 
+          window.showToast&&window.showToast('취소 실패','error'); 
+        } 
+      }));
+    } catch (e) {
+      console.error('내 주문 조회 오류:', e);
+      const box = document.getElementById('myOrders');
+      box.textContent = '주문 조회 실패';
+    }
   }
 
   window.addEventListener('load', async () => {
@@ -354,6 +415,46 @@
         btn.disabled = false;
       }
     });
+    
+    // 수동 매칭 실행 버튼 (안전하게 추가)
+    const manualMatchBtn = document.getElementById('manualMatchBtn');
+    if (manualMatchBtn) {
+      manualMatchBtn.addEventListener('click', async () => {
+        const btn = manualMatchBtn;
+        const originalText = btn.textContent;
+        btn.textContent = '매칭 중...';
+        btn.disabled = true;
+        
+        try {
+          console.log('수동 매칭 실행 시작...');
+          const matchResult = await window.firebaseData?.tradingMatchOnce?.();
+          console.log('수동 매칭 결과:', matchResult);
+          
+          if (matchResult?.ok) {
+            if (matchResult.matches > 0) {
+              window.showToast && window.showToast(`${matchResult.matches}건 매칭 성공!`, 'success');
+              // 화면 갱신
+              await refreshBalances();
+              await refreshTicker();
+              await refreshOrderbook();
+              await refreshMyOrders();
+              await refreshTrades();
+            } else {
+              window.showToast && window.showToast('매칭 가능한 호가가 없습니다.', 'info');
+            }
+          } else {
+            window.showToast && window.showToast(`매칭 실패: ${matchResult?.reason || '알 수 없는 오류'}`, 'error');
+          }
+        } catch (e) {
+          console.error('수동 매칭 오류:', e);
+          window.showToast && window.showToast('매칭 실행 중 오류가 발생했습니다.', 'error');
+        } finally {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      });
+    }
+    
     if (!window.__gsgIntervalsSet) {
       window.__gsgIntervalsSet = true;
       setInterval(refreshTicker, 8000);
