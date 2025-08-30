@@ -327,6 +327,19 @@ window.addEventListener('load', async () => {
           }
         }
       }
+      
+      // 자동 포인트 정상화 (로그인 시 1회만 실행)
+      try {
+        const uid = await window.firebaseData?.getCurrentUserUid?.();
+        if (uid) {
+          const fixResult = await window.firebaseData?.autoFixPointsOnLogin?.();
+          if (fixResult?.success && fixResult.adjustment !== 0) {
+            console.log('자동 포인트 정상화 완료:', fixResult);
+          }
+        }
+      } catch (e) {
+        console.error('자동 포인트 정상화 오류:', e);
+      }
     } catch {}
   } catch {}
 });
