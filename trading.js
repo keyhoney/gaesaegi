@@ -304,6 +304,20 @@
   }
 
   window.addEventListener('load', async () => {
+    // 자동 포인트 정상화 (거래 페이지 접속 시)
+    try {
+      const uid = await window.firebaseData?.getCurrentUserUid?.();
+      if (uid) {
+        const fixResult = await window.firebaseData?.autoFixPointsOnLogin?.();
+        if (fixResult?.success && fixResult.adjustment !== 0) {
+          console.log('거래 페이지 자동 포인트 정상화 완료:', fixResult);
+          window.showToast && window.showToast(`포인트 잔액이 자동으로 ${fixResult.adjustment > 0 ? '+' : ''}${fixResult.adjustment}pt로 조정되었습니다.`, 'info');
+        }
+      }
+    } catch (e) {
+      console.error('거래 페이지 자동 포인트 정상화 오류:', e);
+    }
+    
     initChart();
     await refreshBalances();
     await refreshTicker();
@@ -312,6 +326,34 @@
     await refreshTrades();
     document.getElementById('placeBuyBtn').addEventListener('click', ()=>placeOrder('buy'));
     document.getElementById('placeSellBtn').addEventListener('click', ()=>placeOrder('sell'));
+    
+    // 포인트 잔액 정상화 버튼
+    document.getElementById('fixPointsBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('fixPointsBtn');
+      const originalText = btn.textContent;
+      btn.textContent = '정상화 중...';
+      btn.disabled = true;
+      
+      try {
+        const result = await window.firebaseData?.fixInfinitePoints?.();
+        if (result?.success) {
+          if (result.adjustment !== 0) {
+            window.showToast && window.showToast(`포인트 잔액이 ${result.adjustment > 0 ? '+' : ''}${result.adjustment}pt로 조정되었습니다.`, 'success');
+          } else {
+            window.showToast && window.showToast('포인트 잔액이 정상 상태입니다.', 'info');
+          }
+          await refreshBalances();
+        } else {
+          window.showToast && window.showToast('정상화 중 오류가 발생했습니다.', 'error');
+        }
+      } catch (e) {
+        console.error('정상화 오류:', e);
+        window.showToast && window.showToast('정상화 중 오류가 발생했습니다.', 'error');
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    });
     if (!window.__gsgIntervalsSet) {
       window.__gsgIntervalsSet = true;
       setInterval(refreshTicker, 8000);
