@@ -1,11 +1,35 @@
 (function () {
   'use strict';
 
-  const lastPriceEl = document.getElementById('lastPrice');
-  const changeEl = document.getElementById('changePct');
-  const balancesEl = document.getElementById('balances');
-  const publicBox = document.getElementById('publicTrades');
-  const myBox = document.getElementById('myTrades');
+  // DOM 요소들을 안전하게 초기화
+  let lastPriceEl, changeEl, balancesEl, publicBox, myBox;
+  
+  function initializeDOMElements() {
+    lastPriceEl = document.getElementById('lastPrice');
+    changeEl = document.getElementById('changePct');
+    balancesEl = document.getElementById('balances');
+    publicBox = document.getElementById('publicTrades');
+    myBox = document.getElementById('myTrades');
+    
+    // 필수 요소들 확인
+    const requiredElements = {
+      lastPriceEl: lastPriceEl,
+      changeEl: changeEl,
+      balancesEl: balancesEl,
+      publicBox: publicBox,
+      myBox: myBox
+    };
+    
+    const missingElements = Object.entries(requiredElements)
+      .filter(([name, element]) => !element)
+      .map(([name]) => name);
+    
+    if (missingElements.length > 0) {
+      console.warn('누락된 필수 DOM 요소들:', missingElements);
+    }
+    
+    return missingElements.length === 0;
+  }
 
   function fmt(n) { return Number(n||0).toLocaleString(); }
 
@@ -18,8 +42,21 @@
   let lastMatchMinute = -1;    // 마지막 매칭이 실행된 분
 
   function initChart() {
-    priceChart = echarts.init(document.getElementById('priceChart'));
-    volumeChart = echarts.init(document.getElementById('volumeChart'));
+    const priceChartEl = document.getElementById('priceChart');
+    const volumeChartEl = document.getElementById('volumeChart');
+    
+    if (!priceChartEl || !volumeChartEl) {
+      console.error('차트 요소를 찾을 수 없습니다.');
+      return;
+    }
+    
+    try {
+      priceChart = echarts.init(priceChartEl);
+      volumeChart = echarts.init(volumeChartEl);
+    } catch (e) {
+      console.error('ECharts 초기화 오류:', e);
+      return;
+    }
     priceChart.setOption({
       grid: { left: 50, right: 20, top: 10, bottom: 28 },
       xAxis: { type: 'category', boundaryGap: true, data: [] },
@@ -85,21 +122,26 @@
     // ECharts 캔들 표준 순서: [open, close, low, high]
     const kline = keys.map(k => { const v = byDay.get(k); return [v.o, v.c, v.l, v.h]; });
     const vols = keys.map(k => byDay.get(k).v);
-    priceChart.setOption({
-      xAxis: { data: xs },
-      series: [{
-        type:'candlestick',
-        data: kline,
-        name:'가격',
-        itemStyle: {
-          color: '#c62828',
-          borderColor: '#c62828',
-          color0: '#1565c0',
-          borderColor0: '#1565c0'
-        }
-      }]
-    });
-    volumeChart.setOption({ xAxis: { data: xs }, series: [{ type:'bar', data: vols, name:'거래량' }] });
+    if (priceChart) {
+      priceChart.setOption({
+        xAxis: { data: xs },
+        series: [{
+          type:'candlestick',
+          data: kline,
+          name:'가격',
+          itemStyle: {
+            color: '#c62828',
+            borderColor: '#c62828',
+            color0: '#1565c0',
+            borderColor0: '#1565c0'
+          }
+        }]
+      });
+    }
+    
+    if (volumeChart) {
+      volumeChart.setOption({ xAxis: { data: xs }, series: [{ type:'bar', data: vols, name:'거래량' }] });
+    }
   }
 
   async function refreshTicker() {
@@ -115,8 +157,14 @@
 
       // 최신 체결가
       const last = list.length ? list[list.length-1] : null;
-      if (last) { latestTradePrice = Number(last.price||0)||0; lastPriceEl.textContent = fmt(latestTradePrice); }
-      else { latestTradePrice = null; lastPriceEl.textContent = '-'; }
+      if (last) { 
+        latestTradePrice = Number(last.price||0)||0; 
+        if (lastPriceEl) lastPriceEl.textContent = fmt(latestTradePrice); 
+      }
+      else { 
+        latestTradePrice = null; 
+        if (lastPriceEl) lastPriceEl.textContent = '-'; 
+      }
 
       // 전일 종가 구하기(Asia/Seoul 일자 기준)
       const dtf = new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit' });
@@ -140,8 +188,10 @@
       if (prevClose > 0 && latestTradePrice!=null) {
         changePct = ((latestTradePrice - prevClose) / prevClose) * 100;
       }
-      changeEl.textContent = `${changePct.toFixed(2)}%`;
-      changeEl.style.background = changePct >= 0 ? 'rgba(111,207,151,0.2)' : 'rgba(198,40,40,0.2)';
+      if (changeEl) {
+        changeEl.textContent = `${changePct.toFixed(2)}%`;
+        changeEl.style.background = changePct >= 0 ? 'rgba(111,207,151,0.2)' : 'rgba(198,40,40,0.2)';
+      }
 
       // 차트/통계 갱신
       rebuildCandles(list);
@@ -149,11 +199,15 @@
         const vol = Number(volByDay.get(lastKey)||0);
         const cnt = Number(cntByDay.get(lastKey)||0);
         const sum = Number(sumByDay.get(lastKey)||0);
-        document.getElementById('statVol').textContent = fmt(vol);
-        document.getElementById('statAvg').textContent = cnt ? fmt((sum/cnt).toFixed(0)) : '-';
+        const statVolEl = document.getElementById('statVol');
+        const statAvgEl = document.getElementById('statAvg');
+        if (statVolEl) statVolEl.textContent = fmt(vol);
+        if (statAvgEl) statAvgEl.textContent = cnt ? fmt((sum/cnt).toFixed(0)) : '-';
       } else {
-        document.getElementById('statVol').textContent = '-';
-        document.getElementById('statAvg').textContent = '-';
+        const statVolEl = document.getElementById('statVol');
+        const statAvgEl = document.getElementById('statAvg');
+        if (statVolEl) statVolEl.textContent = '-';
+        if (statAvgEl) statAvgEl.textContent = '-';
       }
     } catch (e) {
       console.error('티커 갱신 오류:', e);
@@ -162,6 +216,11 @@
 
   async function refreshBalances() {
     try {
+      if (!balancesEl) {
+        console.warn('balancesEl이 초기화되지 않았습니다.');
+        return;
+      }
+      
       // 인증 상태 확인
       const isAuth = await window.firebaseData?.isAuthenticated?.();
       if (!isAuth) {
@@ -174,12 +233,23 @@
       balancesEl.textContent = `보유: ${fmt(b.points)} pt / ${fmt(b.coins)} coin`;
     } catch (e) {
       console.error('잔액 조회 오류:', e);
-      balancesEl.textContent = '잔액 조회 실패';
+      if (balancesEl) {
+        balancesEl.textContent = '잔액 조회 실패';
+      }
     }
   }
 
   function renderTrades(box, list) {
-    if (!list || list.length === 0) { box.textContent = '기록이 없습니다.'; return; }
+    if (!box) {
+      console.warn('renderTrades: box 요소가 null입니다.');
+      return;
+    }
+    
+    if (!list || list.length === 0) { 
+      box.textContent = '기록이 없습니다.'; 
+      return; 
+    }
+    
     const fmtTime = new Intl.DateTimeFormat('ko-KR', { timeStyle: 'medium' });
     box.innerHTML = list.map(tr => {
       const side = tr.side === 'buy' ? '매수' : '매도';
@@ -301,7 +371,13 @@
           <div class="ob-rows">${obRows(bidsCum, 'bid') || '<div class="muted">매수 호가 없음</div>'}</div>
         </div>
       </div>`;
-    document.getElementById('orderbook').innerHTML = html;
+    
+    const orderbookEl = document.getElementById('orderbook');
+    if (orderbookEl) {
+      orderbookEl.innerHTML = html;
+    } else {
+      console.warn('orderbook 요소를 찾을 수 없습니다.');
+    }
   }
 
   async function refreshOrderbook() {
@@ -365,26 +441,64 @@
   }
 
   window.addEventListener('load', async () => {
-    // 자동 포인트 정상화 (거래 페이지 접속 시)
+    console.log('거래 페이지 로드 시작...');
+    
+    // DOM 요소 초기화
+    const domInitialized = initializeDOMElements();
+    if (!domInitialized) {
+      console.error('필수 DOM 요소가 누락되어 페이지를 초기화할 수 없습니다.');
+      return;
+    }
+    
+    // 자동 포인트 정상화 (거래 페이지 접속 시) - 조용히 실행
     try {
       const uid = await window.firebaseData?.getCurrentUserUid?.();
       if (uid) {
         const fixResult = await window.firebaseData?.autoFixPointsOnLogin?.();
         if (fixResult?.success && fixResult.adjustment !== 0) {
           console.log('거래 페이지 자동 포인트 정상화 완료:', fixResult);
-          window.showToast && window.showToast(`포인트 잔액이 자동으로 ${fixResult.adjustment > 0 ? '+' : ''}${fixResult.adjustment}pt로 조정되었습니다.`, 'info');
+          // 사용자에게 알림하지 않고 조용히 처리
         }
       }
     } catch (e) {
       console.error('거래 페이지 자동 포인트 정상화 오류:', e);
     }
     
-    initChart();
-    await refreshBalances();
-    await refreshTicker();
-    await refreshOrderbook();
-    await refreshMyOrders();
-    await refreshTrades();
+    try {
+      initChart();
+    } catch (e) {
+      console.error('차트 초기화 오류:', e);
+    }
+    
+    try {
+      await refreshBalances();
+    } catch (e) {
+      console.error('잔액 갱신 오류:', e);
+    }
+    
+    try {
+      await refreshTicker();
+    } catch (e) {
+      console.error('티커 갱신 오류:', e);
+    }
+    
+    try {
+      await refreshOrderbook();
+    } catch (e) {
+      console.error('호가 갱신 오류:', e);
+    }
+    
+    try {
+      await refreshMyOrders();
+    } catch (e) {
+      console.error('내 주문 갱신 오류:', e);
+    }
+    
+    try {
+      await refreshTrades();
+    } catch (e) {
+      console.error('거래 내역 갱신 오류:', e);
+    }
     // 주문 버튼 이벤트 리스너 (안전하게 추가)
     const placeBuyBtn = document.getElementById('placeBuyBtn');
     const placeSellBtn = document.getElementById('placeSellBtn');
@@ -401,72 +515,9 @@
       console.warn('placeSellBtn을 찾을 수 없습니다.');
     }
     
-    // 포인트 잔액 정상화 버튼
-    document.getElementById('fixPointsBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('fixPointsBtn');
-      const originalText = btn.textContent;
-      btn.textContent = '정상화 중...';
-      btn.disabled = true;
-      
-      try {
-        const result = await window.firebaseData?.fixInfinitePoints?.();
-        if (result?.success) {
-          if (result.adjustment !== 0) {
-            window.showToast && window.showToast(`포인트 잔액이 ${result.adjustment > 0 ? '+' : ''}${result.adjustment}pt로 조정되었습니다.`, 'success');
-          } else {
-            window.showToast && window.showToast('포인트 잔액이 정상 상태입니다.', 'info');
-          }
-          await refreshBalances();
-        } else {
-          window.showToast && window.showToast('정상화 중 오류가 발생했습니다.', 'error');
-        }
-      } catch (e) {
-        console.error('정상화 오류:', e);
-        window.showToast && window.showToast('정상화 중 오류가 발생했습니다.', 'error');
-      } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
-      }
-    });
+
     
-    // 수동 매칭 실행 버튼 (안전하게 추가)
-    const manualMatchBtn = document.getElementById('manualMatchBtn');
-    if (manualMatchBtn) {
-      manualMatchBtn.addEventListener('click', async () => {
-        const btn = manualMatchBtn;
-        const originalText = btn.textContent;
-        btn.textContent = '매칭 중...';
-        btn.disabled = true;
-        
-        try {
-          console.log('수동 매칭 실행 시작...');
-          const matchResult = await window.firebaseData?.tradingMatchOnce?.();
-          console.log('수동 매칭 결과:', matchResult);
-          
-          if (matchResult?.ok) {
-            if (matchResult.matches > 0) {
-              window.showToast && window.showToast(`${matchResult.matches}건 매칭 성공!`, 'success');
-              // 화면 갱신
-              await refreshBalances();
-              await refreshTicker();
-              await refreshOrderbook();
-              await refreshMyOrders();
-              await refreshTrades();
-            } else {
-              window.showToast && window.showToast('매칭 가능한 호가가 없습니다.', 'info');
-            }
-          } else {
-            window.showToast && window.showToast(`매칭 실패: ${matchResult?.reason || '알 수 없는 오류'}`, 'error');
-          }
-        } catch (e) {
-          console.error('수동 매칭 오류:', e);
-          window.showToast && window.showToast('매칭 실행 중 오류가 발생했습니다.', 'error');
-        } finally {
-          btn.textContent = originalText;
-          btn.disabled = false;
-        }
-      });
-    }
+
     
     if (!window.__gsgIntervalsSet) {
       window.__gsgIntervalsSet = true;
