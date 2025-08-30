@@ -102,19 +102,19 @@
 
 
   window.addEventListener('load', async () => {
-    // 자동 포인트 정상화 (지갑 페이지 접속 시)
-    try {
-      const uid = await window.firebaseData?.getCurrentUserUid?.();
-      if (uid) {
-        const fixResult = await window.firebaseData?.autoFixPointsOnLogin?.();
-        if (fixResult?.success && fixResult.adjustment !== 0) {
-          console.log('지갑 페이지 자동 포인트 정상화 완료:', fixResult);
-          window.showToast && window.showToast(`포인트 잔액이 자동으로 ${fixResult.adjustment > 0 ? '+' : ''}${fixResult.adjustment}pt로 조정되었습니다.`, 'info');
+          // 자동 포인트 정상화 (지갑 페이지 접속 시) - 조용히 실행
+      try {
+        const uid = await window.firebaseData?.getCurrentUserUid?.();
+        if (uid) {
+          const fixResult = await window.firebaseData?.autoFixPointsOnLogin?.();
+          if (fixResult?.success && fixResult.adjustment !== 0) {
+            console.log('지갑 페이지 자동 포인트 정상화 완료:', fixResult);
+            // 사용자에게 알림하지 않고 조용히 처리
+          }
         }
+      } catch (e) {
+        console.error('지갑 페이지 자동 포인트 정상화 오류:', e);
       }
-    } catch (e) {
-      console.error('지갑 페이지 자동 포인트 정상화 오류:', e);
-    }
     
     loadPoints(); loadCoins(); loadItems(); renderBoosterBadge();
     setInterval(renderBoosterBadge, 60000);
