@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GSG - 개인화 추천</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="favorites.css" />
+    <link rel="stylesheet" href="recommendations.css" />
+    <link rel="icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문 바로가기</a>
+    <header class="site-header" role="banner">
+      <div class="container nav-container">
+        <div class="brand" aria-label="GSG 홈">
+          <a href="index.html" class="brand" style="text-decoration:none; color:inherit">
+            <span class="logo" aria-hidden="true"><img src="img/gsg-icon.png" alt="GSG 로고" width="60" height="60"/></span>
+            <span class="brand-name">GSG</span>
+          </a>
+        </div>
+        <nav class="site-nav" aria-label="상단 메뉴">
+          <ul>
+            <li><a href="index.html" class="btn ghost small">메인</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="page" tabindex="-1">
+      <section class="section">
+        <div class="container">
+          <h1>개인화된 추천</h1>
+          <p class="intro">나에게 맞춘 문제 추천과 취약 영역 보완, 개선점을 확인하세요.</p>
+          <div class="grid" style="grid-template-columns: 1fr;">
+            <article class="card" id="recImprovements">
+              <h3>개선점 제안</h3>
+              <ul id="listImprove" class="list" style="grid-template-columns: 1fr;"></ul>
+            </article>
+            <article class="card" id="recByDifficulty">
+              <h3>난이도별 맞춤 추천</h3>
+              <p class="muted">최근 성과를 반영해 난이도 균형을 맞춘 추천 문제</p>
+              <div class="list-grid" id="listDiff"></div>
+            </article>
+            <article class="card" id="recWeakAreas">
+              <h3>취약 영역 보완</h3>
+              <p class="muted">같은 소분류에서 안 풀어본 문항 우선 추천</p>
+              <div class="list-grid" id="listWeak"></div>
+            </article>
+          </div>
+
+          <div class="card" style="margin-top:16px;">
+            <h3>다른 학생의 오답률이 높은 문항 Top 20</h3>
+            <div id="listGlobalHard" class="list-grid"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Toast container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <script src="firebase-config.js" defer></script>
+    <script src="firebase-data.js" defer></script>
+    <script src="recommendations.js" defer></script>
+  </body>
+  </html>
+
+

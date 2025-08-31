@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GSG - 학습 통계 시각화</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="analytics.css" />
+    <link rel="icon" href="/favicon.ico" />
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2/dist/echarts-gl.min.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문 바로가기</a>
+    <header class="site-header" role="banner">
+      <div class="container nav-container">
+        <div class="brand" aria-label="GSG 홈">
+          <a href="index.html" class="brand" style="text-decoration:none; color:inherit">
+            <span class="logo" aria-hidden="true"><img src="img/gsg-icon.png" alt="GSG 로고" width="60" height="60"/></span>
+            <span class="brand-name">GSG</span>
+          </a>
+        </div>
+        <nav class="site-nav" aria-label="상단 메뉴">
+          <ul>
+            <li><a href="index.html" class="btn ghost small">메인</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="page" tabindex="-1">
+      <section class="section">
+        <div class="container">
+          <h1>학습 통계 시각화</h1>
+          <p class="intro">개인 학습 데이터를 기반으로 진행률과 정확도를 시각화해 보여줍니다. 데이터가 부족하면 예시 데이터로 표시됩니다.</p>
+
+          <div class="grid-analytics">
+            <article class="block">
+              <div class="block-header">
+                <h2>학습 진행률</h2>
+              </div>
+              <div id="progressChart" class="chart"></div>
+            </article>
+
+            <article class="block">
+              <div class="block-header">
+                <h2>정답률 분석</h2>
+              </div>
+              <div class="filters compact">
+                <select id="selSubject"><option value="">과목 선택(전체)</option></select>
+                <select id="selCat" disabled><option value="">대분류(전체)</option></select>
+                <select id="selSub" disabled><option value="">중분류(전체)</option></select>
+              </div>
+              <div id="pieChart" class="chart"></div>
+            </article>
+
+            <article class="block wide">
+              <div class="block-header">
+                <h2>일자별 문제 풀이 개수</h2>
+              </div>
+              <div id="countChart" class="chart3d"></div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Toast container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <script src="firebase-config.js" defer></script>
+    <script src="firebase-data.js" defer></script>
+    <script src="analytics.js" defer></script>
+  </body>
+  </html>
+
+

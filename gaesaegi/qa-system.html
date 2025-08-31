@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GSG - 질문과 답변</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="favorites.css" />
+    <link rel="stylesheet" href="individual-study.css" />
+    <style>
+      /* 질문 목록 개선 스타일 */
+      .question-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 12px;
+        background: var(--card);
+        transition: all 0.2s ease;
+      }
+      
+      .question-row:hover {
+        border-color: var(--primary);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      
+      .question-main {
+        flex: 1;
+        min-width: 0;
+      }
+      
+      .question-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 8px;
+        line-height: 1.4;
+      }
+      
+      .question-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      
+      .question-tags {
+        color: var(--primary);
+        font-weight: 500;
+      }
+      
+      .question-status {
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      
+      .question-status.status-accepted {
+        background: #d4edda;
+        color: #155724;
+      }
+      
+      .question-status.status-pending {
+        background: #fff3cd;
+        color: #856404;
+      }
+      
+      .question-answers {
+        font-weight: 500;
+      }
+      
+      .question-date {
+        color: var(--muted);
+      }
+      
+      .question-actions {
+        flex-shrink: 0;
+        margin-left: 16px;
+      }
+      
+      /* 반응형 디자인 */
+      @media (max-width: 768px) {
+        .question-row {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        
+        .question-actions {
+          margin-left: 0;
+          margin-top: 12px;
+          text-align: right;
+        }
+        
+        .question-meta {
+          gap: 8px;
+        }
+      }
+    </style>
+    <link rel="icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문 바로가기</a>
+    <header class="site-header" role="banner">
+      <div class="container nav-container">
+        <div class="brand" aria-label="GSG 홈">
+          <a href="index.html" class="brand" style="text-decoration:none; color:inherit">
+            <span class="logo" aria-hidden="true"><img src="img/gsg-icon.png" alt="GSG 로고" width="60" height="60"/></span>
+            <span class="brand-name">GSG</span>
+          </a>
+        </div>
+        <nav class="site-nav" aria-label="상단 메뉴">
+          <ul>
+            <li><a href="index.html" class="btn ghost small">메인</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="page" tabindex="-1">
+      <section class="section">
+        <div class="container">
+          <h1>질문과 답변</h1>
+
+          <div class="grid" style="grid-template-columns: 360px 1fr; gap: 12px; align-items: start;">
+            <aside class="card">
+                             <h3>질문 작성</h3>
+               <div class="login-form">
+                 <div class="field"><label for="qTitle">제목</label><input id="qTitle" type="text" placeholder="제목을 입력하세요"/></div>
+                 <div class="field"><label for="qBody">내용</label><input id="qBody" type="text" placeholder="상세 내용을 입력하세요"/></div>
+                 <div class="field"><label>태그(쉼표로 구분)</label><input id="qTags" type="text" placeholder="예: 함수,기출,개념"/></div>
+                 <div class="field">
+                   <label>과목/분류/문항 선택</label>
+                   <div class="grid" style="grid-template-columns: 1fr 1fr; gap:8px;">
+                     <select id="selSubject"><option value="">과목</option></select>
+                     <select id="selCat" disabled><option value="">대분류</option></select>
+                     <select id="selSub" disabled><option value="">중분류</option></select>
+                     <select id="selTopic" disabled><option value="">소분류</option></select>
+                     <select id="selQuestion" disabled style="grid-column: span 2;"><option value="">개별 문항</option></select>
+                   </div>
+                 </div>
+                 <div class="actions"><button id="postQuestion" class="btn primary">질문 올리기</button></div>
+                 <p id="askMsg" class="form-feedback" aria-live="polite"></p>
+                 <div id="loginNotice" class="muted" style="margin-top: 8px; padding: 8px; background: var(--card); border-radius: 8px; border: 1px solid var(--border);">
+                   <strong>💡 로그인이 필요합니다</strong><br>
+                   질문을 작성하려면 먼저 로그인해 주세요. 로그인 후 질문과 답변을 자유롭게 작성할 수 있습니다.
+                 </div>
+               </div>
+              <h3 style="margin-top:12px;">사용자 활동 랭킹</h3>
+              <div id="rankUsers" class="list-grid"></div>
+            </aside>
+
+            <section class="card">
+              <div class="filters" role="group" aria-label="질문 검색 및 필터">
+                <div class="field">
+                  <label for="searchBox">검색</label>
+                  <input id="searchBox" type="text" placeholder="제목/내용/태그 검색" aria-label="질문 검색"/>
+                </div>
+                <div class="field">
+                  <label for="filterSubject">과목</label>
+                  <select id="filterSubject" aria-label="과목 필터">
+                    <option value="">전체</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="filterAccepted">채택여부</label>
+                  <select id="filterAccepted" aria-label="채택여부 필터">
+                    <option value="">전체</option>
+                    <option value="accepted">채택됨</option>
+                    <option value="not">미채택</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="sortBy">정렬</label>
+                  <select id="sortBy" aria-label="정렬 기준">
+                    <option value="new">최신순</option>
+                    <option value="popular">인기순(답변수)</option>
+                  </select>
+                </div>
+              </div>
+              <h3>질문 목록</h3>
+              <div id="questionList" class="list-grid"></div>
+
+              <article class="card" style="margin-top:12px;" id="detailCard" hidden>
+                <h3 id="dTitle">질문</h3>
+                <div id="dMeta" class="muted"></div>
+                <div id="dBody" style="margin:6px 0 10px;"></div>
+                <div id="dProblem" class="muted"></div>
+                <div class="actions" id="dActions" style="margin-top:8px;"></div>
+                <hr style="border:none; border-top:1px solid var(--border); margin:12px 0;"/>
+                <h3>답변</h3>
+                <div id="answers" class="list-grid"></div>
+                <form id="answerForm" class="answer-form" style="margin-top:8px;">
+                  <div class="row">
+                    <div class="field flex-1"><label for="answerInput">답변 작성</label><input id="answerInput" type="text" autocomplete="off" placeholder="답변을 입력하세요"/></div>
+                    <div class="actions"><button type="submit" class="btn primary">등록</button></div>
+                  </div>
+                </form>
+                <p id="answerMsg" class="form-feedback" aria-live="polite"></p>
+              </article>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <script src="firebase-config.js" defer></script>
+    <script src="firebase-data.js" defer></script>
+    <script src="app.js" defer></script>
+    <script src="qa-system.js" defer></script>
+  </body>
+  </html>
+
+
