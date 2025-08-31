@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>GSG - 코인 로또</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="lottery.css" />
     <link rel="icon" href="/favicon.ico" />
   </head>
   <body>
@@ -29,76 +30,197 @@
     <main id="main" class="page" tabindex="-1">
       <section class="section">
         <div class="container">
-          <h1>코인 로또</h1>
-          <!-- 당첨 상품 안내 섹션 (상단) -->
-          <article class="card" style="margin-bottom: 12px;">
-            <h3>당첨 상품 안내</h3>
-            <div class="prize-info">
-              <div class="prize-item">
-                <span class="prize-rank">1등</span>
-                <span class="prize-desc">치킨 한 마리</span>
+          <div class="lottery-header">
+            <h1>🎰 코인 로또</h1>
+            <p class="lottery-subtitle">행운의 번호를 선택하고 맛있는 상품을 받아보세요!</p>
+          </div>
+
+          <!-- 당첨 상품 안내 섹션 -->
+          <article class="card prize-card">
+            <h3>🏆 당첨 상품 안내</h3>
+                          <div class="prize-grid">
+                <div class="prize-item first-prize">
+                  <div class="prize-rank">🥇 1등</div>
+                  <div class="prize-desc">치킨 한 마리</div>
+                </div>
+                <div class="prize-item second-prize">
+                  <div class="prize-rank">🥈 2등</div>
+                  <div class="prize-desc">엽기떡볶이 한 통</div>
+                </div>
+                <div class="prize-item third-prize">
+                  <div class="prize-rank">🥉 3등</div>
+                  <div class="prize-desc">인근 카페 음료 1잔</div>
+                </div>
+                <div class="prize-item fourth-prize">
+                  <div class="prize-rank">🎁 4등</div>
+                  <div class="prize-desc">개별 포장 간식</div>
+                </div>
               </div>
-              <div class="prize-item">
-                <span class="prize-rank">2등</span>
-                <span class="prize-desc">엽기떡볶이 한 통</span>
-              </div>
-              <div class="prize-item">
-                <span class="prize-rank">3등</span>
-                <span class="prize-desc">인근 카페 음료 1잔</span>
-              </div>
-              <div class="prize-item">
-                <span class="prize-rank">4등</span>
-                <span class="prize-desc">과자 한 봉지</span>
-              </div>
-              <div class="prize-item">
-                <span class="prize-rank">5등</span>
-                <span class="prize-desc">개별 포장 스낵</span>
-              </div>
-            </div>
           </article>
 
-          <!-- 번호 선택 및 당첨 결과 섹션 -->
-          <div class="grid" style="grid-template-columns: 1fr 1fr; gap:12px; align-items:start;">
-            <article class="card">
-              <h3>번호 선택</h3>
-              <div class="muted" style="margin-bottom:8px;">1~20 중 6개 선택</div>
-              <div id="numberGrid" class="lottery-number-grid"></div>
-              <div style="display:flex; gap:8px; margin-top:8px;">
-                <button id="autoPick" class="btn small">자동 선택</button>
-                <button id="clearPick" class="btn small">초기화</button>
+          <!-- 번호 선택 및 구매 섹션 -->
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap:16px; align-items:start;">
+            <article class="card selection-card">
+              <h3>🎯 번호 선택</h3>
+              <div class="selection-info">
+                <span class="info-text">1~15 중 6개를 선택하세요</span>
+                <span class="selected-count" id="selectedCount">0/6</span>
               </div>
-              <div style="margin-top:8px;">선택: <strong id="picked">-</strong></div>
-              <div style="display:flex; gap:8px; align-items:center; margin-top:12px;">
-                <div>보유 코인: <strong id="coinBal">0</strong></div>
-                <div class="muted">(1회 1코인)</div>
-                <div style="margin-left:auto;"><button id="buyBtn" class="btn primary">구매</button></div>
+              <div id="numberGrid" class="lottery-number-grid"></div>
+              <div class="selection-controls">
+                <button id="autoPick" class="btn secondary">🎲 자동 선택</button>
+                <button id="clearPick" class="btn ghost">🗑️ 초기화</button>
+              </div>
+              <div class="selected-numbers">
+                <span class="label">선택된 번호:</span>
+                <span class="numbers" id="picked">-</span>
+              </div>
+              <div class="purchase-section">
+                <div class="coin-info">
+                  <span class="coin-icon">🪙</span>
+                  <span class="coin-balance">보유: <strong id="coinBal">0</strong> 코인</span>
+                </div>
+                <button id="buyBtn" class="btn primary purchase-btn">
+                  <span class="btn-text">🎫 로또 구매</span>
+                  <span class="btn-price">1 코인</span>
+                </button>
               </div>
               <p id="buyMsg" class="form-feedback" aria-live="polite"></p>
             </article>
-            <article class="card">
-              <h3>최근 당첨 결과</h3>
-              <div>구매일자: <strong id="drawId">-</strong></div>
-              <div style="margin-top:8px;">당첨 번호: <strong id="drawNums">-</strong></div>
-              <div>보너스: <strong id="drawBonus">-</strong></div>
-              <div style="margin-top:8px;">내 번호: <strong id="myNums">-</strong></div>
-              <div>일치 개수: <strong id="hitCount">-</strong></div>
-              <div>등수: <strong id="rank">-</strong></div>
+
+            <!-- 추첨 결과 섹션 -->
+            <article class="card result-card">
+              <h3>🎊 추첨 결과</h3>
+              <div class="result-content" id="resultContent">
+                <div class="result-placeholder">
+                  <div class="placeholder-icon">🎰</div>
+                  <p>번호를 선택하고 구매 버튼을 눌러주세요!</p>
+                </div>
+              </div>
+              <div class="result-details" id="resultDetails" style="display: none;">
+                <div class="result-item">
+                  <span class="label">📅 추첨일:</span>
+                  <span class="value" id="drawId">-</span>
+                </div>
+                <div class="result-item">
+                  <span class="label">🏆 당첨번호:</span>
+                  <span class="value winning-numbers" id="drawNums">-</span>
+                </div>
+                <div class="result-item">
+                  <span class="label">⭐ 보너스:</span>
+                  <span class="value bonus-number" id="drawBonus">-</span>
+                </div>
+                <div class="result-item">
+                  <span class="label">🎯 내 번호:</span>
+                  <span class="value my-numbers" id="myNums">-</span>
+                </div>
+                <div class="result-item">
+                  <span class="label">🎯 일치:</span>
+                  <span class="value hit-count" id="hitCount">-</span>
+                </div>
+                <div class="result-item">
+                  <span class="label">🏅 등수:</span>
+                  <span class="value rank-result" id="rank">-</span>
+                </div>
+              </div>
             </article>
           </div>
 
-          <div class="grid" style="grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px;">
-            <article class="card">
-              <h3>내 구매 내역</h3>
-              <div id="myTickets" class="list-grid"></div>
+          <!-- 구매 내역 및 통계 -->
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap:16px; margin-top:16px;">
+            <article class="card history-card">
+              <h3>📋 구매 내역</h3>
+              <div id="myTickets" class="ticket-list"></div>
             </article>
-            <article class="card">
-              <h3>로또 통계</h3>
-              <div id="stats" class="grid" style="grid-template-columns: repeat(3, minmax(0,1fr)); gap:8px;"></div>
+            <article class="card stats-card">
+              <h3>📊 로또 통계</h3>
+              <div id="stats" class="stats-grid"></div>
             </article>
           </div>
         </div>
       </section>
     </main>
+
+    <!-- 추첨 애니메이션 오버레이 -->
+    <div id="drawAnimation" class="draw-animation-overlay" style="display: none;">
+      <div class="draw-animation-content">
+        <div class="draw-header">
+          <h2>🎰 추첨 중...</h2>
+          <p>행운의 번호를 뽑고 있습니다</p>
+        </div>
+        <div class="draw-layout">
+          <!-- 좌측: 추첨 애니메이션 -->
+          <div class="draw-animation-section">
+            <div class="draw-machine">
+              <!-- 내가 선택한 번호 -->
+              <div class="my-numbers-section">
+                <div class="section-title">내가 선택한 번호</div>
+                <div class="my-numbers-container">
+                  <div class="my-ball" id="myBall1">-</div>
+                  <div class="my-ball" id="myBall2">-</div>
+                  <div class="my-ball" id="myBall3">-</div>
+                  <div class="my-ball" id="myBall4">-</div>
+                  <div class="my-ball" id="myBall5">-</div>
+                  <div class="my-ball" id="myBall6">-</div>
+                </div>
+              </div>
+              
+              <!-- 당첨 번호 -->
+              <div class="winning-numbers-section">
+                <div class="section-title">당첨 번호</div>
+                <div class="ball-container">
+                  <div class="ball" id="ball1">?</div>
+                  <div class="ball" id="ball2">?</div>
+                  <div class="ball" id="ball3">?</div>
+                  <div class="ball" id="ball4">?</div>
+                  <div class="ball" id="ball5">?</div>
+                  <div class="ball" id="ball6">?</div>
+                </div>
+                <div class="bonus-ball-container">
+                  <div class="bonus-label">보너스</div>
+                  <div class="ball bonus-ball" id="bonusBall">?</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="draw-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 우측: 당첨 결과 및 확인 버튼 -->
+          <div class="draw-result-section" id="drawResultSection" style="display: none;">
+            <!-- 당첨 결과 표시 -->
+            <div class="draw-result" id="drawResult">
+              <div class="result-summary">
+                <div class="result-title">🎊 당첨 결과</div>
+                <div class="result-details">
+                  <div class="result-item">
+                    <span class="label">🎯 일치 개수:</span>
+                    <span class="value" id="resultHitCount">-</span>
+                  </div>
+                  <div class="result-item">
+                    <span class="label">🏅 등수:</span>
+                    <span class="value" id="resultRank">-</span>
+                  </div>
+                  <div class="result-item">
+                    <span class="label">🎁 상품:</span>
+                    <span class="value" id="resultPrize">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 확인 버튼 -->
+            <div class="draw-confirm" id="drawConfirm">
+              <button class="confirm-btn" id="confirmBtn">확인</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
     <script src="firebase-config.js" defer></script>
@@ -106,6 +228,6 @@
     <script src="app.js" defer></script>
     <script src="lottery.js" defer></script>
   </body>
-  </html>
+</html>
 
 

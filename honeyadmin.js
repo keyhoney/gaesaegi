@@ -7,8 +7,6 @@
      // 전역 변수
    let currentUserUid = null;
    let allUsers = [];
-   let allBalances = [];
-   let allPurchases = [];
    let allLotteryTickets = [];
    let allCoinHistory = [];
 
@@ -37,9 +35,12 @@
   // 사용자 정보 표시 함수
   function renderUserInfo(user) {
     const className = user.className || user.class || '미분반';
-    const studentNumber = user.studentNumber || user.number || '미번호';
-    const name = user.name || user.displayName || '미이름';
+    const studentNumber = user.studentNumber || user.number || user.studentNo || '미번호';
+    const name = user.name || user.displayName || user.nickname || '미이름';
     const initials = name.substring(0, 2).toUpperCase();
+    
+    // 전화번호가 있으면 표시
+    const phoneInfo = user.phone ? `<div class="user-phone">${user.phone}</div>` : '';
     
     return `
       <div class="user-info">
@@ -47,6 +48,7 @@
         <div class="user-details">
           <div class="user-name">${name}</div>
           <div class="user-email">${className} ${studentNumber}번</div>
+          ${phoneInfo}
         </div>
       </div>
     `;
@@ -104,7 +106,7 @@
       console.log('사용자 정보 가져오기 시작...');
       
       const { db } = await window.getFirebaseAppAndDb();
-      const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      const { collection, getDocs, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
       
       console.log('Firebase DB 객체:', !!db);
       console.log('현재 관리자 UID:', currentUserUid);
@@ -131,6 +133,192 @@
       
       console.log(`총 ${allUsers.length}명의 사용자 정보를 가져왔습니다.`);
       console.log('사용자 목록:', allUsers.map(u => ({ uid: u.uid, name: u.name || u.displayName })));
+      
+      // 하드코딩된 모든 사용자 UID 목록 사용
+      if (allUsers.length === 0) {
+        console.log('하드코딩된 사용자 UID 목록을 사용합니다...');
+        
+        // 하드코딩된 모든 사용자 UID 목록
+        const allUserUids = [
+          'WRcdJOZJJCXMpkV3WG0jUTp8I5h1',
+          'fkLWvKLKaRT4wZ1j40gia8hmsA72',
+          'pqCnLsuyZrfJASspMOixTiJWl0g1',
+          'JjOgt7spmXMpG7tslDz7ROAwJ4P2',
+          'O61e0m0q0JOAkv73jk5y81mdEDd2',
+          '4NboR1jFUcRMRm3uLljF1l6UqMY2',
+          '0Eiyl2LGCRfzVCJRqzn4ot8qSy92',
+          'M5bNsbKXiVQCi7TuyvWkH3RUNji1',
+          'jZ7MmTF7eFZCpq1PHmKbNLghlHA3',
+          'CUOUoM9NTWMvGyZ9YjT6rdUHtVC3',
+          'oxp6mue9lUWd2XIoSIlgSIceTB02',
+          'nswTy2ip82hIEYfOJ1FiMzxcdxi2',
+          'dR39blRK7sMHcHQ1PlAaQ3AvndQ2',
+          'B2ZYgSDjM7Y3DaBIKmsZl8XBXQp1',
+          '51pgFJbj3qYNi2kHJkBSfsOPKYa2',
+          'VKFJbBedjqML1YkW3jZnBdvtiZU2',
+          'ZJ479LfUCMQqpmzYua0HQahgdZk2',
+          'ZlTHQqBY6pNyzVpb2iU8O5DPO4q2',
+          '36AGvjAeTBYdaKeAqIfpNfHTt5G2',
+          'asIYZFIlbWSY1es46bRCMUp9MZr1',
+          'bF588uRythV6lK3vRwSxTeKCWYf1',
+          'cb4ab1jtBjeb2P1OwOrVp8vIHh92',
+          'lLoc3JZ9OHTtczjZ9vT7Augzyhv1',
+          '6bk72c8s6dfe60zi8Qc54F6Nsat1',
+          'VUOd0mFb1zVAGsqYbsAGjHSC6d23',
+          'Q39Thv2UOST2th3uujNyxLybDV32',
+          'J6qlUjQrEMZbbZlWDSvB9OpHW2i1',
+          'dszmx0y2e4e3HCWTV00H1kZ9nB62',
+          'aeTcj1IXeuf3ENUcPxe5vmIYwFn2',
+          'LhQV1IsUIEZZniE3a4QJk52Tft82',
+          'n9lvyxRp8SQqZEyLNCeYWqYz9zG3',
+          'MssfKSgkmJWGY5oP2U3tNEvlWjI3',
+          'PRJWEPkY0be3mTCSWBFHbGQc12u1',
+          'k2fH1Ri0QJbNXyvpAvpuWU3EOuF2',
+          'FrNwbVDMaIXLlUVdG324RYScTRG2',
+          'QxNDx7GVytfh5dxxiCpH84BQhli1',
+          'dM3Rvcwsg8flCKCY6pbiMnjcOrO2',
+          '2RkgZx7kaOaVmyK3RzcDceAlysx1',
+          'X88tTrzkIVYZFYCrP2jpR6xnk2B3',
+          'bl9A3k2Co5WLBJbYUe98Q4JBooC3',
+          'Cn9MV05VeYVyvlQkqZSUoQ5sFlx2',
+          'r2ABBh4F6DgrMIkkaoFM25oBA5O2',
+          'zo2h81Ij3lQk3uE4RbSDpJD7IXh2',
+          'h0aoOGv68PQBIYWsl4544E5bZvf2',
+          'VI2IoZETcMgFmhbupWABysQKadu2',
+          'KhXhhMTo75P8aPHJjBUUxZvrwzs1',
+          'g0c1n5J1W2YawNOmREj0oEsORBE3',
+          'aKNoy2mfa8X5I6Zzrr5BcHPWnRz1',
+          'oVowmmHMRYaskUj2fWpN8rdeUwh2',
+          'o3NeiVAUDZSlUbpG3tMQ1J7UWlq2',
+          'qBPMabxl9BUj53at6V6UIZPfT6r1',
+          'cjX8yMlygIgBlGloF2e9Fum2isZ2',
+          'fmbB02EY3qUtJFpkeKQqXoKcmkN2',
+          '5E3oLGJO3Wc460s4IcOWoqkY0DB3',
+          'cdMWPqGerYcCuTXZbAw1gXEWIXt2',
+          'xN8HtTXTpId0qWf1AxPypYZlWo63',
+          'nX5yEhFCZZdpSBDGYQiHA9kSXJh2',
+          'ejajdQbTF4M8IwFTz1MVnVuuoA22',
+          '8XQWGq2O23MVI0tzRid2gdKrnaG2',
+          'XSeM8AdPCUP810gokNvTazIOX7w2',
+          'I960Kz1EijNF76638P59SgpomdF2',
+          'PCmGu0Kt0HPdhXQUI6zDx6H96yB3',
+          'TUscOf9J5xfFur2J7EGKbjvqfef2',
+          '9cCgknYXkbQe5CAG1DRlFwWmMUE3',
+          'nBElyz9AUASVdsQqeGQPInQdJCo1',
+          'sb9hNOmrNhPd8KO08DscWCzZxT53',
+          'bO3dHUde3CPOqScsZFe9JGOJEsi2',
+          'VQC1azy1H8Xb9E7nuTW1RyMx5B52',
+          'SlKVE6tzEOWkhVk3IfEalmmmyzx2',
+          'l5qENNQkkweMTvQYtzoG4BAZebF3',
+          'UauPrKFTBJaRXyLYjMF4znSsi5U2',
+          'e9Id49Pa6waJFA7g7RHCbiUUdf72',
+          'm8kg1KbSzdVYbIdCxapCooYVsrR2',
+          'HEumHGcKKDVjVdyMQBo5e0pqOv32',
+          '4sPsZvlWUaP3rL6RKZYBrzEaHA93',
+          'UOgj3L4ZOUQeQreSHzLKhtTQwa82',
+          'm1vRmYxl01c4U7nCmP8EK4KooEN2',
+          '7OJyVZFN9Dgw1THf9QgsZPdTQR42',
+          'VsAWChuPIPeZfy8a62FMJMD9QPG3',
+          'l7Xqxsx99KXzTRXRPd7D00jAUTm2',
+          'y6VTQ7kOMDUeixayVkFZkIRB7xO2',
+          'ZgIOnf4qVDbLBiVucuuuG7nSfFT2',
+          'B7j85Y1HDrhIEP24CwghMLDXcLe2',
+          'S8PcwCtfV8UfQKi2KpC5kbfCsq83',
+          'JN4Aj1tLcgSdLbDxJvHXYphEGG12',
+          'IlZ8YpkPjmV79WU2itCwPp8Gk6t2',
+          'jz2W3dOpZmTUw0H3x2DV2QSPet32',
+          'OyDiGyFxHjUOaXfTKSM49ffSXAE2',
+          'vPyKdlAjbfNZIhW9tO2N9fe8Mg22',
+          'BAdn611CqLXqULS3u8EveX6Bl2v2',
+          'FoGVZ5bhimMEp7H43OVNA72Nw0b2',
+          'YA9rtJMw5zXQPNYuWxslDTKlZoo2',
+          'hU6thgkjI1gIasdTpUA3YSGVm0h1',
+          'hkbvHbUC8xRmc9WZisi9vWJtBe82',
+          'tt1YSD1HEncK2IhdjqRc41RDfGB2',
+          'Bc1l3o3zz2T3xjPtdRP83NJipCE2',
+          'cKipew6dcpeWOHddw6yFxRbHBAh2',
+          'grXV9p498Xar1ugyKKGs7ycT2Dr1',
+          '3uvLN9aYtBgOW6h4R5X3aixHMy23',
+          'jiDQCuRpBGVZjnUrIT0cInXgIVG2',
+          'nIFEBVILqgcQSxH5TVrwtglwp7Q2',
+          'oNP1OtfV9wdHTsgGZO6hkCaCiZK2',
+          'DRdR9MMiFHOnNK85CBcYWKKglUw1',
+          'ZAKL8ukxTyQorl2wZhkG1co6dNw1',
+          'ZNE7WWO7rAgeQZbFzvJQq3s9wlx2',
+          'zcaWS7Kl8xSeBoWrVY5w2LpMwsj2'
+        ];
+        
+        console.log(`하드코딩된 사용자 UID 목록: 총 ${allUserUids.length}명`);
+        
+        // 각 UID에 대해 사용자 정보 생성
+        for (const uid of allUserUids) {
+          try {
+            // 사용자 기본 정보 문서 시도
+            const userDocRef = doc(db, 'users', uid);
+            const userDocSnap = await getDoc(userDocRef);
+            
+            let userInfo = {
+              uid: uid,
+              name: `사용자 ${uid.substring(0, 8)}`,
+              className: '미분반',
+              studentNumber: 0
+            };
+            
+            if (userDocSnap.exists()) {
+              const userData = userDocSnap.data();
+              userInfo = {
+                uid: uid,
+                name: userData.name || userData.displayName || `사용자 ${uid.substring(0, 8)}`,
+                className: userData.className || userData.class || '미분반',
+                studentNumber: userData.studentNumber || userData.number || 0,
+                email: userData.email || null
+              };
+            } else {
+              // 기본 정보가 없으면 profile 컬렉션에서 정보 찾기
+              try {
+                const profileRef = doc(db, 'users', uid, 'profile', 'main');
+                const profileSnap = await getDoc(profileRef);
+                if (profileSnap.exists()) {
+                  const profileData = profileSnap.data();
+                  userInfo = {
+                    uid: uid,
+                    name: profileData.name || profileData.nickname || `사용자 ${uid.substring(0, 8)}`,
+                    className: profileData.classNo ? `${profileData.grade || ''}학년 ${profileData.classNo}반` : '미분반',
+                    studentNumber: profileData.studentNo || 0,
+                    grade: profileData.grade || null,
+                    classNo: profileData.classNo || null,
+                    nickname: profileData.nickname || null,
+                    phone: profileData.phone || null,
+                    updatedAt: profileData.updatedAt || null
+                  };
+                }
+              } catch (profileError) {
+                // 프로필 정보 접근 실패 시 기본 정보 사용
+              }
+            }
+            
+            allUsers.push(userInfo);
+            
+            // 진행 상황 표시 (20명마다)
+            if (allUsers.length % 20 === 0) {
+              console.log(`진행 상황: ${allUsers.length}/${allUserUids.length}명 완료`);
+            }
+            
+          } catch (userError) {
+            console.error(`사용자 ${uid} 정보 생성 실패:`, userError);
+            // 기본 정보라도 추가
+            allUsers.push({
+              uid: uid,
+              name: `사용자 ${uid.substring(0, 8)}`,
+              className: '미분반',
+              studentNumber: 0
+            });
+          }
+        }
+        
+        console.log(`최종 사용자 목록: 총 ${allUsers.length}명`);
+      }
+      
       return allUsers;
     } catch (error) {
       console.error('사용자 정보 가져오기 실패:', error);
@@ -139,95 +327,17 @@
         message: error.message,
         stack: error.stack
       });
+      
+      // 권한 오류인지 확인
+      if (error.code === 'permission-denied') {
+        console.error('❌ Firebase 권한 오류: 관리자가 users 컬렉션에 접근할 수 없습니다.');
+      }
+      
       throw error;
     }
   }
 
-  // 사용자별 잔액 정보 가져오기
-  async function fetchAllBalances() {
-    try {
-      console.log('잔액 정보 가져오기 시작...');
-      console.log('처리할 사용자 수:', allUsers.length);
-      
-      const { db } = await window.getFirebaseAppAndDb();
-      const { collection, getDocs, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-      
-      allBalances = [];
-      
-      for (const user of allUsers) {
-        try {
-          console.log(`사용자 ${user.uid} 잔액 정보 처리 중...`);
-          
-          // 지갑 정보
-          const walletRef = doc(db, 'users', user.uid, 'wallet', 'main');
-          const walletSnap = await getDoc(walletRef);
-          const wallet = walletSnap.exists() ? walletSnap.data() : { coins: 0, totalCoins: 0 };
-          console.log(`사용자 ${user.uid} 지갑 정보:`, wallet);
-          
-          // 일일 통계 합계 (포인트 계산용)
-          const dailyStatsRef = collection(db, 'users', user.uid, 'dailyStats');
-          const dailyStatsSnap = await getDocs(dailyStatsRef);
-          let totalPoints = 0;
-          dailyStatsSnap.forEach(doc => {
-            const data = doc.data();
-            totalPoints += Number(data.points || 0);
-          });
-          console.log(`사용자 ${user.uid} 총 포인트:`, totalPoints);
-          
-          allBalances.push({
-            uid: user.uid,
-            user: user,
-            coins: Number(wallet.coins || 0),
-            totalCoins: Number(wallet.totalCoins || 0),
-            points: totalPoints
-          });
-        } catch (error) {
-          console.error(`사용자 ${user.uid} 잔액 정보 가져오기 실패:`, error);
-        }
-      }
-      
-      console.log(`총 ${allBalances.length}명의 잔액 정보를 가져왔습니다.`);
-      return allBalances;
-    } catch (error) {
-      console.error('잔액 정보 가져오기 실패:', error);
-      throw error;
-    }
-  }
 
-  // 모든 구매 내역 가져오기
-  async function fetchAllPurchases() {
-    try {
-      const { db } = await window.getFirebaseAppAndDb();
-      const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-      
-      allPurchases = [];
-      
-      for (const user of allUsers) {
-        try {
-          const purchasesRef = collection(db, 'users', user.uid, 'purchases');
-          const purchasesQuery = query(purchasesRef, orderBy('purchasedAt', 'desc'));
-          const purchasesSnap = await getDocs(purchasesQuery);
-          
-          purchasesSnap.forEach(doc => {
-            const purchaseData = doc.data();
-            allPurchases.push({
-              id: doc.id,
-              uid: user.uid,
-              user: user,
-              ...purchaseData
-            });
-          });
-        } catch (error) {
-          console.error(`사용자 ${user.uid} 구매 내역 가져오기 실패:`, error);
-        }
-      }
-      
-      return allPurchases;
-    } catch (error) {
-      console.error('구매 내역 가져오기 실패:', error);
-      throw error;
-    }
-  }
 
      // 모든 로또 내역 가져오기
    async function fetchAllLotteryTickets() {
@@ -299,70 +409,48 @@
      }
    }
 
-  // 통계 업데이트 (사용하지 않음)
-  function updateStats() {
-    // 통계 카드가 제거되어 사용하지 않음
-  }
-
-     // 잔액 테이블 렌더링
-   function renderBalancesTable() {
-     const tbody = document.getElementById('balancesBody');
-     const loading = document.getElementById('balancesLoading');
-     const error = document.getElementById('balancesError');
-     const table = document.getElementById('balancesTable');
-     
-     try {
-       const sortedBalances = allBalances.sort((a, b) => b.points - a.points);
-       
-       tbody.innerHTML = sortedBalances.map(balance => `
-         <tr>
-           <td>${renderUserInfo(balance.user)}</td>
-           <td>${formatNumber(balance.points)} pt</td>
-           <td>${formatNumber(balance.coins)} coin</td>
-           <td>
-             <div class="coin-give-form">
-               <input type="number" min="1" max="100" placeholder="코인" class="coin-amount" data-uid="${balance.uid}">
-               <input type="text" placeholder="사유 (예: 수업 중 활발한 참여)" class="coin-reason" data-uid="${balance.uid}">
-               <button class="coin-give-btn" onclick="giveCoin('${balance.uid}')" data-uid="${balance.uid}">지급</button>
-             </div>
-           </td>
-         </tr>
-       `).join('');
-       
-       loading.style.display = 'none';
-       error.style.display = 'none';
-       table.style.display = 'table';
-     } catch (err) {
-       loading.style.display = 'none';
-       error.style.display = 'block';
-       error.textContent = '잔액 정보를 불러오는 중 오류가 발생했습니다.';
-       table.style.display = 'none';
-     }
-   }
-
-  // 구매 내역 테이블 렌더링
-  function renderPurchasesTable() {
-    const tbody = document.getElementById('purchasesBody');
-    const loading = document.getElementById('purchasesLoading');
-    const error = document.getElementById('purchasesError');
-    const table = document.getElementById('purchasesTable');
+  // 로또 당첨 기록 테이블 렌더링
+  function renderLotteryWinnersTable() {
+    const tbody = document.getElementById('lotteryWinnersBody');
+    const loading = document.getElementById('lotteryWinnersLoading');
+    const error = document.getElementById('lotteryWinnersError');
+    const table = document.getElementById('lotteryWinnersTable');
     
     try {
-      const sortedPurchases = allPurchases.sort((a, b) => {
-        const aTime = a.purchasedAt?.toDate ? a.purchasedAt.toDate().getTime() : 0;
-        const bTime = b.purchasedAt?.toDate ? b.purchasedAt.toDate().getTime() : 0;
+      // 당첨 기록만 필터링 (rank가 있는 것만)
+      const winners = allLotteryTickets.filter(ticket => ticket.rank && ticket.rank >= 1 && ticket.rank <= 4);
+      
+      // 등수별로 정렬 (1등, 2등, 3등, 4등 순)
+      const sortedWinners = winners.sort((a, b) => {
+        // 먼저 등수로 정렬
+        if (a.rank !== b.rank) {
+          return a.rank - b.rank;
+        }
+        // 등수가 같으면 시간순 정렬 (최신순)
+        const aTime = a.at?.toDate ? a.at.toDate().getTime() : 0;
+        const bTime = b.at?.toDate ? b.at.toDate().getTime() : 0;
         return bTime - aTime;
       });
       
-      tbody.innerHTML = sortedPurchases.map(purchase => `
-        <tr>
-          <td>${renderUserInfo(purchase.user)}</td>
-          <td>${purchase.name || purchase.id || '-'}</td>
-          <td>${purchase.category || '-'}</td>
-          <td>${formatNumber(purchase.price || 0)} pt</td>
-          <td>${formatDate(purchase.purchasedAt)}</td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = sortedWinners.map(ticket => {
+        const nums = Array.isArray(ticket.nums) ? ticket.nums.join(', ') : '-';
+        const drawNums = Array.isArray(ticket.drawNums) ? ticket.drawNums.join(', ') : '-';
+        const bonus = ticket.drawBonus || '-';
+        const hitCount = ticket.hitCount || 0;
+        const rankText = `${ticket.rank}등`;
+        
+        return `
+          <tr class="winner-row winner-row-${ticket.rank}">
+            <td><strong>${rankText}</strong></td>
+            <td>${renderUserInfo(ticket.user)}</td>
+            <td>${nums}</td>
+            <td>${drawNums}</td>
+            <td>${bonus}</td>
+            <td>${hitCount}개</td>
+            <td>${formatDate(ticket.at)}</td>
+          </tr>
+        `;
+      }).join('');
       
       loading.style.display = 'none';
       error.style.display = 'none';
@@ -370,55 +458,10 @@
     } catch (err) {
       loading.style.display = 'none';
       error.style.display = 'block';
-      error.textContent = '구매 내역을 불러오는 중 오류가 발생했습니다.';
+      error.textContent = '로또 당첨 기록을 불러오는 중 오류가 발생했습니다.';
       table.style.display = 'none';
     }
   }
-
-     // 로또 내역 테이블 렌더링
-   function renderLotteryTable() {
-     const tbody = document.getElementById('lotteryBody');
-     const loading = document.getElementById('lotteryLoading');
-     const error = document.getElementById('lotteryError');
-     const table = document.getElementById('lotteryTable');
-     
-     try {
-       const sortedTickets = allLotteryTickets.sort((a, b) => {
-         const aTime = a.at?.toDate ? a.at.toDate().getTime() : 0;
-         const bTime = b.at?.toDate ? b.at.toDate().getTime() : 0;
-         return bTime - aTime;
-       });
-       
-       tbody.innerHTML = sortedTickets.map(ticket => {
-         const nums = Array.isArray(ticket.nums) ? ticket.nums.join(', ') : '-';
-         const drawNums = Array.isArray(ticket.drawNums) ? ticket.drawNums.join(', ') : '-';
-         const bonus = ticket.drawBonus || '-';
-         const hitCount = ticket.hitCount || 0;
-         const rank = ticket.rank ? `${ticket.rank}등` : '미당첨';
-         
-         return `
-           <tr>
-             <td>${renderUserInfo(ticket.user)}</td>
-             <td>${nums}</td>
-             <td>${drawNums}</td>
-             <td>${bonus}</td>
-             <td>${hitCount}개</td>
-             <td>${rank}</td>
-             <td>${formatDate(ticket.at)}</td>
-           </tr>
-         `;
-       }).join('');
-       
-       loading.style.display = 'none';
-       error.style.display = 'none';
-       table.style.display = 'table';
-     } catch (err) {
-       loading.style.display = 'none';
-       error.style.display = 'block';
-       error.textContent = '로또 내역을 불러오는 중 오류가 발생했습니다.';
-       table.style.display = 'none';
-     }
-   }
 
    // 코인 지급 내역 테이블 렌더링
    function renderCoinHistoryTable() {
@@ -460,25 +503,15 @@
        console.log('데이터 새로고침 시작...');
        
        // 로딩 상태 표시
-       document.getElementById('balancesLoading').style.display = 'block';
-       document.getElementById('purchasesLoading').style.display = 'block';
-       document.getElementById('lotteryLoading').style.display = 'block';
+       document.getElementById('lotteryWinnersLoading').style.display = 'block';
        document.getElementById('coinHistoryLoading').style.display = 'block';
        
-       document.getElementById('balancesTable').style.display = 'none';
-       document.getElementById('purchasesTable').style.display = 'none';
-       document.getElementById('lotteryTable').style.display = 'none';
+       document.getElementById('lotteryWinnersTable').style.display = 'none';
        document.getElementById('coinHistoryTable').style.display = 'none';
        
        // 데이터 가져오기
        console.log('사용자 정보 가져오기...');
        await fetchAllUsers();
-       
-       console.log('잔액 정보 가져오기...');
-       await fetchAllBalances();
-       
-       console.log('구매 내역 가져오기...');
-       await fetchAllPurchases();
        
        console.log('로또 내역 가져오기...');
        await fetchAllLotteryTickets();
@@ -488,9 +521,7 @@
        
        // 테이블 업데이트
        console.log('테이블 렌더링...');
-       renderBalancesTable();
-       renderPurchasesTable();
-       renderLotteryTable();
+       renderLotteryWinnersTable();
        renderCoinHistoryTable();
        
        console.log('데이터 새로고침 완료');
@@ -501,15 +532,23 @@
      }
    }
 
-   // 코인 지급 함수
-   async function giveCoin(uid) {
+   // 반/번호별 코인 지급 함수
+   async function giveCoinByClassNumber() {
      try {
-       const amountInput = document.querySelector(`input.coin-amount[data-uid="${uid}"]`);
-       const reasonInput = document.querySelector(`input.coin-reason[data-uid="${uid}"]`);
-       const button = document.querySelector(`button.coin-give-btn[data-uid="${uid}"]`);
+       const className = document.getElementById('classNameInput').value.trim();
+       const studentNumber = Number(document.getElementById('studentNumberInput').value);
+       const amount = Number(document.getElementById('coinAmountInput').value);
+       const reason = document.getElementById('coinReasonInput').value.trim();
        
-       const amount = Number(amountInput.value);
-       const reason = reasonInput.value.trim();
+       if (!className) {
+         alert('반을 입력해주세요.');
+         return;
+       }
+       
+       if (!studentNumber || studentNumber <= 0) {
+         alert('학생 번호를 입력해주세요.');
+         return;
+       }
        
        if (!amount || amount <= 0) {
          alert('지급할 코인 수량을 입력해주세요.');
@@ -526,7 +565,19 @@
          return;
        }
        
+       // 해당 반/번호의 사용자 찾기
+       const targetUser = allUsers.find(user => 
+         (user.className === className || user.class === className) && 
+         (user.studentNumber === studentNumber || user.number === studentNumber)
+       );
+       
+       if (!targetUser) {
+         alert(`해당하는 학생을 찾을 수 없습니다.\n반: ${className}\n번호: ${studentNumber}`);
+         return;
+       }
+       
        // 버튼 비활성화
+       const button = document.querySelector('.coin-give-btn-large');
        button.disabled = true;
        button.textContent = '처리중...';
        
@@ -534,14 +585,14 @@
        const { doc, updateDoc, addDoc, collection, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
        
        // 사용자 지갑 업데이트
-       const walletRef = doc(db, 'users', uid, 'wallet', 'main');
+       const walletRef = doc(db, 'users', targetUser.uid, 'wallet', 'main');
        await updateDoc(walletRef, {
          coins: window.firebaseData.increment(amount),
          totalCoins: window.firebaseData.increment(amount)
        });
        
        // 코인 지급 내역 기록
-       const coinHistoryRef = collection(db, 'users', uid, 'coinHistory');
+       const coinHistoryRef = collection(db, 'users', targetUser.uid, 'coinHistory');
        await addDoc(coinHistoryRef, {
          amount: amount,
          reason: reason,
@@ -550,11 +601,13 @@
        });
        
        // 입력 필드 초기화
-       amountInput.value = '';
-       reasonInput.value = '';
+       document.getElementById('classNameInput').value = '';
+       document.getElementById('studentNumberInput').value = '';
+       document.getElementById('coinAmountInput').value = '';
+       document.getElementById('coinReasonInput').value = '';
        
        // 성공 메시지
-       alert(`${amount}코인이 성공적으로 지급되었습니다.`);
+       alert(`${targetUser.name || targetUser.displayName} 학생에게 ${amount}코인이 성공적으로 지급되었습니다.`);
        
        // 데이터 새로고침
        await refreshAllData();
@@ -564,10 +617,10 @@
        alert('코인 지급 중 오류가 발생했습니다.');
        
        // 버튼 재활성화
-       const button = document.querySelector(`button.coin-give-btn[data-uid="${uid}"]`);
+       const button = document.querySelector('.coin-give-btn-large');
        if (button) {
          button.disabled = false;
-         button.textContent = '지급';
+         button.textContent = '코인 지급';
        }
      }
    }
@@ -602,140 +655,12 @@
      }
    }
 
-     // 사용자 접근 테스트 함수
-   async function testUserAccess() {
-     try {
-       console.log('사용자 접근 테스트 시작...');
-       
-       const { db } = await window.getFirebaseAppAndDb();
-       const { collection, getDocs, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-       
-       // 1. users 컬렉션 접근 테스트
-       console.log('1. users 컬렉션 접근 테스트...');
-       const usersRef = collection(db, 'users');
-       const usersSnap = await getDocs(usersRef);
-       console.log('users 컬렉션 결과:', { empty: usersSnap.empty, size: usersSnap.size });
-       
-       // 2. 특정 사용자 문서 접근 테스트
-       if (!usersSnap.empty) {
-         const firstUser = usersSnap.docs[0];
-         console.log('2. 첫 번째 사용자 문서 접근 테스트...');
-         console.log('첫 번째 사용자:', { id: firstUser.id, data: firstUser.data() });
-         
-         // 3. 사용자 하위 컬렉션 접근 테스트
-         console.log('3. 사용자 하위 컬렉션 접근 테스트...');
-         const walletRef = doc(db, 'users', firstUser.id, 'wallet', 'main');
-         const walletSnap = await getDoc(walletRef);
-         console.log('지갑 정보:', { exists: walletSnap.exists(), data: walletSnap.exists() ? walletSnap.data() : null });
-         
-         const dailyStatsRef = collection(db, 'users', firstUser.id, 'dailyStats');
-         const dailyStatsSnap = await getDocs(dailyStatsRef);
-         console.log('일일 통계:', { empty: dailyStatsSnap.empty, size: dailyStatsSnap.size });
-       } else {
-         console.log('2. users 컬렉션이 비어있음 - 다른 컬렉션 확인');
-         
-         // 3. 다른 컬렉션들 확인
-         console.log('3. 다른 컬렉션들 확인...');
-         
-         // leaderboard 확인
-         try {
-           const leaderboardRef = collection(db, 'leaderboard');
-           const leaderboardSnap = await getDocs(leaderboardRef);
-           console.log('leaderboard 컬렉션:', { empty: leaderboardSnap.empty, size: leaderboardSnap.size });
-         } catch (error) {
-           console.log('leaderboard 접근 실패:', error.message);
-         }
-         
-         // studyGroups 확인
-         try {
-           const studyGroupsRef = collection(db, 'studyGroups');
-           const studyGroupsSnap = await getDocs(studyGroupsRef);
-           console.log('studyGroups 컬렉션:', { empty: studyGroupsSnap.empty, size: studyGroupsSnap.size });
-         } catch (error) {
-           console.log('studyGroups 접근 실패:', error.message);
-         }
-         
-         // studyGroupsPublic 확인
-         try {
-           const studyGroupsPublicRef = collection(db, 'studyGroupsPublic');
-           const studyGroupsPublicSnap = await getDocs(studyGroupsPublicRef);
-           console.log('studyGroupsPublic 컬렉션:', { empty: studyGroupsPublicSnap.empty, size: studyGroupsPublicSnap.size });
-         } catch (error) {
-           console.log('studyGroupsPublic 접근 실패:', error.message);
-         }
-       }
-       
-       alert('사용자 접근 테스트 완료. 콘솔을 확인하세요.');
-       
-     } catch (error) {
-       console.error('사용자 접근 테스트 실패:', error);
-       alert(`사용자 접근 테스트 실패: ${error.message}`);
-     }
-   }
 
-     // 테스트 사용자 생성 함수
-   async function createTestUser() {
-     try {
-       console.log('테스트 사용자 생성 시작...');
-       
-       const { db } = await window.getFirebaseAppAndDb();
-       const { doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-       
-       const testUserId = 'test-user-' + Date.now();
-       const testUserData = {
-         name: '테스트 사용자',
-         displayName: '테스트 사용자',
-         className: '테스트반',
-         studentNumber: '999',
-         createdAt: serverTimestamp()
-       };
-       
-       // 사용자 기본 정보 생성
-       await setDoc(doc(db, 'users', testUserId), testUserData);
-       console.log('사용자 기본 정보 생성됨:', testUserId);
-       
-       // 지갑 정보 생성
-       await setDoc(doc(db, 'users', testUserId, 'wallet', 'main'), {
-         coins: 0,
-         totalCoins: 0,
-         createdAt: serverTimestamp()
-       });
-       console.log('지갑 정보 생성됨');
-       
-       // 일일 통계 생성
-       const today = new Date().toISOString().split('T')[0];
-       await setDoc(doc(db, 'users', testUserId, 'dailyStats', today), {
-         exp: 0,
-         points: 0,
-         studyExp: 0,
-         studyPoints: 0,
-         totalExp: 0,
-         totalPoints: 0,
-         createdAt: serverTimestamp()
-       });
-       console.log('일일 통계 생성됨');
-       
-       // 프로필 정보 생성
-       await setDoc(doc(db, 'users', testUserId, 'profile', 'main'), {
-         nickname: '테스트',
-         createdAt: serverTimestamp()
-       });
-       console.log('프로필 정보 생성됨');
-       
-       alert(`테스트 사용자가 생성되었습니다.\n사용자 ID: ${testUserId}\n이제 데이터 새로고침을 해보세요.`);
-       
-     } catch (error) {
-       console.error('테스트 사용자 생성 실패:', error);
-       alert(`테스트 사용자 생성 실패: ${error.message}`);
-     }
-   }
 
      // 전역 함수로 노출
    window.refreshAllData = refreshAllData;
-   window.giveCoin = giveCoin;
+   window.giveCoinByClassNumber = giveCoinByClassNumber;
    window.checkAuthStatus = checkAuthStatus;
-   window.testUserAccess = testUserAccess;
-   window.createTestUser = createTestUser;
 
   // 페이지 로드 시 초기화
   window.addEventListener('load', async () => {

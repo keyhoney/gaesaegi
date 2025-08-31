@@ -1,0 +1,723 @@
+/* 로또 페이지 전용 스타일 */
+
+/* 대표 색상 변수 */
+:root {
+  --lottery-primary: #8A4B53;      /* 메인 로즈우드 */
+  --lottery-light: #B87A82;        /* 밝은 로즈우드 */
+  --lottery-lighter: #D4A5AC;      /* 더 밝은 로즈우드 */
+  --lottery-dark: #6B383E;         /* 어두운 로즈우드 */
+  --lottery-darker: #4A262B;       /* 더 어두운 로즈우드 */
+  --lottery-accent: #C9A66B;       /* 골드 액센트 */
+}
+
+/* 헤더 스타일 */
+.lottery-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--lottery-primary), var(--lottery-dark));
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 8px 32px rgba(138, 75, 83, 0.3);
+}
+
+.lottery-header h1 {
+  font-size: 2.5rem;
+  margin: 0 0 8px 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.lottery-subtitle {
+  font-size: 1.1rem;
+  margin: 0;
+  color: white !important;
+}
+
+/* 당첨 상품 카드 */
+.prize-card {
+  background: linear-gradient(135deg, var(--lottery-light), var(--lottery-primary));
+  color: white;
+  border: none;
+  box-shadow: 0 8px 32px rgba(138, 75, 83, 0.3);
+}
+
+.prize-card h3 {
+  color: white;
+  margin-bottom: 16px;
+}
+
+.prize-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.prize-item {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.prize-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+}
+
+.prize-rank {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.prize-desc {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  opacity: 0.9;
+  color: white;
+}
+
+.prize-probability {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+/* 번호 선택 카드 */
+.selection-card {
+  background: linear-gradient(135deg, var(--lottery-lighter), var(--lottery-light));
+  color: white;
+  border: none;
+  box-shadow: 0 8px 32px rgba(138, 75, 83, 0.3);
+}
+
+.selection-card h3 {
+  color: white;
+}
+
+.selection-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.info-text {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.selected-count {
+  font-weight: bold;
+  font-size: 1.1rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+/* 번호 그리드 */
+.lottery-number-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.lottery-number-btn {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.lottery-number-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.lottery-number-btn.selected {
+  background: linear-gradient(135deg, var(--lottery-primary), var(--lottery-dark));
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(138, 75, 83, 0.4);
+  border-color: var(--lottery-primary);
+}
+
+/* 선택 컨트롤 */
+.selection-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.selected-numbers {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.selected-numbers .label {
+  display: block;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.selected-numbers .numbers {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* 구매 섹션 */
+.purchase-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.coin-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coin-icon {
+  font-size: 1.5rem;
+}
+
+.coin-balance {
+  font-size: 0.9rem;
+}
+
+.purchase-btn {
+  background: linear-gradient(135deg, var(--lottery-primary), var(--lottery-dark));
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.purchase-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(138, 75, 83, 0.4);
+}
+
+.btn-text {
+  font-size: 1rem;
+}
+
+.btn-price {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+/* 결과 카드 */
+.result-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.result-card h3 {
+  color: var(--text);
+}
+
+.result-content {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.result-placeholder {
+  text-align: center;
+  color: var(--muted);
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.result-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-item .label {
+  font-weight: 500;
+  color: black !important;
+}
+
+.result-item .value {
+  font-weight: bold;
+  color: black !important;
+}
+
+.winning-numbers {
+  color: var(--lottery-primary);
+  font-size: 1.1rem;
+}
+
+.bonus-number {
+  color: var(--lottery-accent);
+  font-size: 1.1rem;
+}
+
+.my-numbers {
+  color: var(--lottery-light);
+  font-size: 1.1rem;
+}
+
+.hit-count {
+  color: var(--success);
+  font-size: 1.1rem;
+}
+
+.rank-result {
+  color: var(--lottery-dark);
+  font-size: 1.1rem;
+}
+
+/* 구매 내역 및 통계 */
+.history-card, .stats-card {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.history-card h3, .stats-card h3 {
+  color: var(--text);
+}
+
+.ticket-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.ticket-list .row {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+  border-radius: 8px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.stats-grid .card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  padding: 16px;
+  text-align: center;
+  border-radius: 8px;
+}
+
+.stats-grid .muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.stats-grid .stat-value {
+  color: var(--lottery-primary);
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+/* 추첨 애니메이션 오버레이 */
+.draw-animation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+}
+
+.draw-animation-content {
+  background: linear-gradient(135deg, var(--lottery-primary), var(--lottery-dark));
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  max-width: 900px;
+  width: 90%;
+}
+
+/* 좌우 레이아웃 */
+.draw-layout {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.draw-animation-section {
+  flex: 1;
+  max-width: 400px;
+}
+
+.draw-result-section {
+  flex: 1;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.draw-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 2rem;
+}
+
+.draw-header p {
+  margin: 0 0 32px 0;
+  opacity: 0.8;
+}
+
+.draw-machine {
+  margin-bottom: 32px;
+}
+
+/* 내가 선택한 번호 섹션 */
+.my-numbers-section {
+  margin-bottom: 32px;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 16px;
+  text-align: center;
+  color: white;
+}
+
+.my-numbers-container {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.my-ball {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--lottery-primary), var(--lottery-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.my-ball.match {
+  background: linear-gradient(135deg, var(--lottery-accent), #B8945A);
+  border-color: var(--lottery-accent);
+  box-shadow: 0 6px 16px rgba(201, 166, 107, 0.4);
+  animation: pulse 0.5s ease;
+}
+
+/* 당첨 번호 섹션 */
+.winning-numbers-section {
+  margin-bottom: 24px;
+}
+
+.ball-container {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.ball {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--lottery-accent), #B8945A);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  animation: bounce 1s infinite;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.ball.match {
+  background: linear-gradient(135deg, var(--lottery-accent), #B8945A);
+  border-color: var(--lottery-accent);
+  box-shadow: 0 6px 16px rgba(201, 166, 107, 0.4);
+  animation: pulse 0.5s ease;
+}
+
+.bonus-ball-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.bonus-label {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.bonus-ball {
+  background: linear-gradient(135deg, var(--lottery-primary), var(--lottery-dark));
+  width: 40px;
+  height: 40px;
+  font-size: 1rem;
+}
+
+.draw-progress {
+  margin-top: 24px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--lottery-accent), #B8945A);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+/* 애니메이션 */
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .lottery-header h1 {
+    font-size: 2rem;
+  }
+  
+  .prize-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .ball-container {
+    gap: 8px;
+  }
+  
+  .ball {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .bonus-ball {
+    width: 35px;
+    height: 35px;
+    font-size: 0.9rem;
+  }
+  
+  .draw-animation-content {
+    padding: 24px;
+  }
+  
+  .draw-layout {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .draw-animation-section,
+  .draw-result-section {
+    max-width: none;
+  }
+  
+  .my-ball, .ball {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .my-numbers-container {
+    gap: 8px;
+  }
+  
+  .ball-container {
+    gap: 8px;
+  }
+}
+
+/* 당첨 결과 스타일 */
+.draw-result {
+  margin-bottom: 0;
+}
+
+.result-summary {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.result-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 16px;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.result-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.result-details .result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.result-details .result-item:last-child {
+  border-bottom: none;
+}
+
+.result-details .label {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+}
+
+.result-details .value {
+  font-weight: bold;
+  color: white;
+  font-size: 1.1rem;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* 확인 버튼 스타일 */
+.draw-confirm {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.confirm-btn {
+  background: linear-gradient(135deg, var(--lottery-accent), #B8945A);
+  border: none;
+  padding: 12px 32px;
+  border-radius: 25px;
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(201, 166, 107, 0.3);
+}
+
+.confirm-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(201, 166, 107, 0.4);
+}

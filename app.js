@@ -47,7 +47,7 @@ navLinks.forEach((link) => {
 });
 
 // 현재 섹션 감지하여 메뉴 활성화
-const sectionIds = ['learn', 'achievement', 'reward', 'community'];
+const sectionIds = ['individual-study', 'mock-exam', 'favorites', 'lottery', 'feedback'];
 const sectionMap = new Map(
   sectionIds.map((id) => [id, document.getElementById(id)])
 );
@@ -66,38 +66,7 @@ const observer = new IntersectionObserver(
 
 sectionMap.forEach((el) => el && observer.observe(el));
 
-// 성과 섹션 카운터 애니메이션
-function animateCounters() {
-  const counters = document.querySelectorAll('.stat-value');
-  counters.forEach((counter) => {
-    const target = Number(counter.getAttribute('data-target')) || 0;
-    const durationMs = 800;
-    const startTime = performance.now();
 
-    function tick(now) {
-      const progress = Math.min(1, (now - startTime) / durationMs);
-      const value = Math.round(target * progress);
-      counter.textContent = String(value);
-      if (progress < 1) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  });
-}
-
-const achievementSection = document.getElementById('achievement');
-if (achievementSection) {
-  const onceObserver = new IntersectionObserver(
-    (entries) => {
-      const entry = entries[0];
-      if (entry.isIntersecting) {
-        animateCounters();
-        onceObserver.disconnect();
-      }
-    },
-    { threshold: 0.2 }
-  );
-  onceObserver.observe(achievementSection);
-}
 
 // 푸터 연도 자동 반영
 const yearSpan = document.getElementById('year');
@@ -255,93 +224,7 @@ window.addEventListener('load', async () => {
     try { await getRedirectResult(auth); } catch {}
     setupAuthUI(auth, onAuthStateChanged, signOut);
 
-    // 로그인 업적 처리 (하루 1회만 네트워크 기록)
-    try {
-      const key = (window.firebaseData?.getLocalDateSeoulKey?.() 
-        || (function(){ const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
-      const gateKey = `gsg_login_marked_${key}`;
-      
-      // 첫 로그인 배지 체크 (markLogin 호출 전에 수행)
-      const dates = await window.firebaseData?.listLoginDates?.();
-      if (Array.isArray(dates)) {
-        // 첫 로그인 배지 + 코인 1개 (로그인 기록이 없을 때만)
-        if (dates.length === 0) {
-          const has = await window.firebaseData?.hasAchievement?.('first-login');
-          if (!has) {
-            const r = await window.firebaseData?.awardAchievementCoinsOnce?.('first-login', { name: '첫 로그인' }, 1);
-            if (r?.awarded) {
-              showToast('배지 획득: 첫 로그인! +1코인', 'success');
-            }
-          }
-        }
-      }
-      
-      if (!localStorage.getItem(gateKey)) {
-        await window.firebaseData?.markLogin?.(key);
-        try { await window.firebaseData?.updateChallengesOnLogin?.(); } catch {}
-        localStorage.setItem(gateKey, '1');
-      }
-      
-      // 프로필 누락 시 입력 페이지로 이동 (인증된 사용자에 한해 검사)
-      try {
-        const uid = await window.firebaseData?.getCurrentUserUid?.();
-        if (uid) {
-          const prof = await window.firebaseData?.getMyProfile?.();
-          if (!prof || !prof.name) {
-            // 현재 페이지가 프로필 페이지가 아니면 이동
-            if (!/profile\.html$/i.test(location.pathname)) {
-              location.href = 'profile.html';
-              return;
-            }
-          }
-        }
-      } catch {}
-      
-      // 연속 로그인 배지 체크 (markLogin 호출 후에 수행)
-      const updatedDates = await window.firebaseData?.listLoginDates?.();
-      if (Array.isArray(updatedDates)) {
-        // 연속 로그인: Asia/Seoul 기준 키를 사용해 인접일 확인
-        const sorted = updatedDates.slice().sort();
-        const str = (dt) => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-        function nextDay(s) { const [y,m,d] = s.split('-').map(Number); const t = new Date(y, m-1, d); t.setDate(t.getDate()+1); return str(t); }
-        let bestStreak = 0; let curr = 0; let prev = null;
-        sorted.forEach(k => { if (prev && k === nextDay(prev)) { curr += 1; } else { curr = 1; } bestStreak = Math.max(bestStreak, curr); prev = k; });
-        
-        // 연속 로그인 배지들도 코인 지급하도록 수정
-        if (bestStreak >= 3) { 
-          const r = await window.firebaseData?.awardAchievementCoinsOnce?.('streak-login-3', { name: '연속 로그인 3일' }, 1);
-          if (r?.awarded) {
-            showToast('배지 획득: 연속 로그인 3일! +1코인', 'success');
-          }
-        }
-        if (bestStreak >= 5) { 
-          const r = await window.firebaseData?.awardAchievementCoinsOnce?.('streak-login-5', { name: '연속 로그인 5일' }, 2);
-          if (r?.awarded) {
-            showToast('배지 획득: 연속 로그인 5일! +2코인', 'success');
-          }
-        }
-        if (bestStreak >= 10) { 
-          const r = await window.firebaseData?.awardAchievementCoinsOnce?.('streak-login-10', { name: '연속 로그인 10일' }, 3);
-          if (r?.awarded) {
-            showToast('배지 획득: 연속 로그인 10일! +3코인', 'success');
-          }
-        }
-      }
-      
-      // 자동 포인트 정상화 (로그인 시 1회만 실행) - 조용히 실행
-      try {
-        const uid = await window.firebaseData?.getCurrentUserUid?.();
-        if (uid) {
-          const fixResult = await window.firebaseData?.autoFixPointsOnLogin?.();
-          if (fixResult?.success && fixResult.adjustment !== 0) {
-            console.log('자동 포인트 정상화 완료:', fixResult);
-            // 사용자에게 알림하지 않고 조용히 처리
-          }
-        }
-      } catch (e) {
-        console.error('자동 포인트 정상화 오류:', e);
-      }
-    } catch {}
+    
   } catch {}
 });
 
@@ -366,89 +249,7 @@ function showToast(message, type = 'info', timeoutMs = 2400) {
 // 전역 노출
 window.showToast = showToast;
 
-// ===== Recommendations on index page =====
-async function loadRecommendations() {
-  const listDiff = document.getElementById('listDiff');
-  const listWeak = document.getElementById('listWeak');
-  const listImprove = document.getElementById('listImprove');
-  const listGlobalHard = document.getElementById('listGlobalHard');
-  if (!listDiff || !listWeak || !listImprove || !listGlobalHard) return;
 
-  try {
-    // load questions
-    const res = await fetch('questions.json', { cache: 'no-store' });
-    const questions = res.ok ? await res.json() : [];
-    const flat = [];
-    questions.forEach(b => (b['문항들']||[]).forEach(q => flat.push({
-      id: q['문항번호'], diff: q['난이도']||'', img: q['문항주소']||'', solution: q['해설주소']||'',
-      subject: b['과목'], cat: b['대분류'], sub: b['중분류'], topic: b['소분류'],
-    })));
-
-    // user answers & wrongs/favs
-    let finals = [];
-    let wrongs = [];
-    try {
-      finals = await window.firebaseData?.listFinalAnswers?.() || [];
-      const wrongIds = await window.firebaseData?.listWrongs?.() || [];
-      wrongs = new Set(wrongIds);
-    } catch {}
-    const solvedSet = new Set(finals.map(x => x.id));
-
-    // 1) 난이도별 추천: 최근 성과 기반 단순 전략
-    const recent = finals.slice(-30);
-    const recentCorrectRate = recent.length ? recent.filter(x=>x.correct).length / recent.length : 0.6;
-    const target = recentCorrectRate >= 0.75 ? ['♥♥♥♥', '♥♥♥♥♥']
-                 : recentCorrectRate <= 0.45 ? ['♥', '♥♥']
-                 : ['♥♥', '♥♥♥'];
-    const byDifficulty = flat.filter(x => target.some(t => (x.diff||'').startsWith(t)) && !solvedSet.has(x.id)).slice(0, 6);
-
-    // 2) 취약 영역 보완: 최근 틀린 소분류 상위 → 안 풀어본 문항, 없으면 과거 오답 우선
-    const wrongByTopic = new Map();
-    finals.filter(x => x.correct === false).forEach(x => {
-      const key = [x.subject,x.cat,x.sub,x.topic].join('|');
-      wrongByTopic.set(key, (wrongByTopic.get(key)||0)+1);
-    });
-    const weakTopics = Array.from(wrongByTopic.entries()).sort((a,b)=>b[1]-a[1]).map(x=>x[0]).slice(0,3);
-    const weakPicks = [];
-    for (const key of weakTopics) {
-      const [subject, cat, sub, topic] = key.split('|');
-      const pool = flat.filter(q => q.subject===subject && q.cat===cat && q.sub===sub && q.topic===topic);
-      const candidateUnsolved = pool.filter(q => !solvedSet.has(q.id));
-      const arr = candidateUnsolved.length ? candidateUnsolved : pool.filter(q => wrongs.has(q.id));
-      weakPicks.push(...arr.slice(0, 4));
-    }
-
-    // 3) 개선점 자동 제안(간단 규칙)
-    const tips = [];
-    if (recent.length >= 10 && recentCorrectRate < 0.5) tips.push('최근 정답률이 낮아요. 쉬운 난이도부터 다시 복습해 보세요.');
-    if (weakTopics.length) tips.push('오답이 많은 소분류를 우선 복습하세요: ' + weakTopics.map(k=>k.split('|')[3]).join(', '));
-    if (!tips.length) tips.push('좋아요! 현재 페이스를 유지하며 다양한 난이도의 문제를 시도해 보세요.');
-
-    // 4) 전역 오답률 상위 문항
-    let globalHard = [];
-    try { globalHard = await window.firebaseData?.listGlobalWrongRatesTop?.(20) || []; } catch {}
-    const mapQ = new Map(flat.map(x => [x.id, x]));
-    const globalCards = (globalHard.length ? globalHard : flat.slice(0,20))
-      .map(x => ({ id: x.id || x.qid || x, rate: x.wrongRate || null }));
-
-    function cardHtml(q) {
-      const meta = mapQ.get(q.id) || {};
-      const text = `${meta.subject||''} / ${meta.cat||''} / ${meta.sub||''} / ${meta.topic||''}`;
-      const query = new URLSearchParams({ subject: meta.subject||'', cat: meta.cat||'', sub: meta.sub||'', topic: meta.topic||'', qid: q.id });
-      // 난이도는 문항 번호에 괄호로 포함되어 있어 중복 표기 제거
-      return `<div class="row"><div class="line top"><div class="meta">${text}</div></div><div class="line bottom"><div class="id">${q.id}</div><div class="actions"><a class="btn ghost small" href="individual-study.html?${query.toString()}" target="_self">문제 풀기</a></div></div></div>`;
-    }
-
-    listDiff.innerHTML = byDifficulty.slice(0,6).map(q => cardHtml({ id: q.id })).join('') || '추천할 문제가 더 없습니다.';
-    listWeak.innerHTML = weakPicks.slice(0,8).map(q => cardHtml({ id: q.id })).join('') || '취약 영역 추천을 만들 데이터가 부족합니다.';
-    listImprove.innerHTML = tips.map(t => `<li>${t}</li>`).join('');
-    listGlobalHard.innerHTML = globalCards.map(cardHtml).join('');
-  } catch (err) {
-    showToast('추천을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', 'error');
-  }
-}
-
-window.addEventListener('load', () => { try { loadRecommendations(); } catch {} });
 
 // ===== Hero Carousel =====
 (function initCarousel() {

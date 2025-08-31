@@ -5,14 +5,7 @@
     try { window.showToast ? window.showToast(msg, type) : null; } catch {}
   }
 
-  // 상수: 보상 정책
-  const EXP_CORRECT = 100;
-  const EXP_WRONG = 50;
-  const POINTS_CORRECT = 50;
-  const POINTS_WRONG = 25;
-  const DAILY_EXP_LIMIT = 2000;
-  const DAILY_POINTS_LIMIT = 1000;
-  const COOLDOWN_HOURS = 72; // 제출 후 재보상 가능 시간
+
 
   // 로컬 스토리지 사용 제거. 파이어베이스에만 기록/조회합니다.
 
@@ -29,22 +22,123 @@
   const $img = document.getElementById('questionImage');
   const $solutionLink = document.getElementById('solutionLink');
   const $favToggle = document.getElementById('favToggle');
+  
+  // 문제 풀이 기록 표시 영역
+  const $questionHistory = document.getElementById('questionHistory');
 
   const $answerForm = document.getElementById('answerForm');
   const $answerInput = document.getElementById('answerInput');
   const $feedback = document.getElementById('feedback');
-  const $rewardInfo = document.getElementById('rewardInfo');
-
-  const $expToday = document.getElementById('expToday');
-  const $pointsToday = document.getElementById('pointsToday');
 
   // 로컬 상태
   let dataset = [];
   let currentQuestion = null; // { 문항번호, 문항주소, 정답, 난이도, 해설주소 }
+  
+  // 보상 시스템 상수
+  const DAILY_QUESTIONS_FOR_COIN = 10; // 하루 10문제 풀이 시 코인 1개 지급
+  const MAX_TOTAL_COIN_REWARDS = 50; // 총 50문제까지만 코인 지급
 
   // 로컬 저장 제거: 즐겨찾기/오답/로그는 전부 Firebase로
 
   function todayKey() { const d = new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
+
+  // 문제 풀이 기록 조회
+  async function getQuestionHistory(qid) {
+    try {
+      // 최종 답안 기록 조회
+      const finalAnswers = await window.firebaseData?.listFinalAnswers?.() || [];
+      const questionAnswer = finalAnswers.find(answer => answer.id === qid);
+      
+      // 답안 제출 로그 조회
+      const answeredLogs = await window.firebaseData?.fetchAnsweredLogs?.() || [];
+      const questionLogs = answeredLogs.filter(log => log.qid === qid);
+      
+      if (!questionAnswer && questionLogs.length === 0) {
+        return {
+          hasHistory: false,
+          totalAttempts: 0,
+          lastAttemptDate: null,
+          lastAttemptCorrect: null
+        };
+      }
+      
+      // 총 시도 횟수
+      const totalAttempts = questionLogs.length;
+      
+      // 마지막 시도 정보
+      let lastAttemptDate = null;
+      let lastAttemptCorrect = null;
+      
+      if (questionAnswer) {
+        lastAttemptDate = questionAnswer.date;
+        lastAttemptCorrect = questionAnswer.correct;
+      }
+      
+      return {
+        hasHistory: true,
+        totalAttempts,
+        lastAttemptDate,
+        lastAttemptCorrect
+      };
+    } catch (error) {
+      console.error('문제 풀이 기록 조회 중 오류:', error);
+      return {
+        hasHistory: false,
+        totalAttempts: 0,
+        lastAttemptDate: null,
+        lastAttemptCorrect: null
+      };
+    }
+  }
+
+  // 노트 초기화 함수
+  function resetNote() {
+    try {
+      const noteFrame = document.getElementById('noteFrame');
+      if (noteFrame && noteFrame.contentWindow) {
+        // iframe에 postMessage로 노트 초기화 요청
+        noteFrame.contentWindow.postMessage({
+          type: 'resetNote',
+          action: 'clearCanvas'
+        }, '*');
+      }
+    } catch (error) {
+      console.error('노트 초기화 실패:', error);
+    }
+  }
+
+  // 문제 풀이 기록 UI 업데이트
+  function updateQuestionHistoryUI(history) {
+    if (!$questionHistory) return;
+    
+    if (!history.hasHistory) {
+      $questionHistory.innerHTML = '<p class="history-info">이 문제는 처음 풀어보는 문제입니다.</p>';
+      return;
+    }
+    
+    const { totalAttempts, lastAttemptDate, lastAttemptCorrect } = history;
+    
+    let html = '<div class="history-info">';
+    html += `<h4>📊 풀이 기록</h4>`;
+    html += `<p><strong>총 시도 횟수:</strong> ${totalAttempts}회</p>`;
+    
+    if (lastAttemptDate) {
+      const lastDate = new Date(lastAttemptDate);
+      const formattedDate = lastDate.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      const resultIcon = lastAttemptCorrect ? '✅' : '❌';
+      const resultText = lastAttemptCorrect ? '정답' : '오답';
+      
+      html += `<p><strong>마지막 시도:</strong> ${formattedDate} (${resultIcon} ${resultText})</p>`;
+    }
+    
+    html += '</div>';
+    $questionHistory.innerHTML = html;
+  }
 
   // 유틸
   function todayKey() {
@@ -55,87 +149,84 @@
     return `${y}-${m}-${day}`;
   }
 
-  async function loadDailyStats() {
+  // 정답 문제 수 추적 및 코인 지급
+  async function trackDailyQuestionsAndReward(qid, isCorrect) {
     try {
-      const key = await window.firebaseData?.getServerDateSeoulKey?.();
-      const k = key || window.firebaseData?.getLocalDateSeoulKey?.();
-      const d = await window.firebaseData?.getDailyStats?.(k);
-      return { exp: Number(d?.exp||0), points: Number(d?.points||0), studyExp: Number(d?.studyExp||0), studyPoints: Number(d?.studyPoints||0) };
-    } catch (_) { return { exp: 0, points: 0, studyExp: 0, studyPoints: 0 }; }
-  }
-
-  async function updateStatsUI() {
-    const stats = await loadDailyStats();
-    $expToday.textContent = String(stats.exp);
-    // 개별 학습을 통한 포인트만 표시 (일일 한계 적용 대상)
-    $pointsToday.textContent = String(stats.studyPoints);
-  }
-
-  function withinCooldown(lastDate) {
-    if (!lastDate) return false;
-    const lastTs = (lastDate instanceof Date) ? lastDate.getTime() : new Date(lastDate).getTime();
-    if (Number.isNaN(lastTs)) return false;
-    const diffMs = Date.now() - lastTs;
-    const hours = diffMs / (1000 * 60 * 60);
-    return hours < COOLDOWN_HOURS;
-  }
-
-  function nextEligibleTime(lastDate) {
-    const last = (lastDate instanceof Date) ? lastDate.getTime() : new Date(lastDate).getTime();
-    const next = last + COOLDOWN_HOURS * 60 * 60 * 1000;
-    return new Date(next);
-  }
-
-  function formatTime(dt) {
-    const y = dt.getFullYear();
-    const m = String(dt.getMonth() + 1).padStart(2, '0');
-    const d = String(dt.getDate()).padStart(2, '0');
-    const hh = String(dt.getHours()).padStart(2, '0');
-    const mm = String(dt.getMinutes()).padStart(2, '0');
-    return `${y}-${m}-${d} ${hh}:${mm}`;
-  }
-
-  // gains 계산은 서버 트랜잭션에서 수행
-
-  async function grantRewards(isCorrect) {
-    const baseExp = isCorrect ? EXP_CORRECT : EXP_WRONG;
-    const basePoints = isCorrect ? POINTS_CORRECT : POINTS_WRONG;
-    const applied = await window.firebaseData?.applyExpPoints?.(todayKey(), baseExp, basePoints, { exp: DAILY_EXP_LIMIT, points: DAILY_POINTS_LIMIT })
-      || { expApplied: 0, ptsApplied: 0, expReached: false, ptsReached: false };
-    await updateStatsUI();
-
-    const msgs = [];
-    if (applied.expApplied > 0 || applied.ptsApplied > 0) {
-      msgs.push(`보상 지급: 경험치 +${applied.expApplied} exp, 포인트 +${applied.ptsApplied} pt`);
+      if (isCorrect) {
+        // 모든 정답을 카운트
+        const allQuestionLastCorrectTimes = await window.firebaseData?.getAllQuestionLastCorrectTimes?.() || {};
+        const totalCorrectQuestions = Object.keys(allQuestionLastCorrectTimes).length;
+        
+        // 10문제 단위로 코인 지급 (50문제까지만)
+        if (totalCorrectQuestions % DAILY_QUESTIONS_FOR_COIN === 0 && totalCorrectQuestions <= MAX_TOTAL_COIN_REWARDS) {
+          // 코인 지급
+          await window.firebaseData?.addCoins?.(1);
+          
+          const message = `축하합니다! ${totalCorrectQuestions}번째 정답을 맞췄습니다. 코인 1개를 획득했습니다! 🎉`;
+          toast(message, 'success');
+          return message;
+        }
+      }
+      
+      return null; // 보상 지급 없음
+    } catch (error) {
+      console.error('보상 지급 중 오류:', error);
+      return null;
     }
-    if (applied.expReached || applied.ptsReached) {
-      const hits = [];
-      if (applied.expReached) hits.push('경험치 일일 최대치(2,000 exp)');
-      if (applied.ptsReached) hits.push('개별 학습 포인트 일일 최대치(1,000 pt)');
-      msgs.push(`${hits.join(' 및 ')}에 도달하여 추가 보상이 제한됩니다.`);
-    }
-    return msgs.join(' ');
   }
 
-  async function maybeAwardAnswerStreak(isCorrect) {
+  // 현재 진행 상황 표시
+  async function updateProgressDisplay() {
     try {
-      // 간단: 정답 시 연속 정답 카운팅 (로컬 스토리지 보조), 5연속 시 배지 부여
-      const key = 'gsg_correct_streak';
-      let streak = Number(localStorage.getItem(key) || '0');
-      streak = isCorrect ? streak + 1 : 0;
-      localStorage.setItem(key, String(streak));
-      // 단계형 배지 5/10/20
-      if (streak === 5) { await window.firebaseData?.awardAchievementCoinsOnce?.('streak-correct-5', { name: '정답 5연속' }, 1); toast('배지 획득: 정답 5연속! +1코인', 'success'); }
-      if (streak === 10) { await window.firebaseData?.awardAchievementCoinsOnce?.('streak-correct-10', { name: '정답 10연속' }, 2); toast('배지 획득: 정답 10연속! +2코인', 'success'); }
-      if (streak === 20) { await window.firebaseData?.awardAchievementCoinsOnce?.('streak-correct-20', { name: '정답 20연속' }, 3); toast('배지 획득: 정답 20연속! +3코인', 'success'); }
-      // 이벤트 기록(서버 타임스탬프)
-      await window.firebaseData?.addAnswerEvent?.(!!isCorrect);
-      // 문제 풀이 누적 50개 달성 배지
-      const cntKey = 'gsg_answer_count';
-      let cnt = Number(localStorage.getItem(cntKey) || '0') + 1;
-      localStorage.setItem(cntKey, String(cnt));
-      if (cnt === 50) { await window.firebaseData?.awardAchievementCoinsOnce?.('solved-50', { name: '문제 50개 풀이' }, 2); toast('배지 획득: 문제 풀이 50개! +2코인', 'success'); }
-    } catch {}
+      // 모든 정답 문제를 카운트
+      const allQuestionLastCorrectTimes = await window.firebaseData?.getAllQuestionLastCorrectTimes?.() || {};
+      const currentCorrectCount = Object.keys(allQuestionLastCorrectTimes).length;
+      
+      // 50문제 초과 시 코인 획득 불가
+      if (currentCorrectCount > MAX_TOTAL_COIN_REWARDS) {
+        const progressElement = document.getElementById('progressDisplay');
+        if (progressElement) {
+          progressElement.innerHTML = `
+            <div class="progress-info">
+              <span class="progress-text">정답 진행: ${currentCorrectCount}문항</span>
+              <span class="progress-bar">
+                <span class="progress-fill" style="width: 100%"></span>
+              </span>
+              <span class="next-reward">🎉 모든 코인을 획득했습니다! 🎉</span>
+              <span class="daily-rewards">총 ${Math.floor(MAX_TOTAL_COIN_REWARDS / DAILY_QUESTIONS_FOR_COIN)}개 코인 획득 완료 (일일 최대 획득량 ${Math.floor(MAX_TOTAL_COIN_REWARDS / DAILY_QUESTIONS_FOR_COIN)}개)</span>
+            </div>
+          `;
+        }
+        return { currentCorrectCount, nextRewardAt: 0 };
+      }
+      
+      // 표시할 목표는 다음 단계 (10문항이면 20문항, 20문항이면 30문항)
+      const displayTarget = Math.ceil((currentCorrectCount + 1) / DAILY_QUESTIONS_FOR_COIN) * DAILY_QUESTIONS_FOR_COIN;
+      
+      // 진행 상황 계산
+      const progress = currentCorrectCount % DAILY_QUESTIONS_FOR_COIN;
+      const nextRewardAt = displayTarget - currentCorrectCount;
+      
+      // 진행 상황 표시 업데이트
+      const progressElement = document.getElementById('progressDisplay');
+      if (progressElement) {
+        progressElement.innerHTML = `
+          <div class="progress-info">
+            <span class="progress-text">정답 진행: ${currentCorrectCount}문항 / 목표: ${displayTarget}문항</span>
+            <span class="progress-bar">
+              <span class="progress-fill" style="width: ${(progress / DAILY_QUESTIONS_FOR_COIN) * 100}%"></span>
+            </span>
+            <span class="next-reward">다음 코인까지: ${nextRewardAt}문항</span>
+            <span class="daily-rewards">총 ${Math.floor(currentCorrectCount / DAILY_QUESTIONS_FOR_COIN)}개 코인 획득 (일일 최대 획득량 ${Math.floor(MAX_TOTAL_COIN_REWARDS / DAILY_QUESTIONS_FOR_COIN)}개)</span>
+          </div>
+        `;
+      }
+      
+      return { currentCorrectCount, nextRewardAt };
+    } catch (error) {
+      console.error('진행 상황 표시 업데이트 중 오류:', error);
+      return { currentCorrectCount: 0, nextRewardAt: DAILY_QUESTIONS_FOR_COIN };
+    }
   }
 
   function buildHierarchy(data) {
@@ -344,7 +435,7 @@
     }
   }
 
-  function selectQuestionFromDropdown() {
+  async function selectQuestionFromDropdown() {
     const selectedValue = $question.value;
     const cache = JSON.parse($question.dataset.cache || '[]');
     const idxAttr = $question.options[$question.selectedIndex]?.dataset?.index;
@@ -367,6 +458,26 @@
       solution: qObj['해설주소'] || ''
     };
     renderQuestion();
+    
+    // 노트 초기화
+    resetNote();
+    
+    // 문제 풀이 기록 조회 및 표시
+    try {
+      const history = await getQuestionHistory(currentQuestion.id);
+      updateQuestionHistoryUI(history);
+    } catch (error) {
+      console.error('문제 풀이 기록 조회 실패:', error);
+    }
+    
+    // 진행 상황 업데이트
+    try {
+      await updateProgressDisplay();
+    } catch (error) {
+      console.error('진행 상황 업데이트 실패:', error);
+    }
+    
+
   }
 
   function renderQuestion() {
@@ -392,9 +503,13 @@
     $solutionLink.removeAttribute('href');
     $solutionLink.style.display = 'none';
     $feedback.textContent = '';
-    $rewardInfo.textContent = '';
     $answerInput.value = '';
     $answerInput.focus();
+    
+    // 문제 풀이 기록 영역 초기화
+    if ($questionHistory) {
+      $questionHistory.innerHTML = '<p class="history-info">풀이 기록을 불러오는 중...</p>';
+    }
 
     // 즐겨찾기 상태 반영(Firebase)
     (async () => {
@@ -419,11 +534,6 @@
       return;
     }
 
-    // 보상 제한 확인: 동일 문항 72시간 쿨다운
-    const last = await window.firebaseData?.getSubmissionAt?.(currentQuestion.id);
-    let cooldownMsg = '';
-    const eligible = !withinCooldown(last);
-
     const isCorrect = userAns === currentQuestion.answer;
     if (isCorrect) {
       $feedback.textContent = '축하해요. 정답입니다! 🎉';
@@ -445,35 +555,30 @@
     try { await window.firebaseData?.addLearningLog({ date: todayKey(), subject: subj, cat, sub, topic, correct: isCorrect ? 1 : 0, total: 1 }); } catch (_) {}
     try { await window.firebaseData?.addAnsweredLog({ date: todayKey(), qid: currentQuestion.id }); } catch (_) {}
 
-    if (eligible) {
-      const msg = await grantRewards(isCorrect);
-      $rewardInfo.textContent = msg;
-      if (msg && msg.includes('보상 지급')) {
-        toast(msg, 'success');
-      }
-      await window.firebaseData?.setSubmissionNow?.(currentQuestion.id);
-    } else {
-      const next = formatTime(nextEligibleTime(last));
-      cooldownMsg = `최근 72시간 내에 이미 제출한 문제입니다. 보상은 ${next} 이후에 다시 획득할 수 있어요.`;
-      $rewardInfo.textContent = cooldownMsg;
-      toast('보상 쿨다운이 적용되어 포인트/경험치가 지급되지 않았습니다.', 'info');
-    }
-
-    // 업적 체크
-    maybeAwardAnswerStreak(isCorrect);
-    // 챌린지 업데이트(일/주/월)
-    try { await window.firebaseData?.updateChallengesOnAnswer?.(isCorrect); } catch {}
-
     // 최종 제출 답안을 answers/{qid}로 저장(과목 필터 정확도를 위해 메타 포함)
     try {
       await window.firebaseData?.setFinalAnswer?.(currentQuestion.id, {
         subject: subj, cat, sub, topic,
         correct: isCorrect, date: todayKey(),
       });
+      
+      // 정답인 경우 마지막 정답 시간 저장
+      if (isCorrect) {
+        try {
+          await window.firebaseData?.saveQuestionLastCorrectTime?.(currentQuestion.id);
+        } catch (error) {
+          console.error('정답 저장 실패:', error);
+        }
+      }
     } catch (_) {}
 
-    // 리더보드 갱신은 성취도 페이지 진입 시 1회만 수행하도록 더티 플래그 설정
-    try { localStorage.setItem('gsg_lb_dirty', '1'); } catch {}
+    // 하루 정답 문제 보상 체크
+    const rewardMessage = await trackDailyQuestionsAndReward(currentQuestion.id, isCorrect);
+    
+    // 진행 상황 업데이트
+    await updateProgressDisplay();
+    
+
 
     // 정답 여부와 무관하게 해설 링크 노출(있을 때만)
     if (currentQuestion.solution) {
@@ -527,8 +632,14 @@
       const h = buildHierarchy(dataset);
       populateSubjects(h);
       wireEvents(h);
-      updateStatsUI();
       applyDeepLink(h);
+      
+      // 초기 진행 상황 표시
+      try {
+        await updateProgressDisplay();
+      } catch (error) {
+        console.error('초기 진행 상황 표시 실패:', error);
+      }
     } catch (err) {
       console.error(err);
       alert('문제 데이터를 불러오는 중 오류가 발생했습니다. 새로고침 후 다시 시도해 주세요.');

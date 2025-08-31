@@ -189,20 +189,24 @@ a:visited { color: var(--text); }
 }
 /* 테마별 히어로 배경(팔레트 기반 파스텔 변형) */
 .hero.theme-1 {
-  /* Secondary 파스텔의 아주 옅은 톤 */
-  background: linear-gradient(180deg, #F3F7F5 0%, #FFF6F0 100%);
+  /* 개별 문제 학습: 차분한 블루 그린 */
+  background: linear-gradient(180deg, #F0F7F4 0%, #F8FBF9 100%);
 }
 .hero.theme-2 {
-  /* Primary 파스텔의 아주 옅은 톤 */
-  background: linear-gradient(180deg, #F1E6E8 0%, #FFF8F4 100%);
+  /* 모의고사: 집중력 높이는 민트 */
+  background: linear-gradient(180deg, #E8F5F2 0%, #F0FAF7 100%);
 }
 .hero.theme-3 {
-  /* Accent 파스텔의 아주 옅은 톤 */
-  background: linear-gradient(180deg, #F6EEDB 0%, #FFFAF1 100%);
+  /* 즐겨찾기: 따뜻한 옐로우 */
+  background: linear-gradient(180deg, #FEF9E7 0%, #FFFBF0 100%);
 }
 .hero.theme-4 {
-  /* Secondary 변주: 미세한 민트 톤 */
-  background: linear-gradient(180deg, #ECF6F2 0%, #F8FBFA 100%);
+  /* 로또: 재미있는 오렌지 */
+  background: linear-gradient(180deg, #FEF2E6 0%, #FFF7F0 100%);
+}
+.hero.theme-5 {
+  /* 피드백: 소통의 퍼플 */
+  background: linear-gradient(180deg, #F3F0F7 0%, #F8F6FA 100%);
 }
 .hero .container { position: relative; }
 .carousel {
@@ -364,7 +368,7 @@ a:visited { color: var(--text); }
 }
 
 .section {
-  padding: 48px 0;
+  padding: 60px 0;
   background: var(--bg);
 }
 .section.alt {
@@ -379,12 +383,109 @@ a:visited { color: var(--text); }
   color: var(--muted);
 }
 
+/* 새로운 기능 섹션 디자인 */
+.feature-section {
+  padding: 80px 0;
+}
+
+.feature-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.feature-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.feature-header h2 {
+  font-size: clamp(28px, 5vw, 36px);
+  margin: 0 0 16px;
+  font-weight: 700;
+}
+
+.feature-header p {
+  font-size: clamp(16px, 3vw, 18px);
+  color: var(--muted);
+  margin: 0;
+  max-width: 600px;
+  margin-inline: auto;
+}
+
+.feature-content {
+  max-width: 1000px;
+  margin-inline: auto;
+}
+
+.feature-main {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 60px;
+  align-items: center;
+}
+
+.feature-description h3 {
+  font-size: clamp(20px, 4vw, 24px);
+  margin: 0 0 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.feature-description p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 0 0 24px;
+}
+
+.feature-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.feature-benefits li {
+  position: relative;
+  padding-left: 24px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.feature-benefits li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.feature-action {
+  text-align: center;
+}
+
+.btn.large {
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  min-width: 200px;
+}
+
 .grid {
   display: grid;
   gap: 16px;
 }
 .grid.cards {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.grid.cards-single {
+  grid-template-columns: minmax(0, 600px);
+  justify-content: center;
 }
 .grid.stats {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -394,8 +495,13 @@ a:visited { color: var(--text); }
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 16px;
+  padding: 20px;
   box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(35, 31, 32, 0.12);
 }
 .card h3 {
   margin: 0 0 6px;
@@ -519,11 +625,33 @@ a:visited { color: var(--text); }
   .grid.cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .grid.cards-single {
+    grid-template-columns: minmax(0, 500px);
+  }
   .grid.stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* 푸터 5개 카테고리를 3개로 조정 */
+  .site-footer .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  
+  /* 기능 섹션 반응형 */
+  .feature-main {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    text-align: center;
+  }
+  
+  .feature-section {
+    padding: 60px 0;
+  }
+  
+  .feature-header {
+    margin-bottom: 40px;
   }
 }
 
@@ -556,9 +684,13 @@ a:visited { color: var(--text); }
   }
   .site-nav a {
     padding: 12px 10px;
+    font-size: 14px;
   }
 
   .grid.cards {
+    grid-template-columns: 1fr;
+  }
+  .grid.cards-single {
     grid-template-columns: 1fr;
   }
   .grid.stats {
@@ -566,6 +698,34 @@ a:visited { color: var(--text); }
   }
   .list {
     grid-template-columns: 1fr;
+  }
+  /* 푸터 5개 카테고리를 2개로 조정 */
+  .site-footer .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  /* 모바일 기능 섹션 */
+  .feature-section {
+    padding: 40px 0;
+  }
+  
+  .feature-header {
+    margin-bottom: 30px;
+  }
+  
+  .feature-icon {
+    font-size: 36px;
+    margin-bottom: 16px;
+  }
+  
+  .feature-main {
+    gap: 30px;
+  }
+  
+  .btn.large {
+    padding: 14px 24px;
+    font-size: 15px;
+    min-width: 180px;
   }
 }
 
@@ -681,4 +841,36 @@ a:visited { color: var(--text); }
   .lottery-number-grid {
     grid-template-columns: repeat(6, 1fr);
   }
+}
+
+/* 문제 풀이 기록 스타일 */
+.history-info {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.history-info h4 {
+  margin: 0 0 12px 0;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.history-info p {
+  margin: 0 0 8px 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.history-info p:last-child {
+  margin-bottom: 0;
+}
+
+.history-info strong {
+  color: var(--primary);
+  font-weight: 600;
 }

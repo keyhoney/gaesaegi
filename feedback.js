@@ -15,9 +15,29 @@
     return { db, auth, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, serverTimestamp };
   }
 
+  // 카테고리와 상태를 한국어로 변환
+  function getCategoryText(category) {
+    const categoryMap = {
+      'bug': '오류',
+      'improve': '개선',
+      'feature': '기능요청'
+    };
+    return categoryMap[category] || category;
+  }
+
+  function getStatusText(status) {
+    const statusMap = {
+      'open': '접수',
+      'answered': '응답',
+      'resolved': '해결'
+    };
+    return statusMap[status] || status;
+  }
+
   function rowItem(f){
     const when = f.createdAt?.toDate ? new Intl.DateTimeFormat('ko-KR',{dateStyle:'short', timeStyle:'short'}).format(f.createdAt.toDate()) : '';
-    const cat = f.category || '-'; const status = f.status || 'open';
+    const cat = getCategoryText(f.category || '-');
+    const status = getStatusText(f.status || 'open');
     return `<div class="row"><div class="line top"><div class="meta">${f.title||'(제목 없음)'}</div></div><div class="line bottom"><div class="id">${cat} · ${status}</div><div class="diff">${when}</div><div class="actions"><button class="btn small" data-open="${f.id}">열기</button></div></div></div>`;
   }
 
@@ -72,7 +92,7 @@
     const d = { id: fid, ...(s.data()||{}) };
     $('dTitle').textContent = d.title || '(제목 없음)';
     $('dBody').textContent = d.body || '';
-    $('dStatus').textContent = `상태: ${d.status||'open'} · 카테고리: ${d.category||'-'}`;
+    $('dStatus').textContent = `상태: ${getStatusText(d.status||'open')} · 카테고리: ${getCategoryText(d.category||'-')}`;
     const adminBox = $('adminActions');
     adminBox.innerHTML = '';
     $('replyForm').hidden = !isAdmin;

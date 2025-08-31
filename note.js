@@ -608,6 +608,15 @@
         setTool(lastNonPanTool || 'pen');
       }
     });
+
+    // postMessage 리스너 추가 (iframe 통신용)
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'resetNote' && event.data.action === 'clearCanvas') {
+        clearCanvasToBlank();
+        noteNameInput.value = '';
+        toast('노트가 초기화되었습니다', 'info');
+      }
+    });
   }
 })();
 

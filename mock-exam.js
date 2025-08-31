@@ -2,12 +2,6 @@
   'use strict';
 
   // 보상 정책 (하루 1회)
-  const REWARD_TIERS = [
-    { min: 1.0, exp: 1000, points: 500 },
-    { min: 0.8, exp: 800, points: 400 },
-    { min: 0.6, exp: 600, points: 300 },
-    { min: 0.0, exp: 300, points: 150 },
-  ];
   const STORAGE = {
     lastExamRewardDate: 'gsg_mock_exam_last_reward_date',
   };
@@ -39,23 +33,7 @@
   const $rewardMsg = document.getElementById('rewardMsg');
   const $breakdown = document.getElementById('breakdown');
 
-  // 학습 로그 저장(실데이터 연동)
-  const LOG_KEY = 'gsg_learning_logs';
-  const ANSWERED_SET_KEY = 'gsg_answered_set';
-  const ANSWERED_LOG_KEY = 'gsg_answered_log';
-  function loadLogs() { try { const a = JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (_) { return []; } }
-  function saveLogs(arr) { localStorage.setItem(LOG_KEY, JSON.stringify(arr)); }
-  function todayKey() { const d = new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
-  function appendQLog(subject, cat, sub, topic, isCorrect) {
-    if (!subject) return;
-    const logs = loadLogs();
-    logs.push({ date: todayKey(), subject, cat: cat || null, sub: sub || null, topic: topic || null, correct: isCorrect ? 1 : 0, total: 1 });
-    saveLogs(logs);
-  }
-  function loadSet(key){ try{ return new Set(JSON.parse(localStorage.getItem(key)||'[]')); }catch(_){ return new Set(); } }
-  function saveSet(key,s){ localStorage.setItem(key, JSON.stringify(Array.from(s))); }
-  function loadAnsLog(){ try{ const a = JSON.parse(localStorage.getItem(ANSWERED_LOG_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(_){ return []; } }
-  function saveAnsLog(a){ localStorage.setItem(ANSWERED_LOG_KEY, JSON.stringify(a)); }
+
 
   // 데이터
   let dataset = [];
@@ -281,30 +259,34 @@
     return last !== todayKey();
   }
 
-  async function grantExamReward(ratio) {
-    const tier = REWARD_TIERS.find(t => ratio >= t.min) || REWARD_TIERS[REWARD_TIERS.length - 1];
+  async function grantExamReward() {
+    console.log('모의고사 보상 지급 시작');
+    
     if (!canReward()) {
+      console.log('하루 1회 제한으로 인해 보상 지급 불가');
       return `보상은 하루에 한 번만 지급됩니다. 내일 다시 시도해 주세요.`;
     }
     
-    // 실제 경험치와 포인트 적용
-    const applied = await window.firebaseData?.applyExpPoints?.(todayKey(), tier.exp, tier.points, { exp: 2000, points: 1000 })
-      || { expApplied: 0, ptsApplied: 0, expReached: false, ptsReached: false };
+    console.log('Firebase 데이터 객체 확인:', !!window.firebaseData);
+    console.log('addCoins 함수 확인:', !!window.firebaseData?.addCoins);
     
-    localStorage.setItem(STORAGE.lastExamRewardDate, todayKey());
-    
-    const msgs = [];
-    if (applied.expApplied > 0 || applied.ptsApplied > 0) {
-      msgs.push(`보상 지급: 경험치 +${applied.expApplied} exp, 포인트 +${applied.ptsApplied} pt`);
+    // 코인 1개 지급
+    try {
+      const result = await window.firebaseData?.addCoins?.(1);
+      console.log('addCoins 결과:', result);
+      
+      if (result && result.applied > 0) {
+        localStorage.setItem(STORAGE.lastExamRewardDate, todayKey());
+        console.log('보상 지급 성공, 로컬 스토리지 업데이트');
+        return `모의고사 완료! 코인 1개를 획득했습니다! 🎉`;
+      } else {
+        console.log('보상 지급 실패 - applied가 0이거나 result가 없음');
+        return `코인 지급에 실패했습니다. 잠시 후 다시 시도해 주세요.`;
+      }
+    } catch (error) {
+      console.error('addCoins 호출 중 에러:', error);
+      return `코인 지급 중 오류가 발생했습니다: ${error.message}`;
     }
-    if (applied.expReached || applied.ptsReached) {
-      const hits = [];
-      if (applied.expReached) hits.push('경험치 일일 최대치(2,000 exp)');
-      if (applied.ptsReached) hits.push('포인트 일일 최대치(1,000 pt)');
-      msgs.push(`${hits.join(' 및 ')}에 도달하여 추가 보상이 제한됩니다.`);
-    }
-    
-    return msgs.join(' ');
   }
 
   function submitExam() {
@@ -330,12 +312,20 @@
     // 보상 지급 (비동기 처리)
     (async () => {
       try {
-        const rewardMsg = await grantExamReward(ratio);
+        const rewardMsg = await grantExamReward();
         $rewardMsg.textContent = rewardMsg;
         
         // 보상이 실제로 지급되었는지 확인하여 토스트 메시지 표시
-        if (rewardMsg.includes('보상 지급:')) {
-          window.showToast && window.showToast('모의고사 보상이 지급되었습니다!', 'success');
+        if (rewardMsg.includes('코인 1개를 획득했습니다')) {
+          console.log('토스트 메시지 표시 시도');
+          if (window.showToast) {
+            window.showToast('모의고사 완료! 코인 1개를 획득했습니다!', 'success');
+            console.log('토스트 메시지 표시됨');
+          } else {
+            console.log('showToast 함수가 없음');
+          }
+        } else {
+          console.log('보상 지급 실패로 토스트 메시지 표시 안함:', rewardMsg);
         }
       } catch (error) {
         console.error('모의고사 보상 지급 실패:', error);
@@ -351,7 +341,6 @@
     const fbAnswered = [];
     qs.forEach((q, i) => {
       const ok = (ans[i] || '').trim() === q.answer;
-      appendQLog(q.subject || '', q.cat || null, q.sub || null, q.topic || null, ok);
       fbLogs.push({ date: today, subject: q.subject || '', cat: q.cat || null, sub: q.sub || null, topic: q.topic || null, correct: ok ? 1 : 0, total: 1 });
       fbAnswered.push({ date: today, qid: q.id });
     });
@@ -359,32 +348,23 @@
       try { await window.firebaseData?.addManyLearningLogs(fbLogs); } catch (_) {}
       try { await window.firebaseData?.addManyAnsweredLogs(fbAnswered); } catch (_) {}
       
-      // 챌린지 업데이트 (일/주/월)
-      try { 
-        const correctCount = fbLogs.filter(log => log.correct === 1).length;
-        for (let i = 0; i < correctCount; i++) {
-          await window.firebaseData?.updateChallengesOnAnswer?.(true);
+      // 틀린 문항을 오답에 자동 추가
+      try {
+        for (let i = 0; i < qs.length; i++) {
+          const ok = (ans[i] || '').trim() === qs[i].answer;
+          if (!ok) {
+            // 틀린 문항을 오답에 추가
+            await window.firebaseData?.addWrong?.(qs[i].id);
+          }
         }
       } catch (_) {}
       
-      // 정답 이벤트 기록 (배지용)
-      try {
-        for (const log of fbLogs) {
-          await window.firebaseData?.addAnswerEvent?.(log.correct === 1);
-        }
-      } catch (_) {}
+
     })();
 
-    // 문제별 응답 기록(학습 진행률 계산용)
-    const ansSet = loadSet(ANSWERED_SET_KEY);
-    const ansLog = loadAnsLog();
-    qs.forEach((_q, i) => {
-      const id = _q.id; ansSet.add(id); ansLog.push({ date: todayKey(), qid: id });
-    });
-    saveSet(ANSWERED_SET_KEY, ansSet); saveAnsLog(ansLog);
+
     
-    // 리더보드 갱신 플래그 설정 (성취도 페이지 진입 시 갱신)
-    try { localStorage.setItem('gsg_lb_dirty', '1'); } catch {}
+
 
     detail.forEach(d => {
       const el = document.createElement('div');
