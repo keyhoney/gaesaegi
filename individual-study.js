@@ -40,7 +40,16 @@
 
   // 로컬 저장 제거: 즐겨찾기/오답/로그는 전부 Firebase로
 
-  function todayKey() { const d = new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
+  // 한국 시간 기준 날짜 키 (0시 초기화)
+  function todayKey() { 
+    return window.firebaseData?.getLocalDateSeoulKey?.() || (() => {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    })();
+  }
 
   // 문제 풀이 기록 조회
   async function getQuestionHistory(qid) {
@@ -140,29 +149,37 @@
     $questionHistory.innerHTML = html;
   }
 
-  // 유틸
-  function todayKey() {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
 
-  // 정답 문제 수 추적 및 코인 지급
+
+  // 정답 문제 수 추적 및 코인 지급 (하루 최대 5개 제한)
   async function trackDailyQuestionsAndReward(qid, isCorrect) {
     try {
       if (isCorrect) {
-        // 모든 정답을 카운트
-        const allQuestionLastCorrectTimes = await window.firebaseData?.getAllQuestionLastCorrectTimes?.() || {};
-        const totalCorrectQuestions = Object.keys(allQuestionLastCorrectTimes).length;
+        // 오늘 날짜 키
+        const today = todayKey();
         
-        // 10문제 단위로 코인 지급 (50문제까지만)
-        if (totalCorrectQuestions % DAILY_QUESTIONS_FOR_COIN === 0 && totalCorrectQuestions <= MAX_TOTAL_COIN_REWARDS) {
+        // 오늘 받은 코인 수 확인
+        const dailyRewards = await window.firebaseData?.getDailyCoinRewards?.(today) || { count: 0 };
+        const todayRewardCount = dailyRewards.count || 0;
+        
+        // 하루 최대 5개 제한 확인
+        if (todayRewardCount >= 5) {
+          return null; // 오늘은 더 이상 코인을 받을 수 없음
+        }
+        
+        // 오늘 맞춘 문제 수 확인 (일일 카운트)
+        const todayCorrectAnswers = await window.firebaseData?.getTodayCorrectAnswers?.(today) || [];
+        const todayCorrectCount = todayCorrectAnswers.length;
+        
+        // 10문제 단위로 코인 지급
+        if (todayCorrectCount % DAILY_QUESTIONS_FOR_COIN === 0 && todayCorrectCount > 0) {
           // 코인 지급
           await window.firebaseData?.addCoins?.(1);
           
-          const message = `축하합니다! ${totalCorrectQuestions}번째 정답을 맞췄습니다. 코인 1개를 획득했습니다! 🎉`;
+          // 오늘 받은 코인 수 증가
+          await window.firebaseData?.addDailyCoinReward?.(today);
+          
+          const message = `축하합니다! 오늘 ${todayCorrectCount}번째 정답을 맞췄습니다. 코인 1개를 획득했습니다! 🎉 (오늘 ${todayRewardCount + 1}/5개)`;
           toast(message, 'success');
           return message;
         }
@@ -175,54 +192,61 @@
     }
   }
 
-  // 현재 진행 상황 표시
+  // 현재 진행 상황 표시 (하루 제한 포함)
   async function updateProgressDisplay() {
     try {
-      // 모든 정답 문제를 카운트
-      const allQuestionLastCorrectTimes = await window.firebaseData?.getAllQuestionLastCorrectTimes?.() || {};
-      const currentCorrectCount = Object.keys(allQuestionLastCorrectTimes).length;
+      // 오늘 날짜 키
+      const today = todayKey();
       
-      // 50문제 초과 시 코인 획득 불가
-      if (currentCorrectCount > MAX_TOTAL_COIN_REWARDS) {
+      // 오늘 받은 코인 수 확인
+      const dailyRewards = await window.firebaseData?.getDailyCoinRewards?.(today) || { count: 0 };
+      const todayRewardCount = dailyRewards.count || 0;
+      
+      // 오늘 맞춘 문제 수 확인 (일일 카운트)
+      const todayCorrectAnswers = await window.firebaseData?.getTodayCorrectAnswers?.(today) || [];
+      const todayCorrectCount = todayCorrectAnswers.length;
+      
+      // 하루 최대 5개 제한에 도달한 경우
+      if (todayRewardCount >= 5) {
         const progressElement = document.getElementById('progressDisplay');
         if (progressElement) {
           progressElement.innerHTML = `
             <div class="progress-info">
-              <span class="progress-text">정답 진행: ${currentCorrectCount}문항</span>
+              <span class="progress-text">오늘 정답: ${todayCorrectCount}문항</span>
               <span class="progress-bar">
                 <span class="progress-fill" style="width: 100%"></span>
               </span>
-              <span class="next-reward">🎉 모든 코인을 획득했습니다! 🎉</span>
-              <span class="daily-rewards">총 ${Math.floor(MAX_TOTAL_COIN_REWARDS / DAILY_QUESTIONS_FOR_COIN)}개 코인 획득 완료 (일일 최대 획득량 ${Math.floor(MAX_TOTAL_COIN_REWARDS / DAILY_QUESTIONS_FOR_COIN)}개)</span>
+              <span class="next-reward">⏰ 오늘은 더 이상 코인을 받을 수 없습니다</span>
+              <span class="daily-rewards">오늘 ${todayRewardCount}/5개 코인 획득 완료 (내일 0시에 초기화)</span>
             </div>
           `;
         }
-        return { currentCorrectCount, nextRewardAt: 0 };
+        return { currentCorrectCount: todayCorrectCount, nextRewardAt: 0 };
       }
       
       // 표시할 목표는 다음 단계 (10문항이면 20문항, 20문항이면 30문항)
-      const displayTarget = Math.ceil((currentCorrectCount + 1) / DAILY_QUESTIONS_FOR_COIN) * DAILY_QUESTIONS_FOR_COIN;
+      const displayTarget = Math.ceil((todayCorrectCount + 1) / DAILY_QUESTIONS_FOR_COIN) * DAILY_QUESTIONS_FOR_COIN;
       
       // 진행 상황 계산
-      const progress = currentCorrectCount % DAILY_QUESTIONS_FOR_COIN;
-      const nextRewardAt = displayTarget - currentCorrectCount;
+      const progress = todayCorrectCount % DAILY_QUESTIONS_FOR_COIN;
+      const nextRewardAt = displayTarget - todayCorrectCount;
       
       // 진행 상황 표시 업데이트
       const progressElement = document.getElementById('progressDisplay');
       if (progressElement) {
         progressElement.innerHTML = `
           <div class="progress-info">
-            <span class="progress-text">정답 진행: ${currentCorrectCount}문항 / 목표: ${displayTarget}문항</span>
+            <span class="progress-text">오늘 정답: ${todayCorrectCount}문항 / 목표: ${displayTarget}문항</span>
             <span class="progress-bar">
               <span class="progress-fill" style="width: ${(progress / DAILY_QUESTIONS_FOR_COIN) * 100}%"></span>
             </span>
             <span class="next-reward">다음 코인까지: ${nextRewardAt}문항</span>
-            <span class="daily-rewards">총 ${Math.floor(currentCorrectCount / DAILY_QUESTIONS_FOR_COIN)}개 코인 획득 (일일 최대 획득량 ${Math.floor(MAX_TOTAL_COIN_REWARDS / DAILY_QUESTIONS_FOR_COIN)}개)</span>
+            <span class="daily-rewards">오늘 ${todayRewardCount}/5개 코인 획득 (하루 최대 5개)</span>
           </div>
         `;
       }
       
-      return { currentCorrectCount, nextRewardAt };
+      return { currentCorrectCount: todayCorrectCount, nextRewardAt };
     } catch (error) {
       console.error('진행 상황 표시 업데이트 중 오류:', error);
       return { currentCorrectCount: 0, nextRewardAt: DAILY_QUESTIONS_FOR_COIN };

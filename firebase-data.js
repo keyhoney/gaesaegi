@@ -502,6 +502,17 @@
       } catch (_) { return false; }
     },
 
+    // 오늘 맞춘 문제 목록 조회
+    async getTodayCorrectAnswers(dateKey) {
+      try {
+        const { user, db, collection, getDocs, query, where } = await withUser();
+        const ref = collection(db, 'users', user.uid, 'answers');
+        const q = query(ref, where('date', '==', dateKey), where('correct', '==', true));
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ id: d.id, ...(d.data()||{}) }));
+      } catch (_) { return []; }
+    },
+
   };
 })();
 
