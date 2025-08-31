@@ -42,13 +42,15 @@
 
   // 한국 시간 기준 날짜 키 (0시 초기화)
   function todayKey() { 
-    return window.firebaseData?.getLocalDateSeoulKey?.() || (() => {
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    })();
+    // firebaseData가 로드되지 않았을 때를 위한 fallback
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const fallbackDate = `${y}-${m}-${day}`;
+    
+    const result = window.firebaseData?.getLocalDateSeoulKey?.() || fallbackDate;
+    return result;
   }
 
   // 문제 풀이 기록 조회
@@ -171,6 +173,8 @@
         const todayCorrectAnswers = await window.firebaseData?.getTodayCorrectAnswers?.(today) || [];
         const todayCorrectCount = todayCorrectAnswers.length;
         
+        
+        
         // 10문제 단위로 코인 지급
         if (todayCorrectCount % DAILY_QUESTIONS_FOR_COIN === 0 && todayCorrectCount > 0) {
           // 코인 지급
@@ -202,7 +206,7 @@
       const dailyRewards = await window.firebaseData?.getDailyCoinRewards?.(today) || { count: 0 };
       const todayRewardCount = dailyRewards.count || 0;
       
-      // 오늘 맞춘 문제 수 확인 (일일 카운트)
+      // 오늘 맞춘 문제 수 확인 (일일 카운트) - 현재 문제 포함
       const todayCorrectAnswers = await window.firebaseData?.getTodayCorrectAnswers?.(today) || [];
       const todayCorrectCount = todayCorrectAnswers.length;
       
@@ -580,11 +584,14 @@
     try { await window.firebaseData?.addAnsweredLog({ date: todayKey(), qid: currentQuestion.id }); } catch (_) {}
 
     // 최종 제출 답안을 answers/{qid}로 저장(과목 필터 정확도를 위해 메타 포함)
+    const today = todayKey();
     try {
+      
       await window.firebaseData?.setFinalAnswer?.(currentQuestion.id, {
         subject: subj, cat, sub, topic,
-        correct: isCorrect, date: todayKey(),
+        correct: isCorrect, date: today,
       });
+      
       
       // 정답인 경우 마지막 정답 시간 저장
       if (isCorrect) {
@@ -594,9 +601,11 @@
           console.error('정답 저장 실패:', error);
         }
       }
-    } catch (_) {}
+    } catch (error) {
+      console.error('정답 저장 중 오류:', error);
+    }
 
-    // 하루 정답 문제 보상 체크
+    // 정답 저장 후 하루 정답 문제 보상 체크
     const rewardMessage = await trackDailyQuestionsAndReward(currentQuestion.id, isCorrect);
     
     // 진행 상황 업데이트

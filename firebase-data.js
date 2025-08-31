@@ -12,10 +12,10 @@
       throw new Error('Firebase requires http/https context');
     }
     const { getAuth } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
-    const { collection, addDoc, writeBatch, doc, serverTimestamp, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const { collection, addDoc, writeBatch, doc, serverTimestamp, getDocs, query, orderBy, where } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
     const { app, db } = await window.getFirebaseAppAndDb();
     const auth = getAuth(app);
-    return { auth, db, collection, addDoc, writeBatch, doc, serverTimestamp, getDocs, query, orderBy };
+    return { auth, db, collection, addDoc, writeBatch, doc, serverTimestamp, getDocs, query, orderBy, where };
   }
 
   async function withUser() {
@@ -116,8 +116,12 @@
       try {
         const jsDate = new Date();
         const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' });
-        return fmt.format(jsDate); // YYYY-MM-DD
-      } catch { return null; }
+        const result = fmt.format(jsDate); // YYYY-MM-DD
+        return result;
+      } catch (error) {
+        console.error('getLocalDateSeoulKey 오류:', error);
+        return null;
+      }
     },
     addLearningLog,
     addManyLearningLogs,

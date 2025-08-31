@@ -81,6 +81,22 @@
       preserveObjectStacking: true
     });
 
+    // Canvas 텍스트 베이스라인을 안전값으로 강제 ('alphabetical' 경고 방지)
+    try {
+      if (canvas && canvas.contextContainer) {
+        canvas.contextContainer.textBaseline = 'alphabetic';
+      }
+      if (canvas && canvas.contextTop) {
+        canvas.contextTop.textBaseline = 'alphabetic';
+      }
+      canvas.on('before:render', () => {
+        try {
+          if (canvas.contextContainer) canvas.contextContainer.textBaseline = 'alphabetic';
+          if (canvas.contextTop) canvas.contextTop.textBaseline = 'alphabetic';
+        } catch {}
+      });
+    } catch {}
+
     let currentTool = 'pen';
     let isSpacePanning = false;
     let lastNonPanTool = 'pen';
