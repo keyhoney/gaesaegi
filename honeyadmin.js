@@ -374,40 +374,6 @@
      }
    }
 
-   // 모든 코인 지급 내역 가져오기
-   async function fetchAllCoinHistory() {
-     try {
-       const { db } = await window.getFirebaseAppAndDb();
-       const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-       
-       allCoinHistory = [];
-       
-       for (const user of allUsers) {
-         try {
-           const coinHistoryRef = collection(db, 'users', user.uid, 'coinHistory');
-           const coinHistoryQuery = query(coinHistoryRef, orderBy('givenAt', 'desc'));
-           const coinHistorySnap = await getDocs(coinHistoryQuery);
-           
-           coinHistorySnap.forEach(doc => {
-             const historyData = doc.data();
-             allCoinHistory.push({
-               id: doc.id,
-               uid: user.uid,
-               user: user,
-               ...historyData
-             });
-           });
-         } catch (error) {
-           console.error(`사용자 ${user.uid} 코인 지급 내역 가져오기 실패:`, error);
-         }
-       }
-       
-       return allCoinHistory;
-     } catch (error) {
-       console.error('코인 지급 내역 가져오기 실패:', error);
-       throw error;
-     }
-   }
 
   // 로또 당첨 기록 테이블 렌더링
   function renderLotteryWinnersTable() {
@@ -418,9 +384,9 @@
     
     try {
       // 당첨 기록만 필터링 (rank가 있는 것만)
-      const winners = allLotteryTickets.filter(ticket => ticket.rank && ticket.rank >= 1 && ticket.rank <= 4);
+      const winners = allLotteryTickets.filter(ticket => ticket.rank && ticket.rank >= 1 && ticket.rank <= 5);
       
-      // 등수별로 정렬 (1등, 2등, 3등, 4등 순)
+      // 등수별로 정렬 (1등, 2등, 3등, 4등, 5등 순)
       const sortedWinners = winners.sort((a, b) => {
         // 먼저 등수로 정렬
         if (a.rank !== b.rank) {
@@ -463,40 +429,6 @@
     }
   }
 
-   // 코인 지급 내역 테이블 렌더링
-   function renderCoinHistoryTable() {
-     const tbody = document.getElementById('coinHistoryBody');
-     const loading = document.getElementById('coinHistoryLoading');
-     const error = document.getElementById('coinHistoryError');
-     const table = document.getElementById('coinHistoryTable');
-     
-     try {
-       const sortedHistory = allCoinHistory.sort((a, b) => {
-         const aTime = a.givenAt?.toDate ? a.givenAt.toDate().getTime() : 0;
-         const bTime = b.givenAt?.toDate ? b.givenAt.toDate().getTime() : 0;
-         return bTime - aTime;
-       });
-       
-       tbody.innerHTML = sortedHistory.map(history => `
-         <tr>
-           <td>${renderUserInfo(history.user)}</td>
-           <td>${formatNumber(history.amount || 0)} coin</td>
-           <td>${history.reason || '-'}</td>
-           <td>${formatDate(history.givenAt)}</td>
-         </tr>
-       `).join('');
-       
-       loading.style.display = 'none';
-       error.style.display = 'none';
-       table.style.display = 'table';
-     } catch (err) {
-       loading.style.display = 'none';
-       error.style.display = 'block';
-       error.textContent = '코인 지급 내역을 불러오는 중 오류가 발생했습니다.';
-       table.style.display = 'none';
-     }
-   }
-
      // 모든 데이터 새로고침
    async function refreshAllData() {
      try {
@@ -529,99 +461,6 @@
      } catch (error) {
        console.error('데이터 새로고침 실패:', error);
        alert('데이터를 새로고침하는 중 오류가 발생했습니다.');
-     }
-   }
-
-   // 반/번호별 코인 지급 함수
-   async function giveCoinByClassNumber() {
-     try {
-       const className = document.getElementById('classNameInput').value.trim();
-       const studentNumber = Number(document.getElementById('studentNumberInput').value);
-       const amount = Number(document.getElementById('coinAmountInput').value);
-       const reason = document.getElementById('coinReasonInput').value.trim();
-       
-       if (!className) {
-         alert('반을 입력해주세요.');
-         return;
-       }
-       
-       if (!studentNumber || studentNumber <= 0) {
-         alert('학생 번호를 입력해주세요.');
-         return;
-       }
-       
-       if (!amount || amount <= 0) {
-         alert('지급할 코인 수량을 입력해주세요.');
-         return;
-       }
-       
-       if (!reason) {
-         alert('코인 지급 사유를 입력해주세요.');
-         return;
-       }
-       
-       if (amount > 100) {
-         alert('한 번에 최대 100코인까지만 지급할 수 있습니다.');
-         return;
-       }
-       
-       // 해당 반/번호의 사용자 찾기
-       const targetUser = allUsers.find(user => 
-         (user.className === className || user.class === className) && 
-         (user.studentNumber === studentNumber || user.number === studentNumber)
-       );
-       
-       if (!targetUser) {
-         alert(`해당하는 학생을 찾을 수 없습니다.\n반: ${className}\n번호: ${studentNumber}`);
-         return;
-       }
-       
-       // 버튼 비활성화
-       const button = document.querySelector('.coin-give-btn-large');
-       button.disabled = true;
-       button.textContent = '처리중...';
-       
-       const { db } = await window.getFirebaseAppAndDb();
-       const { doc, updateDoc, addDoc, collection, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-       
-       // 사용자 지갑 업데이트
-       const walletRef = doc(db, 'users', targetUser.uid, 'wallet', 'main');
-       await updateDoc(walletRef, {
-         coins: window.firebaseData.increment(amount),
-         totalCoins: window.firebaseData.increment(amount)
-       });
-       
-       // 코인 지급 내역 기록
-       const coinHistoryRef = collection(db, 'users', targetUser.uid, 'coinHistory');
-       await addDoc(coinHistoryRef, {
-         amount: amount,
-         reason: reason,
-         givenAt: serverTimestamp(),
-         givenBy: currentUserUid
-       });
-       
-       // 입력 필드 초기화
-       document.getElementById('classNameInput').value = '';
-       document.getElementById('studentNumberInput').value = '';
-       document.getElementById('coinAmountInput').value = '';
-       document.getElementById('coinReasonInput').value = '';
-       
-       // 성공 메시지
-       alert(`${targetUser.name || targetUser.displayName} 학생에게 ${amount}코인이 성공적으로 지급되었습니다.`);
-       
-       // 데이터 새로고침
-       await refreshAllData();
-       
-     } catch (error) {
-       console.error('코인 지급 실패:', error);
-       alert('코인 지급 중 오류가 발생했습니다.');
-       
-       // 버튼 재활성화
-       const button = document.querySelector('.coin-give-btn-large');
-       if (button) {
-         button.disabled = false;
-         button.textContent = '코인 지급';
-       }
      }
    }
 
