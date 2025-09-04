@@ -8,6 +8,11 @@
    let currentUserUid = null;
    let allUsers = [];
    let allLotteryTickets = [];
+   let dateFilter = {
+     startDate: null,
+     endDate: null,
+     isActive: false
+   };
 
   // 숫자 포맷팅 함수
   function formatNumber(num) {
@@ -376,6 +381,30 @@
    }
 
 
+  // 날짜 필터링 함수
+  function filterWinnersByDate(winners) {
+    if (!dateFilter.isActive) {
+      return winners;
+    }
+    
+    const startDate = dateFilter.startDate ? new Date(dateFilter.startDate + 'T00:00:00') : null;
+    const endDate = dateFilter.endDate ? new Date(dateFilter.endDate + 'T23:59:59') : null;
+    
+    return winners.filter(ticket => {
+      const ticketDate = ticket.at?.toDate ? ticket.at.toDate() : new Date(0);
+      
+      if (startDate && ticketDate < startDate) {
+        return false;
+      }
+      
+      if (endDate && ticketDate > endDate) {
+        return false;
+      }
+      
+      return true;
+    });
+  }
+
   // 로또 당첨 기록 테이블 렌더링
   function renderLotteryWinnersTable() {
     const tbody = document.getElementById('lotteryWinnersBody');
@@ -385,7 +414,10 @@
     
     try {
       // 당첨 기록만 필터링 (rank가 있는 것만)
-      const winners = allLotteryTickets.filter(ticket => ticket.rank && ticket.rank >= 1 && ticket.rank <= 4);
+      let winners = allLotteryTickets.filter(ticket => ticket.rank && ticket.rank >= 1 && ticket.rank <= 4);
+      
+      // 날짜 필터 적용
+      winners = filterWinnersByDate(winners);
       
       // 등수별로 정렬 (1등, 2등, 3등, 4등 순)
       const sortedWinners = winners.sort((a, b) => {
@@ -418,6 +450,9 @@
           </tr>
         `;
       }).join('');
+      
+      // 필터 정보 업데이트
+      updateFilterInfo(sortedWinners.length);
       
       loading.style.display = 'none';
       error.style.display = 'none';
@@ -491,9 +526,72 @@
 
 
 
+  // 필터 정보 업데이트 함수
+  function updateFilterInfo(filteredCount) {
+    const filterInfo = document.getElementById('filterInfo');
+    const totalWinners = allLotteryTickets.filter(ticket => ticket.rank && ticket.rank >= 1 && ticket.rank <= 4).length;
+    
+    if (dateFilter.isActive) {
+      const startText = dateFilter.startDate ? `${dateFilter.startDate}` : '시작';
+      const endText = dateFilter.endDate ? `${dateFilter.endDate}` : '끝';
+      
+      filterInfo.innerHTML = `
+        📊 필터 적용됨: ${startText} ~ ${endText} 기간<br>
+        총 ${totalWinners}건 중 ${filteredCount}건 표시
+      `;
+      filterInfo.style.display = 'block';
+    } else {
+      filterInfo.style.display = 'none';
+    }
+  }
+
+  // 날짜 필터 적용 함수
+  function applyDateFilter() {
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    
+    const startDate = startDateInput.value;
+    const endDate = endDateInput.value;
+    
+    // 유효성 검사
+    if (startDate && endDate && startDate > endDate) {
+      alert('시작일이 종료일보다 늦을 수 없습니다.');
+      return;
+    }
+    
+    // 필터 설정
+    dateFilter.startDate = startDate || null;
+    dateFilter.endDate = endDate || null;
+    dateFilter.isActive = !!(startDate || endDate);
+    
+    // 테이블 다시 렌더링
+    renderLotteryWinnersTable();
+    
+    console.log('날짜 필터 적용:', dateFilter);
+  }
+
+  // 날짜 필터 리셋 함수
+  function resetDateFilter() {
+    // 입력 필드 초기화
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
+    
+    // 필터 상태 초기화
+    dateFilter.startDate = null;
+    dateFilter.endDate = null;
+    dateFilter.isActive = false;
+    
+    // 테이블 다시 렌더링
+    renderLotteryWinnersTable();
+    
+    console.log('날짜 필터 리셋됨');
+  }
+
      // 전역 함수로 노출
    window.refreshAllData = refreshAllData;
    window.checkAuthStatus = checkAuthStatus;
+   window.applyDateFilter = applyDateFilter;
+   window.resetDateFilter = resetDateFilter;
 
   // 페이지 로드 시 초기화
   window.addEventListener('load', async () => {

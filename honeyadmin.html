@@ -269,6 +269,69 @@
          .winner-row-3 { background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%); }
          .winner-row-4 { background: linear-gradient(135deg, #87ceeb 0%, #b0e0e6 100%); }
          .winner-row-5 { background: linear-gradient(135deg, #98fb98 0%, #90ee90 100%); }
+         
+         .filter-section {
+             background: #f8f9fa;
+             padding: 20px;
+             border-radius: 8px;
+             margin-bottom: 20px;
+             border: 1px solid #dee2e6;
+         }
+         
+         .filter-section h3 {
+             margin: 0 0 15px 0;
+             color: #495057;
+             font-size: 1.1em;
+         }
+         
+         .date-filter-form {
+             display: flex;
+             gap: 15px;
+             align-items: end;
+             flex-wrap: wrap;
+         }
+         
+         .filter-buttons {
+             display: flex;
+             gap: 10px;
+         }
+         
+         .filter-btn, .reset-filter-btn {
+             padding: 8px 16px;
+             border: none;
+             border-radius: 4px;
+             cursor: pointer;
+             font-size: 14px;
+             font-weight: 600;
+         }
+         
+         .filter-btn {
+             background: #28a745;
+             color: white;
+         }
+         
+         .filter-btn:hover {
+             background: #218838;
+         }
+         
+         .reset-filter-btn {
+             background: #6c757d;
+             color: white;
+         }
+         
+         .reset-filter-btn:hover {
+             background: #5a6268;
+         }
+         
+         .filter-info {
+             margin-top: 15px;
+             padding: 10px;
+             background: #d1ecf1;
+             border: 1px solid #bee5eb;
+             border-radius: 4px;
+             color: #0c5460;
+             font-size: 14px;
+         }
     </style>
 </head>
 <body>
@@ -296,6 +359,27 @@
             
             <div class="admin-section">
                 <h2>🎰 로또 당첨 기록</h2>
+                
+                <!-- 날짜 필터 섹션 -->
+                <div class="filter-section">
+                    <h3>📅 기간 필터</h3>
+                    <div class="date-filter-form">
+                        <div class="form-group">
+                            <label for="startDate">시작일:</label>
+                            <input type="date" id="startDate" name="startDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">종료일:</label>
+                            <input type="date" id="endDate" name="endDate">
+                        </div>
+                        <div class="filter-buttons">
+                            <button class="filter-btn" onclick="applyDateFilter()">📊 필터 적용</button>
+                            <button class="reset-filter-btn" onclick="resetDateFilter()">🔄 필터 초기화</button>
+                        </div>
+                    </div>
+                    <div id="filterInfo" class="filter-info" style="display: none;"></div>
+                </div>
+                
                 <div id="lotteryWinnersLoading" class="loading">데이터를 불러오는 중...</div>
                 <div id="lotteryWinnersError" class="error" style="display: none;"></div>
                 <table id="lotteryWinnersTable" class="data-table" style="display: none;">
