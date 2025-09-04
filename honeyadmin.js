@@ -8,7 +8,6 @@
    let currentUserUid = null;
    let allUsers = [];
    let allLotteryTickets = [];
-   let allCoinHistory = [];
 
   // 숫자 포맷팅 함수
   function formatNumber(num) {
@@ -436,10 +435,7 @@
        
        // 로딩 상태 표시
        document.getElementById('lotteryWinnersLoading').style.display = 'block';
-       document.getElementById('coinHistoryLoading').style.display = 'block';
-       
        document.getElementById('lotteryWinnersTable').style.display = 'none';
-       document.getElementById('coinHistoryTable').style.display = 'none';
        
        // 데이터 가져오기
        console.log('사용자 정보 가져오기...');
@@ -448,13 +444,10 @@
        console.log('로또 내역 가져오기...');
        await fetchAllLotteryTickets();
        
-       console.log('코인 지급 내역 가져오기...');
-       await fetchAllCoinHistory();
        
        // 테이블 업데이트
        console.log('테이블 렌더링...');
        renderLotteryWinnersTable();
-       renderCoinHistoryTable();
        
        console.log('데이터 새로고침 완료');
        
