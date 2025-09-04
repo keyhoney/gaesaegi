@@ -498,7 +498,6 @@
 
      // 전역 함수로 노출
    window.refreshAllData = refreshAllData;
-   window.giveCoinByClassNumber = giveCoinByClassNumber;
    window.checkAuthStatus = checkAuthStatus;
 
   // 페이지 로드 시 초기화
