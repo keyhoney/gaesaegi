@@ -313,48 +313,6 @@
                     <tbody id="lotteryWinnersBody"></tbody>
                 </table>
             </div>
-            
-            <div class="admin-section">
-                <h2>💰 반/번호별 코인 지급</h2>
-                <div class="coin-give-section">
-                    <div class="coin-give-form-large">
-                        <div class="form-group">
-                            <label for="classNameInput">반:</label>
-                            <input type="text" id="classNameInput" placeholder="예: 1반, 2반, 3반" style="width: 100px;">
-                        </div>
-                        <div class="form-group">
-                            <label for="studentNumberInput">번호:</label>
-                            <input type="number" id="studentNumberInput" placeholder="번호" min="1" max="50" style="width: 80px;">
-                        </div>
-                        <div class="form-group">
-                            <label for="coinAmountInput">코인:</label>
-                            <input type="number" id="coinAmountInput" placeholder="코인" min="1" max="100" style="width: 80px;">
-                        </div>
-                        <div class="form-group">
-                            <label for="coinReasonInput">사유:</label>
-                            <input type="text" id="coinReasonInput" placeholder="사유 (예: 수업 중 활발한 참여)" style="width: 300px;">
-                        </div>
-                        <button onclick="giveCoinByClassNumber()" class="coin-give-btn-large">코인 지급</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="admin-section">
-                <h2>🎁 코인 지급 내역</h2>
-                <div id="coinHistoryLoading" class="loading">데이터를 불러오는 중...</div>
-                <div id="coinHistoryError" class="error" style="display: none;"></div>
-                <table id="coinHistoryTable" class="data-table" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>받은 학생</th>
-                            <th>지급한 코인</th>
-                            <th>사유</th>
-                            <th>지급일시</th>
-                        </tr>
-                    </thead>
-                    <tbody id="coinHistoryBody"></tbody>
-                </table>
-            </div>
         </div>
     </div>
     
