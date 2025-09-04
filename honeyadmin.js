@@ -465,7 +465,24 @@
     }
   }
 
-     // 모든 데이터 새로고침
+     // 기본 데이터 로드 (사용자 정보만)
+   async function loadBasicData() {
+     try {
+       console.log('기본 데이터 로드 시작...');
+       
+       // 데이터 가져오기
+       console.log('사용자 정보 가져오기...');
+       await fetchAllUsers();
+       
+       console.log('기본 데이터 로드 완료');
+       
+     } catch (error) {
+       console.error('기본 데이터 로드 실패:', error);
+       alert('기본 데이터를 로드하는 중 오류가 발생했습니다.');
+     }
+   }
+
+     // 모든 데이터 새로고침 (검색 버튼용)
    async function refreshAllData() {
      try {
        console.log('데이터 새로고침 시작...');
@@ -473,6 +490,7 @@
        // 로딩 상태 표시
        document.getElementById('lotteryWinnersLoading').style.display = 'block';
        document.getElementById('lotteryWinnersTable').style.display = 'none';
+       document.getElementById('lotteryWinnersError').style.display = 'none';
        
        // 데이터 가져오기
        console.log('사용자 정보 가져오기...');
@@ -490,7 +508,12 @@
        
      } catch (error) {
        console.error('데이터 새로고침 실패:', error);
-       alert('데이터를 새로고침하는 중 오류가 발생했습니다.');
+       
+       // 오류 상태 표시
+       document.getElementById('lotteryWinnersLoading').style.display = 'none';
+       document.getElementById('lotteryWinnersError').style.display = 'block';
+       document.getElementById('lotteryWinnersError').textContent = '데이터를 새로고침하는 중 오류가 발생했습니다.';
+       document.getElementById('lotteryWinnersTable').style.display = 'none';
      }
    }
 
@@ -545,8 +568,8 @@
     }
   }
 
-  // 날짜 필터 적용 함수
-  function applyDateFilter() {
+  // 로또 당첨자 검색 함수
+  async function searchLotteryWinners() {
     const startDateInput = document.getElementById('startDate');
     const endDateInput = document.getElementById('endDate');
     
@@ -564,10 +587,19 @@
     dateFilter.endDate = endDate || null;
     dateFilter.isActive = !!(startDate || endDate);
     
-    // 테이블 다시 렌더링
-    renderLotteryWinnersTable();
+    console.log('로또 당첨자 검색 시작:', dateFilter);
     
-    console.log('날짜 필터 적용:', dateFilter);
+    // 초기 메시지 숨기기
+    document.getElementById('lotteryWinnersInitial').style.display = 'none';
+    
+    // 데이터 불러오기 및 렌더링
+    await refreshAllData();
+  }
+
+  // 날짜 필터 적용 함수 (기존 호환성 유지)
+  function applyDateFilter() {
+    // 검색 함수로 리다이렉트
+    searchLotteryWinners();
   }
 
   // 날짜 필터 리셋 함수
@@ -581,8 +613,15 @@
     dateFilter.endDate = null;
     dateFilter.isActive = false;
     
-    // 테이블 다시 렌더링
-    renderLotteryWinnersTable();
+    // 초기 상태로 돌아가기
+    document.getElementById('lotteryWinnersInitial').style.display = 'block';
+    document.getElementById('lotteryWinnersLoading').style.display = 'none';
+    document.getElementById('lotteryWinnersError').style.display = 'none';
+    document.getElementById('lotteryWinnersTable').style.display = 'none';
+    document.getElementById('filterInfo').style.display = 'none';
+    
+    // 데이터 초기화
+    allLotteryTickets = [];
     
     console.log('날짜 필터 리셋됨');
   }
@@ -590,6 +629,7 @@
      // 전역 함수로 노출
    window.refreshAllData = refreshAllData;
    window.checkAuthStatus = checkAuthStatus;
+   window.searchLotteryWinners = searchLotteryWinners;
    window.applyDateFilter = applyDateFilter;
    window.resetDateFilter = resetDateFilter;
 
@@ -622,9 +662,9 @@
       console.log('관리자 접근 권한 확인...');
       const hasAccess = await checkAdminAccess();
       if (hasAccess) {
-        console.log('초기 데이터 로드 시작...');
-        // 초기 데이터 로드
-        await refreshAllData();
+        console.log('기본 데이터 로드 시작...');
+        // 기본 데이터만 로드 (사용자 정보만)
+        await loadBasicData();
       } else {
         console.log('관리자 권한 없음 - 데이터 로드 건너뜀');
         // 인증 상태 표시

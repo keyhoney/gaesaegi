@@ -332,6 +332,31 @@
              color: #0c5460;
              font-size: 14px;
          }
+         
+         .initial-message {
+             text-align: center;
+             padding: 40px 20px;
+             background: #f8f9fa;
+             border: 2px dashed #dee2e6;
+             border-radius: 8px;
+             margin: 20px 0;
+         }
+         
+         .message-content h3 {
+             color: #495057;
+             margin-bottom: 20px;
+         }
+         
+         .message-content p {
+             color: #6c757d;
+             margin: 8px 0;
+             line-height: 1.5;
+         }
+         
+         .message-content p.muted {
+             font-size: 14px;
+             color: #868e96;
+         }
     </style>
 </head>
 <body>
@@ -373,14 +398,24 @@
                             <input type="date" id="endDate" name="endDate">
                         </div>
                         <div class="filter-buttons">
-                            <button class="filter-btn" onclick="applyDateFilter()">📊 필터 적용</button>
+                            <button class="filter-btn" onclick="searchLotteryWinners()">🔍 검색</button>
                             <button class="reset-filter-btn" onclick="resetDateFilter()">🔄 필터 초기화</button>
                         </div>
                     </div>
                     <div id="filterInfo" class="filter-info" style="display: none;"></div>
                 </div>
                 
-                <div id="lotteryWinnersLoading" class="loading">데이터를 불러오는 중...</div>
+                <div id="lotteryWinnersInitial" class="initial-message">
+                    <div class="message-content">
+                        <h3>🔍 로또 당첨자 검색</h3>
+                        <p>날짜를 선택한 후 검색 버튼을 클릭하여 당첨자 목록을 조회하세요.</p>
+                        <p class="muted">• 시작일과 종료일을 모두 입력하면 해당 기간의 당첨자를 조회합니다.</p>
+                        <p class="muted">• 시작일만 입력하면 해당 날짜 이후의 당첨자를 조회합니다.</p>
+                        <p class="muted">• 종료일만 입력하면 해당 날짜 이전의 당첨자를 조회합니다.</p>
+                        <p class="muted">• 날짜를 입력하지 않고 검색하면 전체 당첨자를 조회합니다.</p>
+                    </div>
+                </div>
+                <div id="lotteryWinnersLoading" class="loading" style="display: none;">데이터를 불러오는 중...</div>
                 <div id="lotteryWinnersError" class="error" style="display: none;"></div>
                 <table id="lotteryWinnersTable" class="data-table" style="display: none;">
                     <thead>
