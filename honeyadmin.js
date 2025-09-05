@@ -351,7 +351,9 @@
        const { db } = await window.getFirebaseAppAndDb();
        const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
        
-       allLotteryTickets = [];
+       // 중복 방지를 위해 Set 사용
+       const ticketSet = new Set();
+       const newTickets = [];
        
        for (const user of allUsers) {
          try {
@@ -361,17 +363,29 @@
            
            lotterySnap.forEach(doc => {
              const ticketData = doc.data();
-             allLotteryTickets.push({
-               id: doc.id,
-               uid: user.uid,
-               user: user,
-               ...ticketData
-             });
+             // 고유 키 생성 (사용자 UID + 문서 ID 조합)
+             const uniqueKey = `${user.uid}_${doc.id}`;
+             
+             // 중복 확인
+             if (!ticketSet.has(uniqueKey)) {
+               ticketSet.add(uniqueKey);
+               newTickets.push({
+                 id: doc.id,
+                 uid: user.uid,
+                 user: user,
+                 uniqueKey: uniqueKey,
+                 ...ticketData
+               });
+             }
            });
          } catch (error) {
            console.error(`사용자 ${user.uid} 로또 내역 가져오기 실패:`, error);
          }
        }
+       
+       // 전역 배열 업데이트
+       allLotteryTickets = newTickets;
+       console.log(`로또 내역 수집 완료: 총 ${allLotteryTickets.length}건`);
        
        return allLotteryTickets;
      } catch (error) {
@@ -419,8 +433,19 @@
       // 날짜 필터 적용
       winners = filterWinnersByDate(winners);
       
+      // 중복 제거 (uniqueKey 기준)
+      const uniqueWinners = [];
+      const seenKeys = new Set();
+      winners.forEach(ticket => {
+        const key = ticket.uniqueKey || `${ticket.uid}_${ticket.id}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          uniqueWinners.push(ticket);
+        }
+      });
+      
       // 등수별로 정렬 (1등, 2등, 3등, 4등 순)
-      const sortedWinners = winners.sort((a, b) => {
+      const sortedWinners = uniqueWinners.sort((a, b) => {
         // 먼저 등수로 정렬
         if (a.rank !== b.rank) {
           return a.rank - b.rank;
