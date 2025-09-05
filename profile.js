@@ -8,8 +8,6 @@
   let currentUserUid = null;
   let allUsers = [];
   let filteredUsers = [];
-  let currentPage = 1;
-  const usersPerPage = 20;
 
   // 하드코딩된 모든 사용자 UID 목록
   const ALL_USER_UIDS = [
@@ -285,6 +283,11 @@
   function renderUserTable() {
     const tbody = document.getElementById('userTableBody');
     
+    if (!tbody) {
+      console.error('userTableBody 요소를 찾을 수 없습니다.');
+      return;
+    }
+    
     // 페이지네이션 제거 - 모든 사용자를 한 번에 표시
     tbody.innerHTML = filteredUsers.map(user => {
       const className = user.className || '미분반';
@@ -303,61 +306,14 @@
       `;
     }).join('');
     
-    // 페이지네이션 제거
-    document.getElementById('pagination').innerHTML = '';
+    // 페이지네이션 요소가 있는 경우에만 제거 (HTML에서 이미 제거했지만 안전장치)
+    const pagination = document.getElementById('pagination');
+    if (pagination) {
+      pagination.innerHTML = '';
+    }
   }
 
-  // 페이지네이션 렌더링
-  function renderPagination() {
-    const pagination = document.getElementById('pagination');
-    const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-    
-    if (totalPages <= 1) {
-      pagination.innerHTML = '';
-      return;
-    }
-    
-    let paginationHTML = '';
-    
-    paginationHTML += `
-      <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
-        ◀
-      </button>
-    `;
-    
-    const startPage = Math.max(1, currentPage - 2);
-    const endPage = Math.min(totalPages, currentPage + 2);
-    
-    if (startPage > 1) {
-      paginationHTML += `<button onclick="changePage(1)">1</button>`;
-      if (startPage > 2) {
-        paginationHTML += `<span>...</span>`;
-      }
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-      paginationHTML += `
-        <button onclick="changePage(${i})" ${i === currentPage ? 'class="current"' : ''}>
-          ${i}
-        </button>
-      `;
-    }
-    
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        paginationHTML += `<span>...</span>`;
-      }
-      paginationHTML += `<button onclick="changePage(${totalPages})">${totalPages}</button>`;
-    }
-    
-    paginationHTML += `
-      <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
-        ▶
-      </button>
-    `;
-    
-    pagination.innerHTML = paginationHTML;
-  }
+  // 페이지네이션 기능 제거됨 - 모든 데이터를 한 번에 표시
 
   // 엑셀로 내보내기
   function exportToExcel() {
