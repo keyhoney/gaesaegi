@@ -125,6 +125,7 @@
         docs: snapshot.docs.length 
       });
       
+      // 항상 배열 초기화
       allUsers = [];
       snapshot.forEach(doc => {
         const userData = doc.data();
@@ -138,9 +139,12 @@
       console.log(`총 ${allUsers.length}명의 사용자 정보를 가져왔습니다.`);
       console.log('사용자 목록:', allUsers.map(u => ({ uid: u.uid, name: u.name || u.displayName })));
       
-      // 하드코딩된 모든 사용자 UID 목록 사용
+      // 하드코딩된 모든 사용자 UID 목록 사용 (users 컬렉션이 비어있거나 접근 불가할 때)
       if (allUsers.length === 0) {
         console.log('하드코딩된 사용자 UID 목록을 사용합니다...');
+        
+        // 새로운 배열로 다시 초기화
+        allUsers = [];
         
         // 하드코딩된 모든 사용자 UID 목록
         const allUserUids = [
