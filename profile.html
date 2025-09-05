@@ -1,52 +1,387 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GSG - 사용자 정보 입력</title>
-    <link rel="stylesheet" href="styles.css" />
-    <link rel="icon" href="/favicon.ico" />
-  </head>
-  <body>
-    <a class="skip-link" href="#main">본문 바로가기</a>
-    <header class="site-header" role="banner">
-      <div class="container nav-container">
-        <div class="brand" aria-label="GSG 홈">
-          <a href="index.html" class="brand" style="text-decoration:none; color:inherit">
-            <span class="logo" aria-hidden="true"><img src="img/gsg-icon.png" alt="GSG 로고" width="60" height="60"/></span>
-            <span class="brand-name">GSG</span>
-          </a>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>사용자 프로필 관리 - 개새기</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .profile-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .profile-header {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .profile-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 8px 0;
+    }
+
+    .profile-subtitle {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(138, 75, 83, 0.15);
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-strong);
+    }
+
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border-strong);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+
+    .error {
+      text-align: center;
+      padding: 40px;
+      color: var(--error);
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+
+    .profile-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .profile-table th {
+      background: var(--bg-alt);
+      padding: 16px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .profile-table td {
+      padding: 16px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .profile-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .profile-table tr:hover {
+      background: var(--bg-alt);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .user-details {
+      flex: 1;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .user-class {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .user-phone {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .uid-text {
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--bg-alt);
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .access-denied {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin: 40px auto;
+      max-width: 500px;
+    }
+
+    .access-denied h2 {
+      color: var(--error);
+      margin-bottom: 16px;
+    }
+
+    .access-denied p {
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .pagination button {
+      min-width: 36px;
+      height: 36px;
+      border: 1px solid var(--border-strong);
+      background: var(--card);
+      color: var(--text);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination .current {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .filter-info {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    @media (max-width: 768px) {
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-input {
+        min-width: auto;
+      }
+
+      .profile-table {
+        font-size: 14px;
+      }
+
+      .profile-table th,
+      .profile-table td {
+        padding: 12px 8px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-container">
+    <!-- 접근 권한 없음 화면 -->
+    <div id="accessDenied" class="access-denied" style="display: none;">
+      <h2>⚠️ 접근 권한이 없습니다</h2>
+      <p>이 페이지는 관리자만 접근할 수 있습니다.</p>
+      <p>관리자 계정으로 로그인해 주세요.</p>
+      <div id="authInfo" style="white-space: pre-line; font-family: monospace; font-size: 12px; color: var(--muted); margin-top: 16px;"></div>
+    </div>
+
+    <!-- 관리자 콘텐츠 -->
+    <div id="adminContent" style="display: none;">
+      <!-- 헤더 -->
+      <div class="profile-header">
+        <h1 class="profile-title">👥 사용자 프로필 관리</h1>
+        <p class="profile-subtitle">등록된 모든 사용자의 반, 번호, 이름 정보를 조회할 수 있습니다.</p>
+      </div>
+
+      <!-- 통계 카드 -->
+      <div class="stats" id="statsContainer">
+        <div class="stat-card">
+          <div class="stat-value" id="totalUsers">-</div>
+          <div class="stat-label">총 사용자</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="loadedUsers">-</div>
+          <div class="stat-label">로드된 사용자</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="filteredUsers">-</div>
+          <div class="stat-label">표시된 사용자</div>
         </div>
       </div>
-    </header>
 
-    <main id="main" class="page" tabindex="-1">
-      <section class="section">
-        <div class="container">
-          <h1>사용자 정보 입력/수정</h1>
-          <p class="intro">필수 정보를 모두 입력해 주세요. 기존 정보가 있는 경우 자동으로 채워집니다.</p>
-          <form id="profileForm" class="login-form" novalidate>
-            <div class="field"><label>학년</label><input id="grade" type="number" min="1" max="6" required /></div>
-            <div class="field"><label>반</label><input id="classNo" type="number" min="1" max="50" required /></div>
-            <div class="field"><label>번호</label><input id="studentNo" type="number" min="1" max="99" required /></div>
-            <div class="field"><label>이름</label><input id="name" type="text" required /></div>
-            <div class="field"><label>별명</label><input id="nickname" type="text" required /></div>
-            <div class="field"><label>전화번호</label><input id="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="010-0000-0000" maxlength="13" required /></div>
-            <div class="actions">
-              <button class="btn primary" type="submit">저장하고 시작하기</button>
-            </div>
-            <p class="form-feedback" aria-live="polite"></p>
-          </form>
-        </div>
-      </section>
-    </main>
+      <!-- 검색 및 제어 -->
+      <div class="controls">
+        <input type="text" id="searchInput" class="search-input" placeholder="이름, 반, 번호로 검색...">
+        <button id="loadBtn" class="btn btn-primary">📋 데이터 로드</button>
+        <button id="refreshBtn" class="btn btn-secondary" style="display: none;">🔄 새로고침</button>
+      </div>
 
-    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
-    <script src="firebase-config.js" defer></script>
-    <script src="firebase-data.js" defer></script>
-    <script src="app.js" defer></script>
-    <script src="profile.js" defer></script>
-  </body>
-  </html>
+      <!-- 필터 정보 -->
+      <div id="filterInfo" class="filter-info" style="display: none;"></div>
 
+      <!-- 로딩 상태 -->
+      <div id="loading" class="loading">
+        📋 사용자 정보를 불러오는 중입니다...
+      </div>
 
+      <!-- 오류 상태 -->
+      <div id="error" class="error" style="display: none;">
+        ❌ 사용자 정보를 불러오는 중 오류가 발생했습니다.
+      </div>
+
+      <!-- 사용자 테이블 -->
+      <div id="tableContainer" style="display: none;">
+        <table class="profile-table">
+          <thead>
+            <tr>
+              <th>사용자 정보</th>
+              <th>반</th>
+              <th>번호</th>
+              <th>연락처</th>
+              <th>UID</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody">
+            <!-- 사용자 목록이 여기에 표시됩니다 -->
+          </tbody>
+        </table>
+
+        <!-- 페이지네이션 -->
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase 스크립트 -->
+  <script src="firebase-config.js"></script>
+  <script src="firebase-data.js"></script>
+  <script src="profile.js"></script>
+</body>
+</html>
