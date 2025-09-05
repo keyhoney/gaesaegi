@@ -262,7 +262,6 @@
       });
     }
     
-    currentPage = 1;
     updateStats();
     renderUserTable();
     updateFilterInfo(searchTerm);
@@ -286,15 +285,12 @@
   function renderUserTable() {
     const tbody = document.getElementById('userTableBody');
     
-    const startIndex = (currentPage - 1) * usersPerPage;
-    const endIndex = startIndex + usersPerPage;
-    const pageUsers = filteredUsers.slice(startIndex, endIndex);
-    
-    tbody.innerHTML = pageUsers.map(user => {
+    // 페이지네이션 제거 - 모든 사용자를 한 번에 표시
+    tbody.innerHTML = filteredUsers.map(user => {
       const className = user.className || '미분반';
       const studentNumber = user.studentNumber || 0;
       const phone = user.phone || '-';
-      const shortUid = user.uid.substring(0, 12) + '...';
+      const fullUid = user.uid; // UID 전체 표시
       
       return `
         <tr>
@@ -302,12 +298,13 @@
           <td>${className}</td>
           <td>${studentNumber}번</td>
           <td>${phone}</td>
-          <td><span class="uid-text">${shortUid}</span></td>
+          <td><span class="uid-text">${fullUid}</span></td>
         </tr>
       `;
     }).join('');
     
-    renderPagination();
+    // 페이지네이션 제거
+    document.getElementById('pagination').innerHTML = '';
   }
 
   // 페이지네이션 렌더링
@@ -362,13 +359,101 @@
     pagination.innerHTML = paginationHTML;
   }
 
-  // 페이지 변경
-  function changePage(page) {
-    const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-    if (page < 1 || page > totalPages) return;
+  // 엑셀로 내보내기
+  function exportToExcel() {
+    try {
+      console.log('엑셀 내보내기 시작...');
+      
+      // 현재 필터된 사용자 데이터를 CSV 형식으로 변환
+      const headers = ['이름', '반', '번호', '연락처', 'UID'];
+      const csvData = [headers];
+      
+      filteredUsers.forEach(user => {
+        const name = user.name || user.displayName || user.nickname || '미이름';
+        const className = user.className || '미분반';
+        const studentNumber = user.studentNumber || 0;
+        const phone = user.phone || '';
+        const uid = user.uid;
+        
+        csvData.push([name, className, `${studentNumber}번`, phone, uid]);
+      });
+      
+      // CSV 문자열 생성 (UTF-8 BOM 추가로 한글 깨짐 방지)
+      const csvContent = '\uFEFF' + csvData.map(row => 
+        row.map(cell => {
+          // 쉼표나 따옴표가 있는 경우 따옴표로 감싸기
+          const cellStr = String(cell || '');
+          if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+            return '"' + cellStr.replace(/"/g, '""') + '"';
+          }
+          return cellStr;
+        }).join(',')
+      ).join('\n');
+      
+      // Blob 생성 및 다운로드
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        
+        // 파일명 생성 (현재 날짜와 시간 포함)
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 19).replace(/[:-]/g, '').replace('T', '_');
+        const fileName = `사용자_프로필_${dateStr}.csv`;
+        
+        link.setAttribute('download', fileName);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log(`엑셀 내보내기 완료: ${fileName}`);
+        
+        // 성공 메시지 표시
+        showExportMessage(`✅ ${filteredUsers.length}명의 사용자 정보를 엑셀 파일로 내보냈습니다.`);
+      }
+    } catch (error) {
+      console.error('엑셀 내보내기 실패:', error);
+      showExportMessage('❌ 엑셀 내보내기 중 오류가 발생했습니다.');
+    }
+  }
+  
+  // 내보내기 메시지 표시
+  function showExportMessage(message) {
+    // 기존 메시지가 있으면 제거
+    const existingMessage = document.getElementById('exportMessage');
+    if (existingMessage) {
+      existingMessage.remove();
+    }
     
-    currentPage = page;
-    renderUserTable();
+    // 새 메시지 생성
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'exportMessage';
+    messageDiv.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      box-shadow: var(--shadow);
+      z-index: 1000;
+      font-size: 14px;
+      max-width: 300px;
+    `;
+    messageDiv.textContent = message;
+    
+    document.body.appendChild(messageDiv);
+    
+    // 3초 후 자동 제거
+    setTimeout(() => {
+      if (messageDiv && messageDiv.parentNode) {
+        messageDiv.parentNode.removeChild(messageDiv);
+      }
+    }, 3000);
   }
 
   // 데이터 로드
@@ -391,6 +476,7 @@
       document.getElementById('tableContainer').style.display = 'block';
       document.getElementById('loadBtn').style.display = 'none';
       document.getElementById('refreshBtn').style.display = 'inline-block';
+      document.getElementById('exportBtn').style.display = 'inline-block';
       
       console.log('사용자 데이터 로드 완료');
       
@@ -456,10 +542,10 @@
   }
 
   // 전역 함수로 노출
-  window.changePage = changePage;
   window.loadUserData = loadUserData;
   window.refreshUserData = refreshUserData;
   window.checkAuthStatus = checkAuthStatus;
+  window.exportToExcel = exportToExcel;
 
   // 페이지 로드 시 초기화
   window.addEventListener('load', async () => {
@@ -492,8 +578,8 @@
       if (!hasAccess) {
         console.log('관리자 권한 없음');
         await checkAuthStatus();
-        return;
-      }
+          return;
+        }
       
       // 이벤트 리스너 등록
       document.getElementById('loadBtn').addEventListener('click', loadUserData);

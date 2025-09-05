@@ -85,6 +85,15 @@
       background: var(--border-strong);
     }
 
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #218838;
+    }
+
     .loading {
       text-align: center;
       padding: 40px;
@@ -177,11 +186,14 @@
 
     .uid-text {
       font-family: monospace;
-      font-size: 12px;
+      font-size: 11px;
       color: var(--muted);
       background: var(--bg-alt);
       padding: 4px 8px;
       border-radius: 6px;
+      word-break: break-all;
+      max-width: 300px;
+      display: inline-block;
     }
 
     .stats {
@@ -231,41 +243,7 @@
       margin-bottom: 20px;
     }
 
-    .pagination {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      margin-top: 24px;
-    }
-
-    .pagination button {
-      min-width: 36px;
-      height: 36px;
-      border: 1px solid var(--border-strong);
-      background: var(--card);
-      color: var(--text);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .pagination button:hover:not(:disabled) {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
-
-    .pagination button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .pagination .current {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
+    /* 페이지네이션 CSS 제거됨 - 모든 데이터를 한 번에 표시 */
 
     .filter-info {
       background: var(--bg-alt);
@@ -341,6 +319,7 @@
         <input type="text" id="searchInput" class="search-input" placeholder="이름, 반, 번호로 검색...">
         <button id="loadBtn" class="btn btn-primary">📋 데이터 로드</button>
         <button id="refreshBtn" class="btn btn-secondary" style="display: none;">🔄 새로고침</button>
+        <button id="exportBtn" class="btn btn-success" onclick="exportToExcel()" style="display: none;">📊 엑셀 내보내기</button>
       </div>
 
       <!-- 필터 정보 -->
@@ -373,8 +352,7 @@
           </tbody>
         </table>
 
-        <!-- 페이지네이션 -->
-        <div class="pagination" id="pagination"></div>
+        <!-- 페이지네이션 제거됨 - 모든 데이터를 한 번에 표시 -->
       </div>
     </div>
   </div>
