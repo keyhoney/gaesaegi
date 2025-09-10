@@ -4,7 +4,7 @@
 .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 12px; }
 .list-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
 .row { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
-.row.has-memo { border-left: 4px solid #3498db; background: #f8f9ff; }
+.row.has-memo { border-left: 4px solid var(--primary); background: #fef9f5; }
 .row .line { display: flex; align-items: center; gap: 12px; }
 .row .line.top { position: relative; }
 .row .line.top .meta { width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; }
@@ -13,21 +13,21 @@
 .row .line.bottom .diff { min-width: 90px; color: var(--muted); }
 .row .line.bottom .actions { margin-left: auto; display: flex; gap: 8px; }
 .row a { text-decoration: none; color: var(--accent); }
-.row .memo-preview { margin-top: 8px; padding: 8px; background: #e8f4fd; border-radius: 6px; font-size: 14px; color: #2c3e50; border-left: 3px solid #3498db; }
+.row .memo-preview { margin-top: 8px; padding: 8px; background: #fef7f0; border-radius: 6px; font-size: 14px; color: var(--text); border-left: 3px solid var(--accent); }
 
 /* 인라인 메모 에디터 */
-.memo-editor { margin-top: 12px; border-top: 1px solid #e0e0e0; padding-top: 12px; }
-.memo-editor-content { background: #f8f9ff; border: 1px solid #d0d7ff; border-radius: 8px; padding: 12px; }
-.memo-textarea { width: 100%; min-height: 80px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; font-size: 14px; resize: vertical; background: white; }
-.memo-textarea:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2); }
+.memo-editor { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+.memo-editor-content { background: #fef9f5; border: 1px solid var(--border-strong); border-radius: 8px; padding: 12px; }
+.memo-textarea { width: 100%; min-height: 80px; padding: 10px; border: 1px solid var(--border-strong); border-radius: 6px; font-family: inherit; font-size: 14px; resize: vertical; background: white; }
+.memo-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(138, 75, 83, 0.15); }
 .memo-editor-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-.memo-char-count { font-size: 12px; color: #666; }
+.memo-char-count { font-size: 12px; color: var(--muted); }
 .memo-editor-actions { display: flex; gap: 8px; }
 
 /* 토스트 메시지 */
-.toast { position: fixed; top: 20px; right: 20px; background: #27ae60; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1001; transform: translateX(100%); transition: transform 0.3s ease; }
+.toast { position: fixed; top: 20px; right: 20px; background: var(--success); color: white; padding: 12px 20px; border-radius: 8px; box-shadow: var(--shadow); z-index: 1001; transform: translateX(100%); transition: transform 0.3s ease; }
 .toast.show { transform: translateX(0); }
-.toast-error { background: #e74c3c; }
+.toast-error { background: var(--danger); }
 
 @media (max-width: 900px) { 
   .list-grid { grid-template-columns: 1fr; } 

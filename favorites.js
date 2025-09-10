@@ -107,7 +107,7 @@
       function updateCharCount() {
         const count = textarea.value.length;
         charCount.textContent = `${count}/500`;
-        charCount.style.color = count > 450 ? '#e74c3c' : '#666';
+        charCount.style.color = count > 450 ? 'var(--danger)' : 'var(--muted)';
       }
       
       textarea.addEventListener('input', updateCharCount);
