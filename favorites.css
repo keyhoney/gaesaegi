@@ -4,12 +4,44 @@
 .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 12px; }
 .list-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
 .row { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+.row.has-memo { border-left: 4px solid #3498db; background: #f8f9ff; }
 .row .line { display: flex; align-items: center; gap: 12px; }
+.row .line.top { position: relative; }
 .row .line.top .meta { width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; }
+.row .line.top .memo-indicator { position: absolute; right: 0; top: 0; font-size: 16px; }
 .row .line.bottom .id { min-width: 140px; }
 .row .line.bottom .diff { min-width: 90px; color: var(--muted); }
 .row .line.bottom .actions { margin-left: auto; display: flex; gap: 8px; }
 .row a { text-decoration: none; color: var(--accent); }
-@media (max-width: 900px) { .list-grid { grid-template-columns: 1fr; } .row { flex-wrap: wrap; } .row .meta { flex-basis: 100%; } }
+.row .memo-preview { margin-top: 8px; padding: 8px; background: #e8f4fd; border-radius: 6px; font-size: 14px; color: #2c3e50; border-left: 3px solid #3498db; }
+
+/* 메모 다이얼로그 */
+.memo-dialog { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.memo-dialog-content { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: 90%; max-width: 500px; max-height: 80vh; overflow: hidden; }
+.memo-dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #eee; }
+.memo-dialog-header h3 { margin: 0; font-size: 18px; color: #2c3e50; }
+.memo-dialog-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; }
+.memo-dialog-close:hover { color: #333; }
+.memo-dialog-body { padding: 20px; }
+.memo-question-info { margin-bottom: 16px; padding: 12px; background: #f8f9fa; border-radius: 8px; }
+.memo-question-info strong { display: block; margin-bottom: 4px; color: #2c3e50; }
+.memo-question-id { font-size: 14px; color: #666; }
+.memo-textarea { width: 100%; min-height: 120px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 14px; resize: vertical; }
+.memo-textarea:focus { outline: none; border-color: #3498db; }
+.memo-char-count { text-align: right; font-size: 12px; color: #666; margin-top: 4px; }
+.memo-dialog-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 16px 20px; border-top: 1px solid #eee; background: #f8f9fa; }
+
+/* 토스트 메시지 */
+.toast { position: fixed; top: 20px; right: 20px; background: #27ae60; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1001; transform: translateX(100%); transition: transform 0.3s ease; }
+.toast.show { transform: translateX(0); }
+.toast-error { background: #e74c3c; }
+
+@media (max-width: 900px) { 
+  .list-grid { grid-template-columns: 1fr; } 
+  .row { flex-wrap: wrap; } 
+  .row .meta { flex-basis: 100%; }
+  .memo-dialog-content { width: 95%; margin: 20px; }
+  .toast { right: 10px; left: 10px; }
+}
 
 

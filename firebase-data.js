@@ -329,6 +329,41 @@
       } catch (_) { return false; }
     },
 
+    // Favorites Memos
+    async saveFavoriteMemo(qid, memo) {
+      try {
+        const { user, db } = await withUser();
+        const { doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+        await setDoc(doc(db, 'users', user.uid, 'favorites', qid), { 
+          memo: memo || '', 
+          updatedAt: serverTimestamp() 
+        }, { merge: true });
+        return true;
+      } catch (_) { return false; }
+    },
+    async getFavoriteMemo(qid) {
+      try {
+        const { user, db } = await withUser();
+        const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+        const snap = await getDoc(doc(db, 'users', user.uid, 'favorites', qid));
+        return snap.exists() ? (snap.data()?.memo || '') : '';
+      } catch (_) { return ''; }
+    },
+    async getAllFavoriteMemos() {
+      try {
+        const { user, db, collection, getDocs } = await withUser();
+        const snap = await getDocs(collection(db, 'users', user.uid, 'favorites'));
+        const memos = {};
+        snap.docs.forEach(doc => {
+          const data = doc.data();
+          if (data?.memo) {
+            memos[doc.id] = data.memo;
+          }
+        });
+        return memos;
+      } catch (_) { return {}; }
+    },
+
     // ===== Wallet (coins) =====
     async getWallet() {
       try {
