@@ -81,6 +81,7 @@
               <div class="memo-char-count">0/500</div>
               <div class="memo-editor-actions">
                 <button type="button" class="btn ghost small memo-cancel">취소</button>
+                <button type="button" class="btn ghost small memo-delete" style="display: none;">메모 삭제</button>
                 <button type="button" class="btn small memo-save">저장</button>
               </div>
             </div>
@@ -102,6 +103,7 @@
       const charCount = row.querySelector('.memo-char-count');
       const saveBtn = row.querySelector('.memo-save');
       const cancelBtn = row.querySelector('.memo-cancel');
+      const deleteBtn = row.querySelector('.memo-delete');
       
       // 글자 수 업데이트
       function updateCharCount() {
@@ -110,7 +112,12 @@
         charCount.style.color = count > 450 ? 'var(--danger)' : 'var(--muted)';
       }
       
-      textarea.addEventListener('input', updateCharCount);
+      textarea.addEventListener('input', () => {
+        updateCharCount();
+        // 메모 삭제 버튼 표시/숨김 업데이트
+        const hasContent = textarea.value.trim().length > 0;
+        deleteBtn.style.display = hasContent ? 'inline-flex' : 'none';
+      });
       updateCharCount();
       
       // 메모 버튼 클릭
@@ -127,6 +134,8 @@
         memoEditor.style.display = isVisible ? 'none' : 'block';
         
         if (!isVisible) {
+          // 메모 삭제 버튼 표시/숨김
+          deleteBtn.style.display = memo.trim().length > 0 ? 'inline-flex' : 'none';
           textarea.focus();
           textarea.setSelectionRange(textarea.value.length, textarea.value.length);
         }
@@ -155,6 +164,27 @@
         textarea.value = memo; // 원래 값으로 복원
         updateCharCount();
         memoEditor.style.display = 'none';
+      });
+      
+      // 메모 삭제 버튼 클릭
+      deleteBtn.addEventListener('click', async () => {
+        if (!confirm('정말로 이 메모를 삭제하시겠습니까?')) {
+          return;
+        }
+        
+        const success = await window.firebaseData?.saveFavoriteMemo?.(id, '');
+        
+        if (success) {
+          showToast('메모가 삭제되었습니다.');
+          memoEditor.style.display = 'none';
+          
+          // 목록 새로고침
+          const ids = await listFavIds();
+          const memos = await getAllFavoriteMemos();
+          renderFav(new Set(ids), meta, memos);
+        } else {
+          showToast('메모 삭제에 실패했습니다.', 'error');
+        }
       });
       
       $favList.appendChild(row);
