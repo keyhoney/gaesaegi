@@ -148,6 +148,16 @@
         
         // 하드코딩된 모든 사용자 UID 목록
         const allUserUids = [
+          'q37SSKk7CpcKJs9OX60NGqqVVE92',
+          'fJ8RUAEfVTS4kQ373ZABU1VpiZ62',
+          'X917fcODl8aCMv9gVXEh08feKfq1',
+          'sNZd3J9KsZd2dVsdAhRAazhnUeX2',
+          'iFJZwUrR3QMArZWIoOpDW0DsvwD3',
+          'C4rtvVLZKqQJSWQmAw0vFGqziBH2',
+          '0a7VaiheXMUjRfcUGnpJYGhgvbz1',
+          'jEohnBtI0Yhk0eMtujWRMEP0LK62',
+          '5A3j9MdJgCPR5Qy349RaJfwqFAO2',
+          'qQ5TS5R9fWTkw90DxAgLF0iNDyi2',
           'PGaVHrRQ5OXYjF8cDshbCZygRJP2',
           'qQ5TS5R9fWTkw90DxAgLF0iNDyi2',
           'WRcdJOZJJCXMpkV3WG0jUTp8I5h1',
